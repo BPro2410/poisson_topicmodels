@@ -28,3 +28,11 @@ Offene To Do's u.a.:
 - Welche Modelle möchten wir noch drin haben?
 - Welche Attribute sind in den Modellen immer gleich? Wir können noch mehr Attribute als 'Standard' in die Abstrakte Klasse geben, sobald wir den ganzen Modellumfang wissen. Wie z.B. counts, vocabulary und batch_size. Das kommt stand jetzt bei jedem Modell vor.
 - Welche Outputs soll der User bekommen? Was möchte der Anwender returnt haben?
+
+
+Als Packages nutzen wir recht wenig:
+- JAX und numpy für computation
+- Numpyro für die graphical models
+- Optax für den Optimierer (Adam)
+- pandas und scikit-learn für die Daten und die DTM Erstellung
+

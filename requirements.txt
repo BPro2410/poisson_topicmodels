@@ -1,0 +1,8 @@
+jax==0.4.5
+numpy==1.23.5
+numpyro==0.17.0
+optax==0.2.4
+pandas==1.5.2
+scikit_learn==1.2.0
+scipy==1.15.2
+tqdm==4.64.1
