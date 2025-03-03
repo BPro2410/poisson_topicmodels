@@ -2,6 +2,8 @@
 
 Wie besprochen, unser Repository für das Package, welches verschiedene Poisson factorization Modelle in einem JAX Package ausführen kann.
 
+Eine ANWENDUNGSFILE ist die [run_topicmodels](run_topicmodels.py) file!
+
 Gerade implementiert sind:
 - SPF
 - SPF mit Covariates (CSPF)
@@ -9,14 +11,14 @@ Gerade implementiert sind:
 - PF mit Covariates (CPF)
 - TBIP
 
-Die Architektur sieht aktuell so aus:
+Die Architektur sieht aktuell so aus (UML Klassendiagramm):
 ![Architektur](image.png)
 
 Ich habe das Package mal 'topicmodels' genannt, in Analogie zu Bettinas R package :). Der API Call würde erfolgen mit z.B.:
 
-```
+```python
 tm = topicmodels("SPF", ...)
-´´´
+```
 
 Basierend auf dem ersten Argument, spezifiziert der Anwender, welches Poisson Modell er erhalten möchte. Alle Modelle erben ihr Interface von einer Abstrakten Klasse, getauft NumpyroModel, welche definiert, dass jedes implementierte Modell einen Guide (variational family) und ein Modell (data generating process) für sich selbst definieren muss. Inferenz und Batching sind für alle Modelle gleich, sofern nicht spezielle Verfahren benötigt werden (wie z.B. bei TBIP, das ja noch den ideal point hat und somit author indices im batching benötigt).
 
