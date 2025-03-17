@@ -12,7 +12,7 @@ Gerade implementiert sind:
 - TBIP
 
 Die Architektur sieht aktuell so aus (UML Klassendiagramm):
-![Architektur](image.png)
+![Architektur](JAX_package.png)
 
 Ich habe das Package mal 'topicmodels' genannt, in Analogie zu Bettinas R package :). Der API Call würde erfolgen mit z.B.:
 
@@ -24,11 +24,9 @@ Basierend auf dem ersten Argument, spezifiziert der Anwender, welches Poisson Mo
 
 Das funktioniert so eigentlich aktuell ganz gut und ist auch sauber 'aufgeräumt' wie ich finde.
 
-Offene To Do's u.a.:
-- Welche Modelle möchten wir noch drin haben?
-- Welche Attribute sind in den Modellen immer gleich? Wir können noch mehr Attribute als 'Standard' in die Abstrakte Klasse geben, sobald wir den ganzen Modellumfang wissen. Wie z.B. counts, vocabulary und batch_size. Das kommt stand jetzt bei jedem Modell vor.
+**Offene To Do's u.a.:**
 - Welche Outputs soll der User bekommen? Was möchte der Anwender returnt haben?
-
+-- Besprochen: Return betas und return thetas
 
 Als Packages nutzen wir recht wenig:
 - JAX und numpy für computation
