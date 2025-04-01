@@ -1,0 +1,11 @@
+/* Read the Docs Theme */
+.wy-side-nav-search img {
+    max-width: 150px !important;
+    height: auto !important;
+}
+
+/* Other themes */
+img.logo {
+    width: 100px !important;
+    height: auto !important;
+}
