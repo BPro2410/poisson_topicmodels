@@ -1,0 +1,259 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>models.numpyro_model &mdash; PyPF 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=69392b77" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            PyPF
+              <img src="../../_static/pypf_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/index.html">Getting started with PyPF</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/index.html#examples">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">models</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">PyPF</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">models.numpyro_model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for models.numpyro_model</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractmethod</span><span class="p">,</span> <span class="n">ABC</span>
+<span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">random</span><span class="p">,</span> <span class="n">jit</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">from</span> <span class="nn">optax</span> <span class="kn">import</span> <span class="n">adam</span>
+<span class="kn">from</span> <span class="nn">numpyro.infer</span> <span class="kn">import</span> <span class="n">SVI</span><span class="p">,</span> <span class="n">TraceMeanField_ELBO</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">packages.models.Metrics</span> <span class="kn">import</span> <span class="n">Metrics</span>
+
+<div class="viewcode-block" id="NumpyroModel">
+<a class="viewcode-back" href="../../models.html#models.numpyro_model.NumpyroModel">[docs]</a>
+<span class="k">class</span> <span class="nc">NumpyroModel</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract base class for all used probabilistic models.</span>
+<span class="sd">    Each model has to implement at least their own Model and Guide.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+
+    <span class="n">Metrics</span> <span class="o">=</span> <span class="n">Metrics</span><span class="p">(</span><span class="n">loss</span> <span class="o">=</span> <span class="nb">list</span><span class="p">())</span>
+    
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_guide</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_get_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Helper function to obtain a batch of data, convert from scipy.sparse to jax.numpy.array.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rng : jax.random.PRNGKey</span>
+<span class="sd">            Random number generator key.</span>
+<span class="sd">        Y : scipy.sparse.csr_matrix</span>
+<span class="sd">            The word counts array.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple</span>
+<span class="sd">            Y_batch : numpy.ndarray</span>
+<span class="sd">                Word counts for the batch.</span>
+<span class="sd">            D_batch : numpy.ndarray</span>
+<span class="sd">                Indices of documents in the batch.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">D_batch</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">),</span> <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,))</span>
+        <span class="c1"># Y_batch = jax.device_put(jnp.array(Y[D_batch].toarray()), jax.devices(&quot;cpu&quot;)[0])</span>
+        <span class="n">Y_batch</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Y</span><span class="p">[</span><span class="n">D_batch</span><span class="p">]</span><span class="o">.</span><span class="n">toarray</span><span class="p">())</span>
+
+        <span class="c1"># Ensure the shape of Y_batch is (batch_size, V)</span>
+        <span class="k">assert</span> <span class="n">Y_batch</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Shape mismatch: </span><span class="si">{</span><span class="n">Y_batch</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> != (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">V</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+        <span class="k">return</span> <span class="n">Y_batch</span><span class="p">,</span> <span class="n">D_batch</span>
+    
+<div class="viewcode-block" id="NumpyroModel.train_step">
+<a class="viewcode-back" href="../../models.html#models.numpyro_model.NumpyroModel.train_step">[docs]</a>
+    <span class="k">def</span> <span class="nf">train_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">lr</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Train the model using SVI.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        num_steps : int</span>
+<span class="sd">            Number of training steps.</span>
+<span class="sd">        lr : float</span>
+<span class="sd">            Learning rate for the optimizer.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            The estimated parameters after training.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">svi_batch</span> <span class="o">=</span> <span class="n">SVI</span><span class="p">(</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span>
+            <span class="n">guide</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_guide</span><span class="p">,</span>
+            <span class="n">optim</span> <span class="o">=</span> <span class="n">adam</span><span class="p">(</span><span class="n">lr</span><span class="p">),</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">TraceMeanField_ELBO</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">svi_batch_update</span> <span class="o">=</span> <span class="n">jit</span><span class="p">(</span><span class="n">svi_batch</span><span class="o">.</span><span class="n">update</span><span class="p">)</span>
+
+        <span class="n">Y_batch</span><span class="p">,</span> <span class="n">D_batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_batch</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">counts</span><span class="p">)</span>
+
+        <span class="n">svi_state</span> <span class="o">=</span> <span class="n">svi_batch</span><span class="o">.</span><span class="n">init</span><span class="p">(</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">Y_batch</span> <span class="o">=</span> <span class="n">Y_batch</span><span class="p">,</span> <span class="n">d_batch</span> <span class="o">=</span> <span class="n">D_batch</span>
+        <span class="p">)</span>
+    
+        <span class="n">rngs</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">num_steps</span><span class="p">)</span>
+        <span class="c1"># losses = list()</span>
+        <span class="n">pbar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num_steps</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">pbar</span><span class="p">:</span>
+            <span class="n">Y_batch</span><span class="p">,</span> <span class="n">D_batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_batch</span><span class="p">(</span><span class="n">rngs</span><span class="p">[</span><span class="n">step</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">counts</span><span class="p">)</span>
+            <span class="n">svi_state</span><span class="p">,</span> <span class="n">loss</span> <span class="o">=</span> <span class="n">svi_batch_update</span><span class="p">(</span>
+                <span class="n">svi_state</span><span class="p">,</span> <span class="n">Y_batch</span><span class="o">=</span><span class="n">Y_batch</span><span class="p">,</span> <span class="n">d_batch</span> <span class="o">=</span> <span class="n">D_batch</span>
+            <span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Metrics</span><span class="o">.</span><span class="n">loss</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+            <span class="c1"># losses.append(loss)</span>
+            <span class="k">if</span> <span class="n">step</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">pbar</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span>
+                    <span class="s2">&quot;Init loss: &quot;</span>
+                    <span class="o">+</span> <span class="s2">&quot;</span><span class="si">{:10.4f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Metrics</span><span class="o">.</span><span class="n">loss</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;; Avg loss (last </span><span class="si">{</span><span class="mi">10</span><span class="si">}</span><span class="s2"> iter): &quot;</span>
+                    <span class="o">+</span> <span class="s2">&quot;</span><span class="si">{:10.4f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Metrics</span><span class="o">.</span><span class="n">loss</span><span class="p">[</span><span class="o">-</span><span class="mi">10</span><span class="p">:])</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">estimated_params</span> <span class="o">=</span> <span class="n">svi_batch</span><span class="o">.</span><span class="n">get_params</span><span class="p">(</span><span class="n">svi_state</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimated_params</span></div>
+
+
+    
+<div class="viewcode-block" id="NumpyroModel.return_topics">
+<a class="viewcode-back" href="../../models.html#models.numpyro_model.NumpyroModel.return_topics">[docs]</a>
+    <span class="k">def</span> <span class="nf">return_topics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the topics for each document.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple</span>
+<span class="sd">            categories : numpy.ndarray</span>
+<span class="sd">                Array of topics indices for each document.</span>
+<span class="sd">            E_theta : numpy.ndarray</span>
+<span class="sd">                Estimated topic proportions for each document.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">E_theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimated_params</span><span class="p">[</span><span class="s2">&quot;theta_shape&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimated_params</span><span class="p">[</span><span class="s2">&quot;theta_rate&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">E_theta</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">),</span> <span class="n">E_theta</span></div>
+
+
+<div class="viewcode-block" id="NumpyroModel.return_beta">
+<a class="viewcode-back" href="../../models.html#models.numpyro_model.NumpyroModel.return_beta">[docs]</a>
+    <span class="k">def</span> <span class="nf">return_beta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the beta matrix for the model.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pandas.DataFrame</span>
+<span class="sd">            DataFrame containing the beta matrix with words as rows and topics as columns.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">E_beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimated_params</span><span class="p">[</span><span class="s2">&quot;beta_shape&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimated_params</span><span class="p">[</span><span class="s2">&quot;beta_rate&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">E_beta</span><span class="p">),</span> <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vocab</span><span class="p">)</span></div>
+</div>
+
+
+
+
+    
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Bernd Prostmaier, Bettina Grün, Paul Hofmarcher.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
