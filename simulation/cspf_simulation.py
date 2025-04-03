@@ -1,0 +1,131 @@
+####################################
+#### ----- Simulation ----- ########
+####################################
+
+import numpy as np
+import random
+from packages.models.topicmodels import topicmodels
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+np.random.seed(42)
+
+# Parameters
+num_documents = D = 10000
+vocab_size = V = 8000
+num_topics = K = 5
+words_per_doc = 100  # Adjustable: average number of words per document
+p_covariate = 0.5  # Probability of x_i = 1
+
+# Step 1: Create a vocabulary
+vocabulary = [f"word_{i}" for i in range(vocab_size)]
+
+# Step 2: Define topic-specific word distributions
+topic_word_distributions = []
+for _ in range(num_topics):
+    # Each topic has a probability distribution over words
+    probs = np.random.dirichlet(alpha=np.ones(vocab_size) * 0.1)
+    topic_word_distributions.append(probs)
+
+# Step 3: Assign covariate values (0 or 1)
+covariates = np.random.binomial(1, p_covariate, size=num_documents)
+
+# Step 4: Define topic probability vectors conditioned on covariate
+pi_x0 = [0.1, 0.2, 0.3, 0.2, 0.2]  # Topic distribution when x_i = 0
+pi_x1 = [0.7, 0.3, 0.0, 0.0, 0.0]  # Topic distribution when x_i = 1
+
+# Step 5: Assign topics to documents based on covariate
+document_topics = []
+for x in covariates:
+    topic_probs = pi_x1 if x == 1 else pi_x0
+    topic = np.random.choice(num_topics, p=topic_probs)
+    document_topics.append(topic)
+
+document_topics = np.array(document_topics)
+
+# Step 6: Generate documents
+documents = []
+for doc_id in range(num_documents):
+    topic = document_topics[doc_id]
+    word_probs = topic_word_distributions[topic]
+    words = np.random.choice(vocabulary, size=words_per_doc, p=word_probs)
+    documents.append(" ".join(words))
+
+# Output: documents contains generated texts, document_topics holds ground-truth topic assignments,
+# and covariates stores the binary covariate values
+
+
+#####################
+# Create seed words #
+#####################
+
+# -- Create vocabulary according to top 5 frequent words per topic --
+keywords = dict()
+vocab = vocabulary
+# -- hot words function
+def print_topics(E_beta, num_words: int = 50):
+    top_words = np.argsort(-E_beta, axis = 1)
+
+    hot_words = dict()
+    for topic_idx in range(K):
+        if topic_idx in list(range(len(keywords.keys()))):
+            topic_name = "{}".format(list(keywords.keys())[topic_idx])
+            words_per_topic = num_words
+            hot_words_topic = [vocab[word] for word in top_words[topic_idx, :words_per_topic]]
+            hot_words[topic_name] = hot_words_topic
+        else:
+            words_per_topic = num_words
+            hot_words[f"Topic_{topic_idx - len(keywords) + 1}"] = \
+                    [vocab[word] for word in top_words[topic_idx, :words_per_topic]]
+
+    return hot_words
+
+
+# -- Top 100 words per topic
+hot_words = print_topics(np.array(topic_word_distributions), num_words = 100)
+
+# -- Sample of 10 words per topic for seed words
+keywords_selected = {k: np.random.choice(v, 10, replace = False) for k, v in hot_words.items()}
+keywords = keywords_selected
+
+
+
+##################
+# Estimate model #
+##################
+
+from sklearn.feature_extraction.text import CountVectorizer
+import scipy.sparse as sparse
+
+# --- hyperparameter ---
+model_hyperparameter = dict(
+    residual_topics = 0,
+    epochs = 150,
+    batch_size = 1024,
+    lr = 0.01
+)
+seeded_topics = len(list(keywords.keys()))
+model_hyperparameter["num_topics"] = model_hyperparameter["residual_topics"] + seeded_topics
+
+# --- create corpus ---
+cv = CountVectorizer(vocabulary = vocab)
+cv.fit(documents)
+counts = sparse.csr_matrix(cv.transform(documents), dtype=np.int8)
+
+# --- Create design matrix ---
+X_design_matrix = pd.DataFrame({"intercept": np.repeat(1, len(covariates)), "simulated_cov": covariates})
+
+# --- Run topicmodels package ---
+cspf = topicmodels("CSPF", counts, vocab, keywords, residual_topics = 0, batch_size = 1024, X_design_matrix = X_design_matrix)
+num_steps = model_hyperparameter["epochs"] * int(counts.shape[0] / model_hyperparameter["batch_size"])
+estimates = cspf.train_step(num_steps = num_steps, lr = 0.01)
+topic_prediction, e_theta = cspf.return_topics()
+
+# --- Analyze results ---
+estimated_categories = estimates["theta_shape"] / estimates["theta_rate"]
+estimated_categories = np.argmax(estimated_categories, axis = 1)
+
+np.sum(document_topics == estimated_categories )/len(document_topics)
+
+cov_effects = cspf.return_covariate_effects()
+print(cov_effects)

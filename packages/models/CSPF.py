@@ -186,7 +186,7 @@ class CSPF(NumpyroModel):
 
             topics = np.where(argmaxes <= max_index,
                     keyword_keys[argmaxes_clipped],
-                    "No_keyword_topic_" + (argmaxes - max_index).astype(str))
+                    f"No_keyword_topic_{argmaxes - max_index}")
             
             return topics
         
