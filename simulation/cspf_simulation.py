@@ -59,10 +59,9 @@ for doc_id in range(num_documents):
 # Create seed words #
 #####################
 
-# -- Create vocabulary according to top 5 frequent words per topic --
 keywords = dict()
 vocab = vocabulary
-# -- hot words function
+
 def print_topics(E_beta, num_words: int = 50):
     top_words = np.argsort(-E_beta, axis = 1)
 
