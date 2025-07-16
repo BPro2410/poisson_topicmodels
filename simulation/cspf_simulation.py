@@ -128,3 +128,51 @@ np.sum(document_topics == estimated_categories )/len(document_topics)
 
 cov_effects = cspf.return_covariate_effects()
 print(cov_effects)
+
+
+
+z = 1.95
+C = estimates["lambda_location"].shape[0]
+K = estimates["lambda_location"].shape[1]
+cov_effects = estimates["lambda_location"]
+cov_scales = estimates["lambda_scale"]
+# Format LaTeX entries
+latex_matrix = []
+for i in range(C):
+    row = []
+    for j in range(K):
+        mu = cov_effects[i, j]
+        sigma = cov_scales[i, j]
+        lower = mu - z * sigma
+        upper = mu + z * sigma
+
+        # Format the inner mini-table
+        if lower > 0 or upper < 0:
+            mu_str = f"$\\mathbf{{{mu:.2f}}}$"
+        else:
+            mu_str = f"${mu:.2f}$"
+
+        ci_str = f"{{\\footnotesize [{lower:.2f}, {upper:.2f}]}}"
+        entry = f"\\begin{{tabular}}{{@{{}}c@{{}}}}\n{mu_str} \\\\\n{ci_str}\n\\end{{tabular}}"
+        row.append(entry)
+    latex_matrix.append(row)
+
+# Print the LaTeX table
+print("\\begin{table}[ht]")
+print("\\centering")
+print("\\begin{tabular}{l|" + "c" * K + "}")
+print("\\toprule")
+print("Covariate & " + " & ".join([f"Topic {j + 1}" for j in range(K)]) + " \\\\")
+print("\\midrule")
+for i, row in enumerate(latex_matrix):
+    print(f"Cov {i + 1} & " + " & ".join(row) + " \\\\")
+print("\\bottomrule")
+print("\\end{tabular}")
+print("""\\caption{
+    Posterior mean estimates of covariate effects on topic proportions with 95\% credible intervals. 
+    Values shown are the posterior means with corresponding 95\% credible intervals below each estimate, 
+    based on a normal approximation. Boldface indicates effects whose intervals do not include zero, 
+    suggesting strong evidence for a positive or negative association.
+    }""")
+print("\\label{tab:simulation_cov_effects2}")
+print("\\end{table}")

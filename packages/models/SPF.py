@@ -136,7 +136,7 @@ class SPF(NumpyroModel):
         def recode_cats(argmaxes, keywords):
             """
             Recodes the argmax index into topic strings.
-            
+
             :param argmaxes: np.array() or jnp.array() because of vectorized parallel computing
             :param keywords: Dictionary containing keyword topics
             :return: Array of recoded topics
@@ -149,9 +149,9 @@ class SPF(NumpyroModel):
             argmaxes_clipped = np.clip(argmaxes, 0, max_index)
 
             topics = np.where(argmaxes <= max_index,
-                    keyword_keys[argmaxes_clipped],
-                    "No_keyword_topic_" + (argmaxes - max_index).astype(str))
-            
+                              keyword_keys[argmaxes_clipped],
+                              f"No_keyword_topic_{argmaxes - max_index}")
+
             return topics
         
         E_theta = self.estimated_params["theta_shape"] / self.estimated_params["theta_rate"]
@@ -179,3 +179,7 @@ class SPF(NumpyroModel):
         rs_names = [f"residual_topic_{i+1}" for i in range(self.residual_topics)]
 
         return pd.DataFrame(jnp.transpose(E_beta), index = self.vocab, columns = list(self.keywords.keys()) + rs_names)
+
+    def return_top_words_per_topic(self, n = 10):
+        beta = self.return_beta()
+        return {topic: beta[topic].nlargest(n).index.tolist() for topic in beta}

@@ -44,7 +44,7 @@ import scipy.sparse as sparse
 
  
 # ---- Load data ----
-df1 = pd.read_csv("/home/sagemaker-user/Bernd-PHD/Data/10k_amazon.csv")
+df1 = pd.read_csv("data/10k_amazon.csv")
 
  
 
@@ -90,7 +90,7 @@ estimated_params = tm1.train_step(num_steps = 100, lr = 0.01)
 estimated_params
 topics, e_theta = tm1.return_topics()
 beta = tm1.return_beta()
-
+top_words = tm1.return_top_words_per_topic(n = 10)
 
 # --- See loss within inherited metrics object ---
 tm1.Metrics.loss
