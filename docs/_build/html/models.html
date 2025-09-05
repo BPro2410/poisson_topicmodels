@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>models package &mdash; PyPF 0.0.1 documentation</title>
+  <title>Module contents &mdash; PyPF 0.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/custom.css?v=69392b77" />
@@ -20,6 +20,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Contributing" href="intro/contributing.html" />
     <link rel="prev" title="models" href="modules.html" /> 
 </head>
 
@@ -43,50 +44,53 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="introduction/index.html">Getting started with PyPF</a></li>
-<li class="toctree-l1"><a class="reference internal" href="introduction/index.html#examples">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro/examples.html">Examples</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">models</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">models package</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-models.CPF">models.CPF module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#models.CPF.CPF"><code class="docutils literal notranslate"><span class="pre">CPF</span></code></a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#models.CPF"><code class="docutils literal notranslate"><span class="pre">CPF</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#models.CPF.return_covariate_effects"><code class="docutils literal notranslate"><span class="pre">CPF.return_covariate_effects()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#module-models.CSPF">models.CSPF module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#models.CSPF.CSPF"><code class="docutils literal notranslate"><span class="pre">CSPF</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#models.CSPF"><code class="docutils literal notranslate"><span class="pre">CSPF</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#models.CSPF.return_beta"><code class="docutils literal notranslate"><span class="pre">CSPF.return_beta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#models.CSPF.return_covariate_effects"><code class="docutils literal notranslate"><span class="pre">CSPF.return_covariate_effects()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#models.CSPF.return_topics"><code class="docutils literal notranslate"><span class="pre">CSPF.return_topics()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#module-models.Metrics">models.Metrics module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#models.Metrics.Metrics"><code class="docutils literal notranslate"><span class="pre">Metrics</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#models.Metrics"><code class="docutils literal notranslate"><span class="pre">Metrics</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#models.Metrics.loss"><code class="docutils literal notranslate"><span class="pre">Metrics.loss</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">Metrics.loss</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#module-models.PF">models.PF module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#models.PF.PF"><code class="docutils literal notranslate"><span class="pre">PF</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#models.NumpyroModel"><code class="docutils literal notranslate"><span class="pre">NumpyroModel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#models.NumpyroModel.Metrics"><code class="docutils literal notranslate"><span class="pre">NumpyroModel.Metrics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#models.NumpyroModel.return_beta"><code class="docutils literal notranslate"><span class="pre">NumpyroModel.return_beta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#models.NumpyroModel.return_topics"><code class="docutils literal notranslate"><span class="pre">NumpyroModel.return_topics()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#models.NumpyroModel.train_step"><code class="docutils literal notranslate"><span class="pre">NumpyroModel.train_step()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#module-models.SPF">models.SPF module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#models.SPF.SPF"><code class="docutils literal notranslate"><span class="pre">SPF</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#models.PF"><code class="docutils literal notranslate"><span class="pre">PF</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#models.SPF"><code class="docutils literal notranslate"><span class="pre">SPF</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#models.SPF.infer_new_documents"><code class="docutils literal notranslate"><span class="pre">SPF.infer_new_documents()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#models.SPF.return_beta"><code class="docutils literal notranslate"><span class="pre">SPF.return_beta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#models.SPF.return_top_words_per_topic"><code class="docutils literal notranslate"><span class="pre">SPF.return_top_words_per_topic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#models.SPF.return_topics"><code class="docutils literal notranslate"><span class="pre">SPF.return_topics()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#module-models.TBIP">models.TBIP module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#models.TBIP.TBIP"><code class="docutils literal notranslate"><span class="pre">TBIP</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#models.TBIP"><code class="docutils literal notranslate"><span class="pre">TBIP</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#models.TBIP.train_step"><code class="docutils literal notranslate"><span class="pre">TBIP.train_step()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#module-models.numpyro_model">models.numpyro_model module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#models.numpyro_model.NumpyroModel"><code class="docutils literal notranslate"><span class="pre">NumpyroModel</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#module-models.test_that">models.test_that module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#models.test_that.test_that"><code class="docutils literal notranslate"><span class="pre">test_that()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#module-models">Module contents</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#models.topicmodels"><code class="docutils literal notranslate"><span class="pre">topicmodels</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="intro/contributing.html">Contributing</a></li>
 </ul>
 
         </div>
@@ -104,7 +108,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="modules.html">models</a></li>
-      <li class="breadcrumb-item active">models package</li>
+      <li class="breadcrumb-item active">Module contents</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/models.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -114,21 +118,16 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="models-package">
-<h1>models package<a class="headerlink" href="#models-package" title="Link to this heading"></a></h1>
-<section id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
-</section>
-<section id="module-models.CPF">
-<span id="models-cpf-module"></span><h2>models.CPF module<a class="headerlink" href="#module-models.CPF" title="Link to this heading"></a></h2>
+  <section id="module-models">
+<span id="module-contents"></span><h1>Module contents<a class="headerlink" href="#module-models" title="Link to this heading"></a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="models.CPF.CPF">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.CPF.</span></span><span class="sig-name descname"><span class="pre">CPF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vocab</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_topics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_design_matrix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/CPF.html#CPF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.CPF.CPF" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="models.CPF">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.</span></span><span class="sig-name descname"><span class="pre">CPF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vocab</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_topics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_design_matrix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/CPF.html#CPF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.CPF" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NumpyroModel</span></code></p>
 <p>Implementation of the standard Poisson factorization topic model including covariates.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="models.CPF.CPF.return_covariate_effects">
-<span class="sig-name descname"><span class="pre">return_covariate_effects</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/CPF.html#CPF.return_covariate_effects"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.CPF.CPF.return_covariate_effects" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="models.CPF.return_covariate_effects">
+<span class="sig-name descname"><span class="pre">return_covariate_effects</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/CPF.html#CPF.return_covariate_effects"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.CPF.return_covariate_effects" title="Link to this definition"></a></dt>
 <dd><p>Return the covariate effects for the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -142,18 +141,15 @@
 
 </dd></dl>
 
-</section>
-<section id="module-models.CSPF">
-<span id="models-cspf-module"></span><h2>models.CSPF module<a class="headerlink" href="#module-models.CSPF" title="Link to this heading"></a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="models.CSPF.CSPF">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.CSPF.</span></span><span class="sig-name descname"><span class="pre">CSPF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vocab</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keywords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residual_topics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_design_matrix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/CSPF.html#CSPF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.CSPF.CSPF" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="models.CSPF">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.</span></span><span class="sig-name descname"><span class="pre">CSPF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vocab</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keywords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residual_topics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_design_matrix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/CSPF.html#CSPF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.CSPF" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NumpyroModel</span></code></p>
 <p>Implementation of the Seeded Poisson Factorization (SPF) topic model including covariates.</p>
 <p>CSPF allows to fit a guided topic model and estimate covariate effects that drive topic polarization.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="models.CSPF.CSPF.return_beta">
-<span class="sig-name descname"><span class="pre">return_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/CSPF.html#CSPF.return_beta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.CSPF.CSPF.return_beta" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="models.CSPF.return_beta">
+<span class="sig-name descname"><span class="pre">return_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/CSPF.html#CSPF.return_beta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.CSPF.return_beta" title="Link to this definition"></a></dt>
 <dd><p>Return the beta matrix for the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -166,8 +162,8 @@
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="models.CSPF.CSPF.return_covariate_effects">
-<span class="sig-name descname"><span class="pre">return_covariate_effects</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/CSPF.html#CSPF.return_covariate_effects"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.CSPF.CSPF.return_covariate_effects" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="models.CSPF.return_covariate_effects">
+<span class="sig-name descname"><span class="pre">return_covariate_effects</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/CSPF.html#CSPF.return_covariate_effects"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.CSPF.return_covariate_effects" title="Link to this definition"></a></dt>
 <dd><p>Return the covariate effects for the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -180,8 +176,8 @@
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="models.CSPF.CSPF.return_topics">
-<span class="sig-name descname"><span class="pre">return_topics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/CSPF.html#CSPF.return_topics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.CSPF.CSPF.return_topics" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="models.CSPF.return_topics">
+<span class="sig-name descname"><span class="pre">return_topics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/CSPF.html#CSPF.return_topics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.CSPF.return_topics" title="Link to this definition"></a></dt>
 <dd><p>Return the topics for each document.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -201,17 +197,14 @@
 
 </dd></dl>
 
-</section>
-<section id="module-models.Metrics">
-<span id="models-metrics-module"></span><h2>models.Metrics module<a class="headerlink" href="#module-models.Metrics" title="Link to this heading"></a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="models.Metrics.Metrics">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.Metrics.</span></span><span class="sig-name descname"><span class="pre">Metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/Metrics.html#Metrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.Metrics.Metrics" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="models.Metrics">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.</span></span><span class="sig-name descname"><span class="pre">Metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/Metrics.html#Metrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.Metrics" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Data class for storing metrics.</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="models.Metrics.Metrics.loss">
-<span class="sig-name descname"><span class="pre">loss</span></span><a class="headerlink" href="#models.Metrics.Metrics.loss" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="models.Metrics.loss">
+<span class="sig-name descname"><span class="pre">loss</span></span><a class="headerlink" href="#models.Metrics.loss" title="Link to this definition"></a></dt>
 <dd><p>List of loss values during training.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -227,29 +220,107 @@
 
 </dd></dl>
 
-</section>
-<section id="module-models.PF">
-<span id="models-pf-module"></span><h2>models.PF module<a class="headerlink" href="#module-models.PF" title="Link to this heading"></a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="models.PF.PF">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.PF.</span></span><span class="sig-name descname"><span class="pre">PF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vocab</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_topics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/PF.html#PF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.PF.PF" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="models.NumpyroModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.</span></span><span class="sig-name descname"><span class="pre">NumpyroModel</span></span><a class="reference internal" href="_modules/models/numpyro_model.html#NumpyroModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.NumpyroModel" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Abstract base class for all used probabilistic models.
+Each model has to implement at least their own Model and Guide.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.NumpyroModel.Metrics">
+<span class="sig-name descname"><span class="pre">Metrics</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Metrics(loss=[])</span></em><a class="headerlink" href="#models.NumpyroModel.Metrics" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.NumpyroModel.return_beta">
+<span class="sig-name descname"><span class="pre">return_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/numpyro_model.html#NumpyroModel.return_beta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.NumpyroModel.return_beta" title="Link to this definition"></a></dt>
+<dd><p>Return the beta matrix for the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>DataFrame containing the beta matrix with words as rows and topics as columns.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.NumpyroModel.return_topics">
+<span class="sig-name descname"><span class="pre">return_topics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/numpyro_model.html#NumpyroModel.return_topics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.NumpyroModel.return_topics" title="Link to this definition"></a></dt>
+<dd><p>Return the topics for each document.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>categories<span class="classifier">numpy.ndarray</span></dt><dd><p>Array of topics indices for each document.</p>
+</dd>
+<dt>E_theta<span class="classifier">numpy.ndarray</span></dt><dd><p>Estimated topic proportions for each document.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.NumpyroModel.train_step">
+<span class="sig-name descname"><span class="pre">train_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/numpyro_model.html#NumpyroModel.train_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.NumpyroModel.train_step" title="Link to this definition"></a></dt>
+<dd><p>Train the model using SVI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_steps</strong> (<em>int</em>) – Number of training steps.</p></li>
+<li><p><strong>lr</strong> (<em>float</em>) – Learning rate for the optimizer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The estimated parameters after training.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="models.PF">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.</span></span><span class="sig-name descname"><span class="pre">PF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vocab</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_topics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/PF.html#PF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.PF" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NumpyroModel</span></code></p>
 <p>Documentation of the Poisson factorization (PF) topic model.
 PF is an unsupervised topic model.</p>
 </dd></dl>
 
-</section>
-<section id="module-models.SPF">
-<span id="models-spf-module"></span><h2>models.SPF module<a class="headerlink" href="#module-models.SPF" title="Link to this heading"></a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="models.SPF.SPF">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.SPF.</span></span><span class="sig-name descname"><span class="pre">SPF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vocab</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keywords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residual_topics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/SPF.html#SPF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.SPF.SPF" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="models.SPF">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.</span></span><span class="sig-name descname"><span class="pre">SPF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vocab</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keywords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residual_topics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/SPF.html#SPF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.SPF" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NumpyroModel</span></code></p>
 <p>Implementation of the Seeded Poisson Factorization (SPF) topic model.</p>
 <p>SPF allows to fit guided topics by increasing the topical prevalence of seed words a-priori.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="models.SPF.SPF.return_beta">
-<span class="sig-name descname"><span class="pre">return_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/SPF.html#SPF.return_beta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.SPF.SPF.return_beta" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="models.SPF.infer_new_documents">
+<span class="sig-name descname"><span class="pre">infer_new_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_counts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/SPF.html#SPF.infer_new_documents"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.SPF.infer_new_documents" title="Link to this definition"></a></dt>
+<dd><p>Infer topic proportions for new documents using fixed learned parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>new_counts</strong> (<em>scipy.sparse.csr_matrix</em>) – Word counts for new documents.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Predicted topic names.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.SPF.return_beta">
+<span class="sig-name descname"><span class="pre">return_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/SPF.html#SPF.return_beta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.SPF.return_beta" title="Link to this definition"></a></dt>
 <dd><p>Return the beta matrix for the model, i.e. topic-word intensities.
 Reimplemented from the base class due to the higher rates approach for seed words.</p>
 <dl class="field-list simple">
@@ -263,8 +334,13 @@ Reimplemented from the base class due to the higher rates approach for seed word
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="models.SPF.SPF.return_topics">
-<span class="sig-name descname"><span class="pre">return_topics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/SPF.html#SPF.return_topics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.SPF.SPF.return_topics" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="models.SPF.return_top_words_per_topic">
+<span class="sig-name descname"><span class="pre">return_top_words_per_topic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/SPF.html#SPF.return_top_words_per_topic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.SPF.return_top_words_per_topic" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.SPF.return_topics">
+<span class="sig-name descname"><span class="pre">return_topics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/SPF.html#SPF.return_topics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.SPF.return_topics" title="Link to this definition"></a></dt>
 <dd><p>Return the topics for each document. Reimplemented from the base class due to the guided
 topic modeling approach, where topics are not fully unsupervised.</p>
 <dl class="field-list simple">
@@ -285,18 +361,15 @@ topic modeling approach, where topics are not fully unsupervised.</p>
 
 </dd></dl>
 
-</section>
-<section id="module-models.TBIP">
-<span id="models-tbip-module"></span><h2>models.TBIP module<a class="headerlink" href="#module-models.TBIP" title="Link to this heading"></a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="models.TBIP.TBIP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.TBIP.</span></span><span class="sig-name descname"><span class="pre">TBIP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vocab</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_topics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">authors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/TBIP.html#TBIP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.TBIP.TBIP" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="models.TBIP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.</span></span><span class="sig-name descname"><span class="pre">TBIP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vocab</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_topics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">authors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/TBIP.html#TBIP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.TBIP" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NumpyroModel</span></code></p>
 <p>TBIP Model</p>
 <p>This class models topic-based ideal points (TBIP) in a set of documents authored by multiple individuals.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="models.TBIP.TBIP.train_step">
-<span class="sig-name descname"><span class="pre">train_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/TBIP.html#TBIP.train_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.TBIP.TBIP.train_step" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="models.TBIP.train_step">
+<span class="sig-name descname"><span class="pre">train_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/TBIP.html#TBIP.train_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.TBIP.train_step" title="Link to this definition"></a></dt>
 <dd><p>Custom train function specified exclusively for TBIP objects.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -316,89 +389,12 @@ topic modeling approach, where topics are not fully unsupervised.</p>
 
 </dd></dl>
 
-</section>
-<section id="module-models.numpyro_model">
-<span id="models-numpyro-model-module"></span><h2>models.numpyro_model module<a class="headerlink" href="#module-models.numpyro_model" title="Link to this heading"></a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="models.numpyro_model.NumpyroModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.numpyro_model.</span></span><span class="sig-name descname"><span class="pre">NumpyroModel</span></span><a class="reference internal" href="_modules/models/numpyro_model.html#NumpyroModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.numpyro_model.NumpyroModel" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
-<p>Abstract base class for all used probabilistic models.
-Each model has to implement at least their own Model and Guide.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="models.numpyro_model.NumpyroModel.Metrics">
-<span class="sig-name descname"><span class="pre">Metrics</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Metrics(loss=[])</span></em><a class="headerlink" href="#models.numpyro_model.NumpyroModel.Metrics" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="models.numpyro_model.NumpyroModel.return_beta">
-<span class="sig-name descname"><span class="pre">return_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/numpyro_model.html#NumpyroModel.return_beta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.numpyro_model.NumpyroModel.return_beta" title="Link to this definition"></a></dt>
-<dd><p>Return the beta matrix for the model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>DataFrame containing the beta matrix with words as rows and topics as columns.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>pandas.DataFrame</p>
-</dd>
-</dl>
+<dt class="sig sig-object py" id="models.topicmodels">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.</span></span><span class="sig-name descname"><span class="pre">topicmodels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/topicmodels.html#topicmodels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.topicmodels" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="models.numpyro_model.NumpyroModel.return_topics">
-<span class="sig-name descname"><span class="pre">return_topics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/numpyro_model.html#NumpyroModel.return_topics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.numpyro_model.NumpyroModel.return_topics" title="Link to this definition"></a></dt>
-<dd><p>Return the topics for each document.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><dl class="simple">
-<dt>categories<span class="classifier">numpy.ndarray</span></dt><dd><p>Array of topics indices for each document.</p>
-</dd>
-<dt>E_theta<span class="classifier">numpy.ndarray</span></dt><dd><p>Estimated topic proportions for each document.</p>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>tuple</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="models.numpyro_model.NumpyroModel.train_step">
-<span class="sig-name descname"><span class="pre">train_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/numpyro_model.html#NumpyroModel.train_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.numpyro_model.NumpyroModel.train_step" title="Link to this definition"></a></dt>
-<dd><p>Train the model using SVI.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>num_steps</strong> (<em>int</em>) – Number of training steps.</p></li>
-<li><p><strong>lr</strong> (<em>float</em>) – Learning rate for the optimizer.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The estimated parameters after training.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-</section>
-<section id="module-models.test_that">
-<span id="models-test-that-module"></span><h2>models.test_that module<a class="headerlink" href="#module-models.test_that" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="models.test_that.test_that">
-<span class="sig-prename descclassname"><span class="pre">models.test_that.</span></span><span class="sig-name descname"><span class="pre">test_that</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/models/test_that.html#test_that"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#models.test_that.test_that" title="Link to this definition"></a></dt>
-<dd><p>Simple test of a fuction</p>
-</dd></dl>
-
-</section>
-<section id="module-models">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-models" title="Link to this heading"></a></h2>
-</section>
 </section>
 
 
@@ -406,6 +402,7 @@ Each model has to implement at least their own Model and Guide.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="modules.html" class="btn btn-neutral float-left" title="models" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="intro/contributing.html" class="btn btn-neutral float-right" title="Contributing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

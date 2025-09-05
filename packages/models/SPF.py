@@ -132,7 +132,7 @@ class SPF(NumpyroModel):
             E_theta : numpy.ndarray
                 Estimated topic proportions for each document.
         """
-        
+
         def recode_cats(argmaxes, keywords):
             """
             Recodes the argmax index into topic strings.
@@ -183,3 +183,49 @@ class SPF(NumpyroModel):
     def return_top_words_per_topic(self, n = 10):
         beta = self.return_beta()
         return {topic: beta[topic].nlargest(n).index.tolist() for topic in beta}
+
+    def _recode_topics(self, indices: np.ndarray) -> np.ndarray:
+        keyword_keys = np.array(list(self.keywords.keys()))
+        num_keywords = len(keyword_keys)
+        indices_clipped = np.clip(indices, 0, num_keywords - 1)
+        return np.where(indices < num_keywords, keyword_keys[indices_clipped],
+                        [f"No_keyword_topic_{i - num_keywords}" for i in indices])
+
+    def infer_new_documents(self, new_counts):
+        """
+        Infer topic proportions for new documents using fixed learned parameters.
+
+        Parameters
+        ----------
+        new_counts : scipy.sparse.csr_matrix
+            Word counts for new documents.
+
+        Returns
+        -------
+        np.ndarray
+            Predicted topic names.
+        """
+        new_D = new_counts.shape[0]
+        Y_new = jnp.array(new_counts.toarray())
+
+        # Fixed learned topic-word matrix
+        E_beta = self.estimated_params["beta_shape"] / self.estimated_params["beta_rate"]
+        E_beta_tilde = self.estimated_params["beta_tilde_shape"] / self.estimated_params["beta_tilde_rate"]
+        E_beta = E_beta.at[self.kw_indices].add(E_beta_tilde)
+
+        # Set prior Gamma(.3, .3) for theta
+        a_theta = jnp.ones((new_D, self.K)) * 0.3
+        b_theta = jnp.ones((new_D, self.K)) * 0.3
+
+        # Posterior mean of theta (MAP estimation under Gamma-Poisson conjugacy)
+        P = jnp.dot(a_theta / b_theta, E_beta)  # Poisson rates
+        theta_est = a_theta / b_theta  # Posterior mean of theta
+
+        # Normalize to get topic proportions (optional)
+        theta_norm = theta_est / jnp.sum(theta_est, axis=1, keepdims=True)
+
+        # Predict topic index
+        topic_idx = np.argmax(theta_norm, axis=1)
+
+        # Return human-readable topic names
+        return self._recode_topics(topic_idx), theta_est

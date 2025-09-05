@@ -1,7 +1,5 @@
 # --- Import topicmodels package ---
-from packages.models.topicmodels import topicmodels
-
- 
+from packages.models import topicmodels, PF, SPF
 
 #######################
 
@@ -81,10 +79,10 @@ vocab = cv.get_feature_names_out()
  
 
 # ---- Initialize TM package ----
-tm1 = topicmodels("SPF", counts, vocab, keywords, residual_topics = 2, batch_size = 1024)
+tm1 = topicmodels("SPF", counts, vocab, keywords, residual_topics = 0, batch_size = 1024)
 
 # ---- Run inference -----
-estimated_params = tm1.train_step(num_steps = 100, lr = 0.01)
+estimated_params = tm1.train_step(num_steps = 1000, lr = 0.1)
 
 # ---- Inspect results ----
 estimated_params
@@ -95,6 +93,16 @@ top_words = tm1.return_top_words_per_topic(n = 10)
 # --- See loss within inherited metrics object ---
 tm1.Metrics.loss
 
+from sklearn.feature_extraction.text import CountVectorizer
+
+new_docs = ["my son loves. i bought it for christmas war war war guns", "the apples taste very good!"]
+
+# Use the same vectorizer used in training
+X_new_counts = sparse.csr_matrix(cv.transform(new_docs), dtype=np.float32)
+
+# Infer topics
+topics_new = tm1.infer_new_documents(X_new_counts)
+print(topics_new)
 
 
 

@@ -41,11 +41,13 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../introduction/index.html">Getting started with PyPF</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../introduction/index.html#examples">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro/examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../modules.html">models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro/contributing.html">Contributing</a></li>
 </ul>
 
         </div>
@@ -86,7 +88,7 @@
 <span class="kn">from</span> <span class="nn">packages.models.Metrics</span> <span class="kn">import</span> <span class="n">Metrics</span>
 
 <div class="viewcode-block" id="NumpyroModel">
-<a class="viewcode-back" href="../../models.html#models.numpyro_model.NumpyroModel">[docs]</a>
+<a class="viewcode-back" href="../../models.html#models.NumpyroModel">[docs]</a>
 <span class="k">class</span> <span class="nc">NumpyroModel</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Abstract base class for all used probabilistic models.</span>
@@ -133,7 +135,7 @@
         <span class="k">return</span> <span class="n">Y_batch</span><span class="p">,</span> <span class="n">D_batch</span>
     
 <div class="viewcode-block" id="NumpyroModel.train_step">
-<a class="viewcode-back" href="../../models.html#models.numpyro_model.NumpyroModel.train_step">[docs]</a>
+<a class="viewcode-back" href="../../models.html#models.NumpyroModel.train_step">[docs]</a>
     <span class="k">def</span> <span class="nf">train_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">lr</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Train the model using SVI.</span>
@@ -191,7 +193,7 @@
 
     
 <div class="viewcode-block" id="NumpyroModel.return_topics">
-<a class="viewcode-back" href="../../models.html#models.numpyro_model.NumpyroModel.return_topics">[docs]</a>
+<a class="viewcode-back" href="../../models.html#models.NumpyroModel.return_topics">[docs]</a>
     <span class="k">def</span> <span class="nf">return_topics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the topics for each document.</span>
@@ -209,7 +211,7 @@
 
 
 <div class="viewcode-block" id="NumpyroModel.return_beta">
-<a class="viewcode-back" href="../../models.html#models.numpyro_model.NumpyroModel.return_beta">[docs]</a>
+<a class="viewcode-back" href="../../models.html#models.NumpyroModel.return_beta">[docs]</a>
     <span class="k">def</span> <span class="nf">return_beta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the beta matrix for the model.</span>

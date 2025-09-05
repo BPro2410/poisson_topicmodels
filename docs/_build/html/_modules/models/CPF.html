@@ -41,11 +41,13 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../introduction/index.html">Getting started with PyPF</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../introduction/index.html#examples">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro/examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../modules.html">models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro/contributing.html">Contributing</a></li>
 </ul>
 
         </div>
@@ -86,7 +88,7 @@
 
 <span class="c1"># Create numpyro model</span>
 <div class="viewcode-block" id="CPF">
-<a class="viewcode-back" href="../../models.html#models.CPF.CPF">[docs]</a>
+<a class="viewcode-back" href="../../models.html#models.CPF">[docs]</a>
 <span class="k">class</span> <span class="nc">CPF</span><span class="p">(</span><span class="n">NumpyroModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Implementation of the standard Poisson factorization topic model including covariates.</span>
@@ -190,7 +192,7 @@
                 <span class="n">theta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span><span class="s2">&quot;theta&quot;</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="n">a_theta</span><span class="p">[</span><span class="n">d_batch</span><span class="p">],</span> <span class="n">b_theta</span><span class="p">[</span><span class="n">d_batch</span><span class="p">]))</span>
     
 <div class="viewcode-block" id="CPF.return_covariate_effects">
-<a class="viewcode-back" href="../../models.html#models.CPF.CPF.return_covariate_effects">[docs]</a>
+<a class="viewcode-back" href="../../models.html#models.CPF.return_covariate_effects">[docs]</a>
     <span class="k">def</span> <span class="nf">return_covariate_effects</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the covariate effects for the model.</span>

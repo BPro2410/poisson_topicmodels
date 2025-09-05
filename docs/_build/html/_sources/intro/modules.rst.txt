@@ -1,0 +1,43 @@
+=======
+Modules
+=======
+
+.. automodule:: topicmodels_package.packages.models.topicmodels
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: topicmodels_package.packages.models.numpyro_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: topicmodels_package.packages.models.PF
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: topicmodels_package.packages.models.SPF
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: topicmodels_package.packages.models.CPF
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: topicmodels_package.packages.models.CSPF
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: topicmodels_package.packages.models.TBIP
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: topicmodels_package.packages.models.Metrics
+   :members:
+   :undoc-members:
+   :show-inheritance:
