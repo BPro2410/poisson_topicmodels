@@ -8,6 +8,7 @@ from optax import adam
 from numpyro.infer import SVI, TraceMeanField_ELBO
 from tqdm import tqdm
 import numpy as np
+import warnings
 
 # Abstract class - defining the minimum requirements for the probabilistic model
 from packages.models.numpyro_model import NumpyroModel
@@ -20,7 +21,7 @@ class TBIP(NumpyroModel):
     This class models topic-based ideal points (TBIP) in a set of documents authored by multiple individuals.
     """
 
-    def __init__(self, counts, vocab, num_topics, authors, batch_size):
+    def __init__(self, counts, vocab, num_topics, authors, batch_size, time_varying = False, beta_shape_init = None, beta_rate_init = None):
         """
         Initialize the TBIP model.
         
@@ -36,6 +37,12 @@ class TBIP(NumpyroModel):
             A list of authors for each document.
         batch_size : int
             The number of documents to be processed in each batch.
+        time_varying : bool, optional
+            Whether to model time-varying ideal points (default is False).
+        beta_shape_init : numpy.ndarray, optional
+            Initial shape parameters for the topic-word distributions (default is None).
+        beta_rate_init : numpy.ndarray, optional
+            Initial rate parameters for the topic-word distributions (default is None).
         """
         self.authors_unique = np.unique(authors)
         self.author_map = {speaker: idx for idx, speaker in enumerate(self.authors_unique)}
@@ -46,7 +53,26 @@ class TBIP(NumpyroModel):
         self.V = counts.shape[1]
         self.K = num_topics
         self.batch_size = batch_size  # number of documents in a batch
-        self.vocab = vocab
+        self.vocab =vocab
+
+        # Add time varying component
+        self.time_varying = time_varying
+        if self.time_varying:
+            warnings.warn("Time-varying TBIP model initiated.")
+            warnings.warn("Please notice: Setting time_varying=True requires to fit the TBIP model separaetly for each time period. Please initiate the TBIP model in t+1 with the estimated beta parameter in t. See documentation for more details.")
+        
+        # check if beta_rate_init and beta_shape_init have the correct shape and are jnp.arrays
+        for inits in [beta_shape_init, beta_rate_init]:
+            if inits is None:
+                warnings.warn(f"No initial values for beta parameters were provided. The model will initialize them uniformly.")
+            if inits is not None:
+                if not isinstance(inits, jnp.ndarray):
+                    raise ValueError("beta_shape_init and beta_rate_init must be jnp.ndarray objects with matching dimensions [num_topics times num_words].")
+                if inits.shape != (self.K, self.V):
+                    raise ValueError(f"beta_shape_init and beta_rate_init must have shape ({self.K}, {self.V})")
+        self.beta_rate_init = beta_rate_init
+        self.beta_shape_init = beta_shape_init
+
 
     def _model(self, Y_batch, d_batch, i_batch):
         """
@@ -125,12 +151,28 @@ class TBIP(NumpyroModel):
             constraint=constraints.positive,
         )
 
-        mu_beta = param("mu_beta", init_value=jnp.zeros([self.K, self.V]))
-        sigma_beta = param(
-            "sigma_beta",
-            init_value=jnp.ones([self.K, self.V]),
-            constraint=constraints.positive,
-        )
+        # Add initial values for beta parameters if provided for the tv-tbip model
+        if self.beta_shape_init is not None and self.time_varying == True:
+            mu_beta = param(
+                "mu_beta",
+                init_value=self.beta_shape_init,
+            )
+        else:
+            mu_beta = param("mu_beta", init_value=jnp.zeros([self.K, self.V]))
+        
+        # check if beta_shape init is not none and self.time_yvarying is true
+        if self.beta_shape_init is not None and self.time_varying == True:
+            sigma_beta = param(
+                "sigma_beta",
+                init_value=self.beta_rate_init,
+                constraint=constraints.positive,
+            )
+        else:
+            sigma_beta = param(
+                "sigma_beta",
+                init_value=jnp.ones([self.K, self.V]),
+                constraint=constraints.positive,
+            )
 
         with plate("i", self.N):
             sample("x", dist.Normal(mu_x, sigma_x))
@@ -175,7 +217,7 @@ class TBIP(NumpyroModel):
         return Y_batch, D_batch, I_batch
     
 
-    def train_step(self, num_steps: int, lr: float):
+    def train_step(self, num_steps: int, lr: float) -> dict:
         """
         Custom train function specified exclusively for TBIP objects.
         
@@ -185,13 +227,12 @@ class TBIP(NumpyroModel):
             Number of training steps.
         lr : float 
             Learning rate for the optimizer.
-        
+
         Returns
         ----------
         dict
             A dictionary containing the estimated parameter values
         """
-
         svi_batch = SVI(
             model = self._model,
             guide = self._guide,
