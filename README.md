@@ -1,7 +1,27 @@
 # topicmodels_package
 
-Lightweight Poisson-factorization topic modeling package implemented with JAX / NumPyro.  
-This repository includes example data, an example runner (`run_topicmodels.py`) and a Dockerfile that launches JupyterLab so you can interactively run the examples.
+``topicmodels`` is a Python package for probabilistic topic modeling using
+Bayesian inference built on `JAX <https://github.com/google/jax>`_ and `NumPyro <https://github.com/pyro-ppl/numpyro>`_.
+
+It provides implementations of several advanced topic models:
+
+- **Poisson Factorization (PF)** – unsupervised baseline topic model.
+- **Seeded Poisson Factorization (SPF)** – guided topic modeling with keyword priors.
+- **Covariate Poisson Factorization (CPF)** – models topics influenced by external covariates.
+- **Covariate Seeded Poisson Factorization (CSPF)** – combines seeded guidance with covariate effects.
+- **Text-Based Ideal Points (TBIP)** – estimates ideal points of authors from text.
+- **Time-Varying Text-Based Ideal Points (TVTBIP)** – captures temporal dynamics in authors' ideal points.
+- **Structual Text-Based Scaling (STBS)** – models text data with structural information.
+- **Embedded Topic Models (ETM)** – integrates word embeddings into topic modeling.
+- ... and more models to come! 
+
+
+The package emphasizes **scalability**, **interpretability**, and **flexibility**.
+
+
+This repository includes example data, a [minimal example python script](`run_topicmodels.py`), a [minimal example jupyter notebook](run_topicmodels.py) and a [Dockerfile](Dockerfile) that launches JupyterLab so you can interactively run the examples.
+
+
 
 ## Contents
 - run_topicmodels.py — example script that demonstrates using the topicmodels factory and models

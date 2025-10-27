@@ -25,6 +25,13 @@ Install via pip
 For GPU acceleration, install `jax` with CUDA support.
 See the `JAX installation guide <https://jax.readthedocs.io/en/latest/installation.html>`_.
 
+
+Docker
+---------------
+We also provide a Dockerfile that sets up an environment with all dependencies installed.
+You can find the Dockerfile in our GitHub repository `here <https://github.com/BPro2410/topicmodels_package/blob/main/Dockerfile>`_.
+
+
 Troubleshooting
 ---------------
 

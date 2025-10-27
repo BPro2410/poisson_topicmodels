@@ -14,6 +14,11 @@ It provides implementations of several advanced topic models:
 - **Covariate Poisson Factorization (CPF)** – models topics influenced by external covariates.
 - **Covariate Seeded Poisson Factorization (CSPF)** – combines seeded guidance with covariate effects.
 - **Text-Based Ideal Points (TBIP)** – estimates ideal points of authors from text.
+- **Time-Varying Text-Based Ideal Points (TVTBIP)** – captures temporal dynamics in authors' ideal points.
+- **Structual Text-Based Scaling (STBS)** – models text data with structural information.
+- **Embedded Topic Models (ETM)** – integrates word embeddings into topic modeling.
+- ... and more models to come! 
+
 
 The package emphasizes **scalability**, **interpretability**, and **flexibility**.
 
