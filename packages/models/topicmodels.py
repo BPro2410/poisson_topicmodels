@@ -3,6 +3,7 @@ from packages.models.SPF import SPF
 from packages.models.TBIP import TBIP
 from packages.models.PF import PF
 from packages.models.CPF import CPF
+from packages.models.ETM import ETM
 
 
 from jax import jit
@@ -39,6 +40,8 @@ def get_base_class(model):
         return PF
     if model == "CPF":
         return CPF
+    if model == "ETM":
+        return ETM
 
 
 class topicmodels:

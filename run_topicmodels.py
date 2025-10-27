@@ -6,7 +6,6 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 from packages.models import topicmodels
 
-
 # ---- Load data ----
 df1 = pd.read_csv("data/10k_amazon.csv")
 
@@ -15,8 +14,6 @@ cv = CountVectorizer(stop_words='english', min_df = 2)
 cv.fit(df1["Text"])
 counts = sparse.csr_matrix(cv.transform(df1["Text"]), dtype = np.float32)
 vocab = cv.get_feature_names_out()
-
-
 
 
 
@@ -96,10 +93,28 @@ betas = tm3.return_beta()
 
 df1['speaker'] = np.random.choice(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'], size=len(df1), replace=True)
 tm4 = topicmodels("TBIP", counts, vocab, num_topics = 10, authors = df1.speaker, batch_size = 1024)
-print("HELLO")
-svi_batch, svi_sate, losses = tm4.train_step(num_steps = 1000, lr = 0.01)
-import matplotlib.pyplot as plt
-plt.plot(losses[800:])
+estimated_params = tm4.train_step(num_steps = 1000, lr = 0.01)
+
+
+
+##############
+### ETM TEST #
+##############
+
+from packages.utils.utils import create_word2vec_embedding_from_dataset, load_embeds, save_embeds
+
+# -- Create embeddings --
+# embeds = create_word2vec_embedding_from_dataset(list(df1["Text"]))
+# save_embeds(embeds, "data/embeds.bin")
+
+# -- Load embeddings --
+# path to embeddings
+path_to_embeddings = "data/embeds.bin"
+embeddings_mapping = load_embeds(path_to_embeddings)
+
+# -- RUN ETM --
+tm5 = topicmodels("ETM", counts, vocab, num_topics = 5, batch_size = 1024, embeddings_mapping=embeddings_mapping, embed_size = 300)
+estimated_params = tm5.train_step(num_steps = 100, lr = 0.01)
 
 
 
