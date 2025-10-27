@@ -2,7 +2,7 @@
 Contributing
 ============
 
-We welcome contributions to ``PyPF``!
+We welcome contributions to ``PyPF``! Pull requests and issues welcome. For code changes, include tests and documentation.
 
 Development Setup
 -----------------

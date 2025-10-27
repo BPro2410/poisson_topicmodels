@@ -84,4 +84,4 @@ Specialized Models
 
 - **SPF / CSPF** require a dictionary of seed keywords.
 - **CPF / CSPF** require a covariate design matrix.
-- **TBIP / TVTBIP** requires author labels for documents.
+- **TBIP** requires author labels for documents.

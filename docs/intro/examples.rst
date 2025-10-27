@@ -184,6 +184,18 @@ Next we follow the PyPF logic and initialize, train and analyze the TBIP model.
 
 
 
+TVTBIP: Time-variyng text-based ideal point model
+-------------------------------------------------
+
+Implemented but minimal example to be added soon.
+
+
+ETM: Embedded Topic Model
+-------------------------
+
+tbd.
+
+
 SBTS: Structual text-based scaling model
 ----------------------------------------
 
