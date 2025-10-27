@@ -129,7 +129,7 @@ betas = tm2.return_beta()
 
  
 
-category0 = ["grocery gourmet food", "toys games", "baby products"]
+category0 = ["grocery gourmet food", "toys games"]
 covariable = df1['Cat1'].apply(lambda x: 0 if x in category0 else 1)
 print(covariable[0:10])
 print(df1['Cat1'].head(10))
@@ -137,7 +137,7 @@ print(df1['Cat1'].head(10))
 X_design_matrix = pd.DataFrame({'intercept' : np.repeat(1, len(df1)), 'var_infromative' : covariable})
 
 tm3 = topicmodels("CSPF", counts, vocab, keywords, residual_topics = 2, batch_size = 1024, X_design_matrix = X_design_matrix)
-estimated_params = tm3.train_step(num_steps = 100, lr = 0.01)
+estimated_params = tm3.train_step(num_steps = 1000, lr = 0.01)
 topics, e_theta = tm3.return_topics()
 betas = tm3.return_beta()
 

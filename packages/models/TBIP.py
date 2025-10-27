@@ -46,6 +46,7 @@ class TBIP(NumpyroModel):
         self.V = counts.shape[1]
         self.K = num_topics
         self.batch_size = batch_size  # number of documents in a batch
+        self.vocab = vocab
 
     def _model(self, Y_batch, d_batch, i_batch):
         """
