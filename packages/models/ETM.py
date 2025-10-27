@@ -83,3 +83,4 @@ class ETM(NumpyroModel):
         assert Y_batch.shape == (self.batch_size, self.V), f"Shape mismatch: {Y_batch.shape} != ({self.batch_size}, {self.V})"
 
         return Y_batch, D_batch
+
