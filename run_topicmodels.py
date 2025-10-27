@@ -40,7 +40,7 @@ import scipy.sparse as sparse
 
 # SPF Versuch1
 
- 
+ print("SPF TEST")
 # ---- Load data ----
 df1 = pd.read_csv("data/10k_amazon.csv")
 
@@ -67,7 +67,7 @@ counts = sparse.csr_matrix(cv.transform(df1["Text"]), dtype = np.float32)
 vocab = cv.get_feature_names_out()
 
 
-
+print("test1")
 
 
 # ####################
@@ -105,7 +105,7 @@ topics_new = tm1.infer_new_documents(X_new_counts)
 print(topics_new)
 
 
-
+print("PF TEST")
 # ###############
 
 # ### PF Test ###

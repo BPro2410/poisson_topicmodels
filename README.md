@@ -10,11 +10,12 @@ Gerade implementiert sind:
 - Standard PF
 - PF mit Covariates (CPF)
 - TBIP
+- TV-TBIP
 
-Die Architektur sieht aktuell so aus (UML Klassendiagramm):
+Die Architektur sieht aktuell so aus (UML Klassendiagramm -> **Outdated**):
 ![Architektur](JAX_package.png)
 
-Ich habe das Package mal 'topicmodels' genannt, in Analogie zu Bettinas R package :). Der API Call würde erfolgen mit z.B.:
+Ich habe das Package mal 'topicmodels' genannt, in Analogie zu Bettinas R package :. Der API Call würde erfolgen mit z.B.:
 
 ```python
 tm = topicmodels("SPF", ...)
