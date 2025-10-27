@@ -277,50 +277,50 @@
         <span class="n">num_keywords</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">keyword_keys</span><span class="p">)</span>
         <span class="n">indices_clipped</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">num_keywords</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">indices</span> <span class="o">&lt;</span> <span class="n">num_keywords</span><span class="p">,</span> <span class="n">keyword_keys</span><span class="p">[</span><span class="n">indices_clipped</span><span class="p">],</span>
-                        <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;No_keyword_topic_</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">num_keywords</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">])</span>
+                        <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;No_keyword_topic_</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">num_keywords</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="SPF.infer_new_documents">
-<a class="viewcode-back" href="../../models.html#models.SPF.infer_new_documents">[docs]</a>
-    <span class="k">def</span> <span class="nf">infer_new_documents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_counts</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Infer topic proportions for new documents using fixed learned parameters.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        new_counts : scipy.sparse.csr_matrix</span>
-<span class="sd">            Word counts for new documents.</span>
+    
+    
+    <span class="c1"># Not implemented yet.</span>
+    <span class="c1"># def infer_new_documents(self, new_counts):</span>
+    <span class="c1">#     &quot;&quot;&quot;</span>
+    <span class="c1">#     Infer topic proportions for new documents using fixed learned parameters.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        np.ndarray</span>
-<span class="sd">            Predicted topic names.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">new_D</span> <span class="o">=</span> <span class="n">new_counts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">Y_new</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">new_counts</span><span class="o">.</span><span class="n">toarray</span><span class="p">())</span>
+    <span class="c1">#     Parameters</span>
+    <span class="c1">#     ----------</span>
+    <span class="c1">#     new_counts : scipy.sparse.csr_matrix</span>
+    <span class="c1">#         Word counts for new documents.</span>
 
-        <span class="c1"># Fixed learned topic-word matrix</span>
-        <span class="n">E_beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimated_params</span><span class="p">[</span><span class="s2">&quot;beta_shape&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimated_params</span><span class="p">[</span><span class="s2">&quot;beta_rate&quot;</span><span class="p">]</span>
-        <span class="n">E_beta_tilde</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimated_params</span><span class="p">[</span><span class="s2">&quot;beta_tilde_shape&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimated_params</span><span class="p">[</span><span class="s2">&quot;beta_tilde_rate&quot;</span><span class="p">]</span>
-        <span class="n">E_beta</span> <span class="o">=</span> <span class="n">E_beta</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">kw_indices</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">E_beta_tilde</span><span class="p">)</span>
+    <span class="c1">#     Returns</span>
+    <span class="c1">#     -------</span>
+    <span class="c1">#     np.ndarray</span>
+    <span class="c1">#         Predicted topic names.</span>
+    <span class="c1">#     &quot;&quot;&quot;</span>
+    <span class="c1">#     new_D = new_counts.shape[0]</span>
+    <span class="c1">#     Y_new = jnp.array(new_counts.toarray())</span>
 
-        <span class="c1"># Set prior Gamma(.3, .3) for theta</span>
-        <span class="n">a_theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">new_D</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">))</span> <span class="o">*</span> <span class="mf">0.3</span>
-        <span class="n">b_theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">new_D</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">))</span> <span class="o">*</span> <span class="mf">0.3</span>
+    <span class="c1">#     # Fixed learned topic-word matrix</span>
+    <span class="c1">#     E_beta = self.estimated_params[&quot;beta_shape&quot;] / self.estimated_params[&quot;beta_rate&quot;]</span>
+    <span class="c1">#     E_beta_tilde = self.estimated_params[&quot;beta_tilde_shape&quot;] / self.estimated_params[&quot;beta_tilde_rate&quot;]</span>
+    <span class="c1">#     E_beta = E_beta.at[self.kw_indices].add(E_beta_tilde)</span>
 
-        <span class="c1"># Posterior mean of theta (MAP estimation under Gamma-Poisson conjugacy)</span>
-        <span class="n">P</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">a_theta</span> <span class="o">/</span> <span class="n">b_theta</span><span class="p">,</span> <span class="n">E_beta</span><span class="p">)</span>  <span class="c1"># Poisson rates</span>
-        <span class="n">theta_est</span> <span class="o">=</span> <span class="n">a_theta</span> <span class="o">/</span> <span class="n">b_theta</span>  <span class="c1"># Posterior mean of theta</span>
+    <span class="c1">#     # Set prior Gamma(.3, .3) for theta</span>
+    <span class="c1">#     a_theta = jnp.ones((new_D, self.K)) * 0.3</span>
+    <span class="c1">#     b_theta = jnp.ones((new_D, self.K)) * 0.3</span>
 
-        <span class="c1"># Normalize to get topic proportions (optional)</span>
-        <span class="n">theta_norm</span> <span class="o">=</span> <span class="n">theta_est</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">theta_est</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1">#     # Posterior mean of theta (MAP estimation under Gamma-Poisson conjugacy)</span>
+    <span class="c1">#     P = jnp.dot(a_theta / b_theta, E_beta)  # Poisson rates</span>
+    <span class="c1">#     theta_est = a_theta / b_theta  # Posterior mean of theta</span>
 
-        <span class="c1"># Predict topic index</span>
-        <span class="n">topic_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">theta_norm</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1">#     # Normalize to get topic proportions (optional)</span>
+    <span class="c1">#     theta_norm = theta_est / jnp.sum(theta_est, axis=1, keepdims=True)</span>
 
-        <span class="c1"># Return human-readable topic names</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recode_topics</span><span class="p">(</span><span class="n">topic_idx</span><span class="p">),</span> <span class="n">theta_est</span></div>
-</div>
+    <span class="c1">#     # Predict topic index</span>
+    <span class="c1">#     topic_idx = np.argmax(theta_norm, axis=1)</span>
 
+    <span class="c1">#     # Return human-readable topic names</span>
+    <span class="c1">#     return self._recode_topics(topic_idx), theta_est</span>
 </pre></div>
 
            </div>

@@ -85,6 +85,7 @@
 <span class="kn">from</span> <span class="nn">numpyro.infer</span> <span class="kn">import</span> <span class="n">SVI</span><span class="p">,</span> <span class="n">TraceMeanField_ELBO</span>
 <span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 
 <span class="c1"># Abstract class - defining the minimum requirements for the probabilistic model</span>
 <span class="kn">from</span> <span class="nn">packages.models.numpyro_model</span> <span class="kn">import</span> <span class="n">NumpyroModel</span>
@@ -99,7 +100,7 @@
 <span class="sd">    This class models topic-based ideal points (TBIP) in a set of documents authored by multiple individuals.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">vocab</span><span class="p">,</span> <span class="n">num_topics</span><span class="p">,</span> <span class="n">authors</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">vocab</span><span class="p">,</span> <span class="n">num_topics</span><span class="p">,</span> <span class="n">authors</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">time_varying</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">beta_shape_init</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">beta_rate_init</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize the TBIP model.</span>
 <span class="sd">        </span>
@@ -115,6 +116,12 @@
 <span class="sd">            A list of authors for each document.</span>
 <span class="sd">        batch_size : int</span>
 <span class="sd">            The number of documents to be processed in each batch.</span>
+<span class="sd">        time_varying : bool, optional</span>
+<span class="sd">            Whether to model time-varying ideal points (default is False).</span>
+<span class="sd">        beta_shape_init : numpy.ndarray, optional</span>
+<span class="sd">            Initial shape parameters for the topic-word distributions (default is None).</span>
+<span class="sd">        beta_rate_init : numpy.ndarray, optional</span>
+<span class="sd">            Initial rate parameters for the topic-word distributions (default is None).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">authors_unique</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">authors</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">author_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">speaker</span><span class="p">:</span> <span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">speaker</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">authors_unique</span><span class="p">)}</span>
@@ -125,6 +132,26 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">V</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">=</span> <span class="n">num_topics</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>  <span class="c1"># number of documents in a batch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vocab</span> <span class="o">=</span><span class="n">vocab</span>
+
+        <span class="c1"># Add time varying component</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_varying</span> <span class="o">=</span> <span class="n">time_varying</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_varying</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Time-varying TBIP model initiated.&quot;</span><span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Please notice: Setting time_varying=True requires to fit the TBIP model separaetly for each time period. Please initiate the TBIP model in t+1 with the estimated beta parameter in t. See documentation for more details.&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># check if beta_rate_init and beta_shape_init have the correct shape and are jnp.arrays</span>
+        <span class="k">for</span> <span class="n">inits</span> <span class="ow">in</span> <span class="p">[</span><span class="n">beta_shape_init</span><span class="p">,</span> <span class="n">beta_rate_init</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">inits</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No initial values for beta parameters were provided. The model will initialize them uniformly.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">inits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inits</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;beta_shape_init and beta_rate_init must be jnp.ndarray objects with matching dimensions [num_topics times num_words].&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">inits</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;beta_shape_init and beta_rate_init must have shape (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">V</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">beta_rate_init</span> <span class="o">=</span> <span class="n">beta_rate_init</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">beta_shape_init</span> <span class="o">=</span> <span class="n">beta_shape_init</span>
+
 
     <span class="k">def</span> <span class="nf">_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y_batch</span><span class="p">,</span> <span class="n">d_batch</span><span class="p">,</span> <span class="n">i_batch</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -203,12 +230,28 @@
             <span class="n">constraint</span><span class="o">=</span><span class="n">constraints</span><span class="o">.</span><span class="n">positive</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">mu_beta</span> <span class="o">=</span> <span class="n">param</span><span class="p">(</span><span class="s2">&quot;mu_beta&quot;</span><span class="p">,</span> <span class="n">init_value</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V</span><span class="p">]))</span>
-        <span class="n">sigma_beta</span> <span class="o">=</span> <span class="n">param</span><span class="p">(</span>
-            <span class="s2">&quot;sigma_beta&quot;</span><span class="p">,</span>
-            <span class="n">init_value</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V</span><span class="p">]),</span>
-            <span class="n">constraint</span><span class="o">=</span><span class="n">constraints</span><span class="o">.</span><span class="n">positive</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="c1"># Add initial values for beta parameters if provided for the tv-tbip model</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta_shape_init</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_varying</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">mu_beta</span> <span class="o">=</span> <span class="n">param</span><span class="p">(</span>
+                <span class="s2">&quot;mu_beta&quot;</span><span class="p">,</span>
+                <span class="n">init_value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">beta_shape_init</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mu_beta</span> <span class="o">=</span> <span class="n">param</span><span class="p">(</span><span class="s2">&quot;mu_beta&quot;</span><span class="p">,</span> <span class="n">init_value</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V</span><span class="p">]))</span>
+        
+        <span class="c1"># check if beta_shape init is not none and self.time_yvarying is true</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta_shape_init</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_varying</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">sigma_beta</span> <span class="o">=</span> <span class="n">param</span><span class="p">(</span>
+                <span class="s2">&quot;sigma_beta&quot;</span><span class="p">,</span>
+                <span class="n">init_value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">beta_rate_init</span><span class="p">,</span>
+                <span class="n">constraint</span><span class="o">=</span><span class="n">constraints</span><span class="o">.</span><span class="n">positive</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sigma_beta</span> <span class="o">=</span> <span class="n">param</span><span class="p">(</span>
+                <span class="s2">&quot;sigma_beta&quot;</span><span class="p">,</span>
+                <span class="n">init_value</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V</span><span class="p">]),</span>
+                <span class="n">constraint</span><span class="o">=</span><span class="n">constraints</span><span class="o">.</span><span class="n">positive</span><span class="p">,</span>
+            <span class="p">)</span>
 
         <span class="k">with</span> <span class="n">plate</span><span class="p">(</span><span class="s2">&quot;i&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">):</span>
             <span class="n">sample</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu_x</span><span class="p">,</span> <span class="n">sigma_x</span><span class="p">))</span>
@@ -255,7 +298,7 @@
 
 <div class="viewcode-block" id="TBIP.train_step">
 <a class="viewcode-back" href="../../models.html#models.TBIP.train_step">[docs]</a>
-    <span class="k">def</span> <span class="nf">train_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">lr</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">train_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">lr</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Custom train function specified exclusively for TBIP objects.</span>
 <span class="sd">        </span>
@@ -265,13 +308,12 @@
 <span class="sd">            Number of training steps.</span>
 <span class="sd">        lr : float </span>
 <span class="sd">            Learning rate for the optimizer.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Returns</span>
 <span class="sd">        ----------</span>
 <span class="sd">        dict</span>
 <span class="sd">            A dictionary containing the estimated parameter values</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">svi_batch</span> <span class="o">=</span> <span class="n">SVI</span><span class="p">(</span>
             <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span>
             <span class="n">guide</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_guide</span><span class="p">,</span>
