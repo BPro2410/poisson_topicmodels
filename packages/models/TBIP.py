@@ -61,15 +61,15 @@ class TBIP(NumpyroModel):
             warnings.warn("Time-varying TBIP model initiated.")
             warnings.warn("Please notice: Setting time_varying=True requires to fit the TBIP model separaetly for each time period. Please initiate the TBIP model in t+1 with the estimated beta parameter in t. See documentation for more details.")
         
-        # check if beta_rate_init and beta_shape_init have the correct shape and are jnp.arrays
-        for inits in [beta_shape_init, beta_rate_init]:
-            if inits is None:
-                warnings.warn(f"No initial values for beta parameters were provided. The model will initialize them uniformly.")
-            if inits is not None:
-                if not isinstance(inits, jnp.ndarray):
-                    raise ValueError("beta_shape_init and beta_rate_init must be jnp.ndarray objects with matching dimensions [num_topics times num_words].")
-                if inits.shape != (self.K, self.V):
-                    raise ValueError(f"beta_shape_init and beta_rate_init must have shape ({self.K}, {self.V})")
+            # check if beta_rate_init and beta_shape_init have the correct shape and are jnp.arrays
+            for inits in [beta_shape_init, beta_rate_init]:
+                if inits is None:
+                    warnings.warn(f"No initial values for beta parameters were provided. The model will initialize them uniformly.")
+                if inits is not None:
+                    if not isinstance(inits, jnp.ndarray):
+                        raise ValueError("beta_shape_init and beta_rate_init must be jnp.ndarray objects with matching dimensions [num_topics times num_words].")
+                    if inits.shape != (self.K, self.V):
+                        raise ValueError(f"beta_shape_init and beta_rate_init must have shape ({self.K}, {self.V})")
         self.beta_rate_init = beta_rate_init
         self.beta_shape_init = beta_shape_init
 

@@ -36,6 +36,7 @@ keywords = {"pet supplies": pets, "toys games": toys, "beauty": beauty, "baby pr
 
 # ---- Initialize TM package ----
 tm1 = topicmodels("SPF", counts, vocab, keywords, residual_topics = 0, batch_size = 1024)
+print(tm1)
 
 # ---- Run inference -----
 estimated_params = tm1.train_step(num_steps = 1000, lr = 0.1)

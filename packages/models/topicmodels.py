@@ -30,11 +30,17 @@ def get_base_class(model):
     class
         Corresponding model class.
     """
+    supported_models = ["SPF", "CSPF", "TBIP", "TVTBIP", "PF", "CPF", "ETM"]
+    if model not in supported_models:
+        raise ValueError("Please select a model that is supported in topicmodels package. Supported models are: {supported_models}")
+    
     if model == "SPF":
         return SPF
     if model == "CSPF":
         return CSPF
     if model == "TBIP":
+        return TBIP
+    if model == "TVTBIP":
         return TBIP
     if model == "PF":
         return PF
@@ -80,23 +86,11 @@ class topicmodels:
                 """
                 super().__init__(*args, **kwargs)
                 self.model_name = model
-            
-            # def get_batch(self, rng, Y):
-            #     D_batch = random.choice(rng, jnp.arange(self.D), shape = (self.batch_size,))
-            #     # Y_batch = jax.device_put(jnp.array(Y[D_batch].toarray()), jax.devices("cpu")[0])
-            #     Y_batch = jnp.array(Y[D_batch].toarray())
 
-            #     # Ensure the shape of Y_batch is (batch_size, V)
-            #     assert Y_batch.shape == (self.batch_size, self.V), f"Shape mismatch: {Y_batch.shape} != ({self.batch_size}, {self.V})"
 
-            #     return Y_batch, D_batch
+            def __repr__(self):
+                return f"{self.model_name} initialized with {self.K} topics to be estimated on {self.D} documents."
+        
         
         return DynamicTM(model, *args, **kwargs)
-    
-
-    
-
-
-
-
-
+ 

@@ -88,4 +88,4 @@ class ETM(NumpyroModel):
         raise NotImplementedError("Use the fitted parameter of the NN to extract topics.")
     
     def return_beta(self):
-        raise NotImplementedError("To be implemented.")")
+        raise NotImplementedError("To be implemented.")
