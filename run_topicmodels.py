@@ -1,3 +1,8 @@
+# --- JAX Configuration for Metal GPU ---
+# If you use Mac and want to enable Metal GPU for JAX,
+# make sure to call the appropriate functions in jax_config.py
+import jax_config
+
 # --- Import topicmodels package ---
 import numpy as np
 import pandas as pd
@@ -39,7 +44,11 @@ tm1 = topicmodels("SPF", counts, vocab, keywords, residual_topics = 0, batch_siz
 print(tm1)
 
 # ---- Run inference -----
-estimated_params = tm1.train_step(num_steps = 1000, lr = 0.1)
+import time
+start = time.time()
+estimated_params = tm1.train_step(num_steps = 50, lr = 0.1)
+end = time.time()
+print(f"Training time: {end - start} seconds")
 
 # ---- Inspect results ----
 estimated_params
