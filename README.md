@@ -1,7 +1,7 @@
 # topicmodels_package
 
 ``topicmodels`` is a Python package for probabilistic topic modeling using
-Bayesian inference built on `JAX <https://github.com/google/jax>`_ and `NumPyro <https://github.com/pyro-ppl/numpyro>`_.
+Bayesian inference built on [JAX](https://github.com/google/jax) and [NumPyro](https://github.com/pyro-ppl/numpyro).
 
 It provides implementations of several advanced topic models:
 
@@ -19,7 +19,7 @@ It provides implementations of several advanced topic models:
 The package emphasizes **scalability**, **interpretability**, and **flexibility**.
 
 
-This repository includes example data, a [minimal example python script](`run_topicmodels.py`), a [minimal example jupyter notebook](run_topicmodels.py) and a [Dockerfile](Dockerfile) that launches JupyterLab so you can interactively run the examples.
+This repository includes example data, a [minimal example python script](run_topicmodels.py), a [minimal example jupyter notebook](run_topicmodels.py) and a [Dockerfile](Dockerfile) that launches JupyterLab so you can interactively run the examples.
 
 
 
