@@ -1,5 +1,5 @@
-models
-======
+topicmodels API
+===============
 
 .. toctree::
    :maxdepth: 4

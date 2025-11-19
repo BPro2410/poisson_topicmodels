@@ -1,11 +1,13 @@
 .. topicmodels documentation master file
 
-=================================
-topicmodels: Probabilistic Models
-=================================
+========================================================
+topicmodels: Probabilistic Topic Modeling with JAX
+========================================================
 
-``topicmodels`` is a Python package for probabilistic topic modeling using
+``topicmodels`` is a comprehensive Python package for probabilistic topic modeling using
 Bayesian inference built on `JAX <https://github.com/google/jax>`_ and `NumPyro <https://github.com/pyro-ppl/numpyro>`_.
+
+Powered by GPU-accelerated inference and professional-grade type hints (90% coverage).
 
 It provides implementations of several advanced topic models:
 

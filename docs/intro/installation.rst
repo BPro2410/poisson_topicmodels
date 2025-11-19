@@ -20,7 +20,7 @@ Install via pip
 
 .. code-block:: bash
 
-   pip install PyPF
+   pip install topicmodels
 
 For GPU acceleration, install `jax` with CUDA support.
 See the `JAX installation guide <https://jax.readthedocs.io/en/latest/installation.html>`_.
@@ -35,9 +35,9 @@ You can find the Dockerfile in our GitHub repository `here <https://github.com/B
 Troubleshooting
 ---------------
 
-In case you are running intro troubles installing PyPF, or have limited GPU support, please consider the tipps mentioned in the `Numpyro Installation documentation <https://num.pyro.ai/en/latest/getting_started.html#installation>`_.
+In case you are running into troubles installing topicmodels, or have limited GPU support, please consider the tips mentioned in the `Numpyro Installation documentation <https://num.pyro.ai/en/latest/getting_started.html#installation>`_.
 
 If you need further assistance with GPU support, please visit the `JAX GPU installation instructions <https://github.com/jax-ml/jax#pip-installation-gpu-cuda>`_. 
 
 
-You can also install PyPF from `source <https://github.com/BPro2410/topicmodels_package>`_. 
+You can also install topicmodels from `source <https://github.com/BPro2410/topicmodels_package>`_. 

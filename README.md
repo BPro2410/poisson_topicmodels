@@ -9,6 +9,10 @@
 
 ## Statement of Need
 
+
+**poisson-topicmodels**
+
+
 Traditional topic modeling packages (e.g., Gensim, scikit-learn's LDA) use older inference methods and lack flexibility for emerging research needs. **topicmodels** addresses key gaps:
 
 1. **Modern Probabilistic Inference**: Built on NumPyro, enabling automatic differentiation, probabilistic programming, and integration with cutting-edge Bayesian methods.

@@ -1,15 +1,15 @@
-What is PyPF
-============
+What is topicmodels
+===================
 
-PyPF is desined as an easy-to-use Python library for a general audience of practitions that 
+topicmodels is designed as an easy-to-use Python library for a general audience of practitioners that 
 are interested in applying text mining techniques to their own text analysis tasks. 
-The workflow for all text mining tasks with PyPF can be divided in three steps: 
+The workflow for all text mining tasks with topicmodels can be divided in three steps: 
 
 + model initialization, 
 + model training and 
 + model evaluation. 
 
-PyPF requires to prespecify the model input by the user. This way, we believe that user can pre-process their data with no limits to get the best results. 
+topicmodels requires you to prespecify the model input. This way, users can pre-process their data with no limits to get the best results. 
 
 
 A simple example
@@ -32,7 +32,7 @@ First, we load any kind of text data.
         "Best laptop I’ve owned, powerful and reliable!"
     ]
 
-The text data can be preprocessed in a format required by the user. Next we create all relevant information for the PF PyPF API, that is:
+The text data can be preprocessed in a format required by the user. Next we create all relevant information for the PF topicmodels API, that is:
 
 + a counts matrix (scipy sparse object)
 + the vocabulary used for the counts matrix
@@ -45,19 +45,20 @@ The text data can be preprocessed in a format required by the user. Next we crea
 
     cv = CountVectorizer(stop_words='english', min_df = 1)
     counts = sparse.csr_matrix(cv.fit_transform(documents), dtype = np.float32)
+    vocab = cv.get_feature_names_out()
 
 
-Next, we can start to call the PyPF API, select the hyperparameter and fit the required model.
+Next, we can start to call the topicmodels API, select the hyperparameters and fit the required model.
 
 .. code-block:: python
 
-    from PyPF import topicmodels
+    from packages.models import PF
 
-    # We select the Poisson factorization model 'PF' and initialize the model first
-    tm = topicmodels("PF", counts, vocab, num_topics = 10, batch_size = 1024)
+    # We select the Poisson factorization model and initialize the model first
+    tm = PF(counts=counts, vocab=vocab, num_topics=10, batch_size=100)
 
     # Set the number of training steps and the learning rate
-    estimated_params = tm.train_step(num_steps = 100, lr =0.01)
+    estimated_params = tm.train_step(num_steps=100, lr=0.01)
 
 
 From thereon, it is as easy as it can be. Users can perform any type of post-analysis using the estimated parameters, or

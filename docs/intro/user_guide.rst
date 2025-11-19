@@ -2,15 +2,15 @@
 User Guide
 ==========
 
-This guide provides a gentle introduction to the functionality of ``PyPF``. PyPF is desined as an easy-to-use Python library for a general audience of practitions that 
+This guide provides a gentle introduction to the functionality of ``topicmodels``. topicmodels is designed as an easy-to-use Python library for a general audience of practitioners that 
 are interested in applying text mining techniques to their own text analysis tasks. 
-The workflow for all text mining tasks with PyPF can be divided in three steps: 
+The workflow for all text mining tasks with topicmodels can be divided in three steps: 
 
 + model initialization, 
 + model training and 
 + model evaluation. 
 
-PyPF requires to prespecify the model input by the user. This way, we believe that user can pre-process their data with no limits to get the best results. 
+topicmodels requires you to prespecify the model input. This way, users can pre-process their data with no limits to get the best results. 
 
 Prerequisites
 ----------------
@@ -32,7 +32,7 @@ First, we load any kind of text data.
         "Best laptop I’ve owned, powerful and reliable!"
     ]
 
-The text data can be preprocessed in a format required by the user. Next we create all relevant information for the PF PyPF API, that is:
+The text data can be preprocessed in a format required by the user. Next we create all relevant information for the PF topicmodels API, that is:
 
 + a counts matrix (scipy sparse object)
 + the vocabulary used for the counts matrix
@@ -49,13 +49,13 @@ The text data can be preprocessed in a format required by the user. Next we crea
 Creating a Model
 ----------------
 
-All models are accessible through the main factory class:
+All models are accessible through direct imports:
 
 .. code-block:: python
 
-   from PyPF import topicmodels
+   from packages.models import PF
 
-   model = topicmodels("PF", counts, cv.vocab, num_topics=20, batch_size=128)
+   model = PF(counts=counts, vocab=cv.get_feature_names_out(), num_topics=20, batch_size=128)
 
 Training a Model
 ----------------
