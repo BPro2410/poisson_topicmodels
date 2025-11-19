@@ -1,4 +1,5 @@
 from abc import abstractmethod, ABC
+from typing import Dict, Tuple, Any, Optional
 import jax
 from jax import random, jit
 import jax.numpy as jnp
@@ -7,27 +8,56 @@ from numpyro.infer import SVI, TraceMeanField_ELBO
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
+import scipy.sparse as sparse
 
 from packages.models.Metrics import Metrics
+
 
 class NumpyroModel(ABC):
     """
     Abstract base class for all used probabilistic models.
     Each model has to implement at least their own Model and Guide.
+    
+    Attributes
+    ----------
+    counts : scipy.sparse.csr_matrix
+        Document-term matrix.
+    D : int
+        Number of documents.
+    V : int
+        Size of vocabulary.
+    vocab : np.ndarray
+        Vocabulary array.
+    K : int
+        Number of topics.
+    batch_size : int
+        Size of mini-batches for training.
+    Metrics : Metrics
+        Instance metrics tracker (per instance, not shared).
+    estimated_params : dict
+        Estimated parameters after training.
     """
     
-
-    Metrics = Metrics(loss = list())
+    def __init__(self) -> None:
+        """Initialize base model with per-instance metrics."""
+        self.Metrics = Metrics(loss=[])
+        self.estimated_params: Dict[str, Any] = {}
     
     @abstractmethod
-    def _model(self):
+    def _model(self) -> None:
+        """Define the probabilistic model."""
         pass
 
     @abstractmethod
-    def _guide(self):
+    def _guide(self) -> None:
+        """Define the variational guide."""
         pass
 
-    def _get_batch(self, rng, Y):
+    def _get_batch(
+        self, 
+        rng: jax.random.PRNGKeyArray, 
+        Y: sparse.csr_matrix
+    ) -> Tuple[jnp.ndarray, jnp.ndarray]:
         """
         Helper function to obtain a batch of data, convert from scipy.sparse to jax.numpy.array.
         
@@ -55,87 +85,123 @@ class NumpyroModel(ABC):
 
         return Y_batch, D_batch
     
-    def train_step(self, num_steps, lr):
+    def train_step(
+        self, 
+        num_steps: int, 
+        lr: float,
+        random_seed: Optional[int] = None,
+    ) -> Dict[str, Any]:
         """
-        Train the model using SVI.
+        Train the model using Stochastic Variational Inference (SVI).
         
         Parameters
         ----------
         num_steps : int
-            Number of training steps.
+            Number of training iterations. Must be > 0.
         lr : float
-            Learning rate for the optimizer.
+            Learning rate for the optimizer. Must be > 0.
+        random_seed : int, optional
+            Seed for JAX random number generator. If provided, ensures
+            reproducible results. Default is None (random initialization).
         
         Returns
         -------
         dict
-            The estimated parameters after training.
+            Estimated parameters after training.
+            
+        Raises
+        ------
+        ValueError
+            If num_steps <= 0 or lr <= 0.
         """
-
+        if num_steps <= 0:
+            raise ValueError(f"num_steps must be > 0, got {num_steps}")
+        if lr <= 0:
+            raise ValueError(f"lr must be > 0, got {lr}")
+        
         svi_batch = SVI(
-            model = self._model,
-            guide = self._guide,
-            optim = adam(lr),
-            loss = TraceMeanField_ELBO()
+            model=self._model,
+            guide=self._guide,
+            optim=adam(lr),
+            loss=TraceMeanField_ELBO()
         )
         svi_batch_update = jit(svi_batch.update)
 
-        Y_batch, D_batch = self._get_batch(random.PRNGKey(1), self.counts)
+        # Initialize RNG
+        if random_seed is not None:
+            init_rng = jax.random.PRNGKey(random_seed)
+        else:
+            init_rng = jax.random.PRNGKey(0)
+        
+        Y_batch, D_batch = self._get_batch(init_rng, self.counts)
 
         svi_state = svi_batch.init(
-            random.PRNGKey(0), Y_batch = Y_batch, d_batch = D_batch
+            jax.random.PRNGKey(1), Y_batch=Y_batch, d_batch=D_batch
         )
     
-        rngs = random.split(random.PRNGKey(2), num_steps)
-        # losses = list()
+        rngs = random.split(jax.random.PRNGKey(2), num_steps)
         pbar = tqdm(range(num_steps))
 
         for step in pbar:
             Y_batch, D_batch = self._get_batch(rngs[step], self.counts)
             svi_state, loss = svi_batch_update(
-                svi_state, Y_batch=Y_batch, d_batch = D_batch
+                svi_state, Y_batch=Y_batch, d_batch=D_batch
             )
             loss = loss / self.D
             self.Metrics.loss.append(loss)
-            # losses.append(loss)
             if step % 10 == 0:
                 pbar.set_description(
                     "Init loss: "
                     + "{:10.4f}".format(self.Metrics.loss[0])
-                    + f"; Avg loss (last {10} iter): "
+                    + f"; Avg loss (last 10 iter): "
                     + "{:10.4f}".format(jnp.array(self.Metrics.loss[-10:]).mean()))
         
         self.estimated_params = svi_batch.get_params(svi_state)
         
         return self.estimated_params
-
     
-    def return_topics(self):
+    def return_topics(self) -> Tuple[np.ndarray, np.ndarray]:
         """
         Return the topics for each document.
 
         Returns
         -------
-        tuple
-            categories : numpy.ndarray
-                Array of topics indices for each document.
-            E_theta : numpy.ndarray
-                Estimated topic proportions for each document.
+        categories : np.ndarray
+            Array of topic indices for each document (shape: D,).
+        E_theta : np.ndarray
+            Estimated topic proportions for each document (shape: D, K).
+            
+        Raises
+        ------
+        ValueError
+            If model has not been trained yet (no estimated parameters).
         """
+        if not self.estimated_params:
+            raise ValueError("Model must be trained before calling return_topics()")
+            
         E_theta = self.estimated_params["theta_shape"] / self.estimated_params["theta_rate"]
-        return np.argmax(E_theta, axis = 1), E_theta
+        return np.argmax(E_theta, axis=1), E_theta
 
-    def return_beta(self):
+    def return_beta(self) -> pd.DataFrame:
         """
-        Return the beta matrix for the model.
+        Return the beta matrix (word-topic associations) for the model.
         
         Returns
         -------
-        pandas.DataFrame
-            DataFrame containing the beta matrix with words as rows and topics as columns.
+        pd.DataFrame
+            DataFrame with words as index and topics as columns,
+            containing word-topic probability estimates.
+            
+        Raises
+        ------
+        ValueError
+            If model has not been trained yet (no estimated parameters).
         """
+        if not self.estimated_params:
+            raise ValueError("Model must be trained before calling return_beta()")
+            
         E_beta = self.estimated_params["beta_shape"] / self.estimated_params["beta_rate"]
-        return pd.DataFrame(jnp.transpose(E_beta), index = self.vocab)
+        return pd.DataFrame(jnp.transpose(E_beta), index=self.vocab)
 
 
 
