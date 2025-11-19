@@ -1,12 +1,18 @@
-# from .packages.models.topicmodels import topicmodels
-# from .packages.models.PF import PF
-# from .packages.models.SPF import SPF
-# from .packages.models.CPF import CPF
-# from .packages.models.CSPF import CSPF
-# from .packages.models.TBIP import TBIP
-# from .packages.models.numpyro_model import NumpyroModel
-# from .packages.models.Metrics import Metrics
+"""
+topicmodels: Probabilistic topic modeling with Bayesian inference.
 
-# __all__ = [
-#     'topicmodels', 'PF', 'SPF', 'CPF', 'CSPF', 'TBIP', 'NumpyroModel', 'Metrics'
-# ]
+A Python package for advanced topic modeling using JAX and NumPyro,
+providing implementations of several state-of-the-art topic models:
+
+- Poisson Factorization (PF)
+- Seeded Poisson Factorization (SPF)
+- Covariate Poisson Factorization (CPF)
+- Covariate Seeded Poisson Factorization (CSPF)
+- Text-Based Ideal Points (TBIP)
+- Embedded Topic Models (ETM)
+"""
+
+__version__ = "0.1.0"
+__author__ = "Bernd Prostmaier, Bettina Grün, Paul Hofmarcher"
+__email__ = "b.prostmaier@icloud.com"
+
