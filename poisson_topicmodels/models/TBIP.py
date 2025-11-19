@@ -1,9 +1,12 @@
+from typing import Tuple
+
 import warnings
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 import numpyro.distributions as dist
+import scipy.sparse as sparse
 from jax import jit, random
 from numpyro import param, plate, sample
 from numpyro.distributions import constraints
@@ -24,44 +27,77 @@ class TBIP(NumpyroModel):
 
     def __init__(
         self,
-        counts,
-        vocab,
-        num_topics,
-        authors,
-        batch_size,
-        time_varying=False,
-        beta_shape_init=None,
-        beta_rate_init=None,
-    ):
+        counts: sparse.csr_matrix,
+        vocab: np.ndarray,
+        num_topics: int,
+        authors: np.ndarray,
+        batch_size: int,
+        time_varying: bool = False,
+        beta_shape_init: np.ndarray = None,
+        beta_rate_init: np.ndarray = None,
+    ) -> None:
         """
         Initialize the TBIP model.
 
         Parameters
         ----------
         counts : scipy.sparse.csr_matrix
-            A 2D sparse array of shape (D, V) representing the word counts in each document, where D is the number of documents and V is the vocabulary size.
-        vocab : list
-            A list of vocabulary terms.
+            A 2D sparse array of shape (D, V) representing the word counts in each document,
+            where D is the number of documents and V is the vocabulary size.
+        vocab : np.ndarray
+            A vocabulary array of shape (V,) containing word terms.
         num_topics : int
-            The number of topics (K).
-        authors : list
-            A list of authors for each document.
+            The number of topics (K). Must be > 0.
+        authors : np.ndarray or list
+            An array of authors for each document.
         batch_size : int
             The number of documents to be processed in each batch.
+            Must satisfy 0 < batch_size <= D.
         time_varying : bool, optional
             Whether to model time-varying ideal points (default is False).
-        beta_shape_init : numpy.ndarray, optional
+        beta_shape_init : np.ndarray, optional
             Initial shape parameters for the topic-word distributions (default is None).
-        beta_rate_init : numpy.ndarray, optional
+            Must have shape (K, V) if provided.
+        beta_rate_init : np.ndarray, optional
             Initial rate parameters for the topic-word distributions (default is None).
+            Must have shape (K, V) if provided.
+
+        Raises
+        ------
+        TypeError
+            If counts is not a sparse matrix.
+        ValueError
+            If dimensions are invalid or time_varying parameters have wrong shape.
         """
+        # Input validation
+        if not sparse.issparse(counts):
+            raise TypeError(f"counts must be a scipy sparse matrix, got {type(counts).__name__}")
+
+        D, V = counts.shape
+        if D == 0 or V == 0:
+            raise ValueError(f"counts matrix is empty: shape ({D}, {V})")
+
+        if num_topics <= 0:
+            raise ValueError(f"num_topics must be > 0, got {num_topics}")
+
+        if batch_size <= 0 or batch_size > D:
+            raise ValueError(f"batch_size must satisfy 0 < batch_size <= {D}, got {batch_size}")
+
+        if vocab.shape[0] != V:
+            raise ValueError(f"vocab size {vocab.shape[0]} != counts columns {V}")
+
+        # Convert authors to array-like
+        authors = np.asarray(authors)
+        if len(authors) != D:
+            raise ValueError(f"authors length {len(authors)} != counts rows {D}")
+
         self.authors_unique = np.unique(authors)
         self.author_map = {speaker: idx for idx, speaker in enumerate(self.authors_unique)}
-        self.author_indices = authors.map(self.author_map)
+        self.author_indices = np.array([self.author_map[a] for a in authors])
         self.N = len(self.authors_unique)  # number of people
         self.counts = counts
-        self.D = counts.shape[0]
-        self.V = counts.shape[1]
+        self.D = D
+        self.V = V
         self.K = num_topics
         self.batch_size = batch_size  # number of documents in a batch
         self.vocab = vocab
@@ -71,39 +107,50 @@ class TBIP(NumpyroModel):
         if self.time_varying:
             warnings.warn("Time-varying TBIP model initiated.")
             warnings.warn(
-                "Please notice: Setting time_varying=True requires to fit the TBIP model separaetly for each time period. Please initiate the TBIP model in t+1 with the estimated beta parameter in t. See documentation for more details."
+                "Please notice: Setting time_varying=True requires to fit the TBIP model "
+                "separately for each time period. Please initiate the TBIP model in t+1 with "
+                "the estimated beta parameter in t. See documentation for more details."
             )
 
             # check if beta_rate_init and beta_shape_init have the correct shape and are jnp.arrays
             for inits in [beta_shape_init, beta_rate_init]:
                 if inits is None:
                     warnings.warn(
-                        f"No initial values for beta parameters were provided. The model will initialize them uniformly."
+                        "No initial values for beta parameters were provided. "
+                        "The model will initialize them uniformly."
                     )
                 if inits is not None:
-                    if not isinstance(inits, jnp.ndarray):
+                    if not isinstance(inits, (np.ndarray, jnp.ndarray)):
                         raise ValueError(
-                            "beta_shape_init and beta_rate_init must be jnp.ndarray objects with matching dimensions [num_topics times num_words]."
+                            "beta_shape_init and beta_rate_init must be numpy or jnp.ndarray objects "
+                            "with matching dimensions [num_topics times num_words]."
                         )
                     if inits.shape != (self.K, self.V):
                         raise ValueError(
-                            f"beta_shape_init and beta_rate_init must have shape ({self.K}, {self.V})"
+                            f"beta_shape_init and beta_rate_init must have shape ({self.K}, {self.V}), "
+                            f"got {inits.shape}"
                         )
         self.beta_rate_init = beta_rate_init
         self.beta_shape_init = beta_shape_init
 
-    def _model(self, Y_batch, d_batch, i_batch):
-        """
-        Define the probabilistic model using NumPyro.
+    def _model(self, Y_batch: jnp.ndarray, d_batch: jnp.ndarray, i_batch: jnp.ndarray) -> None:
+        """Define the probabilistic model using NumPyro.
+
+        Model structure:
+        - x (N,): ideal points for each author
+        - beta (K x V): topic-word distributions
+        - eta (K x V): ideal point loadings for words
+        - theta (D x K): document-topic intensities
+        - Y_batch: observed word counts with Poisson likelihood
 
         Parameters
         ----------
-        Y_batch : numpy.ndarray
-            The observed word counts for the current batch.
-        d_batch : numpy.ndarray
-            Indices of documents in the current batch.
-        i_batch : numpy.ndarray
-            Indices of authors for the documents in the batch.
+        Y_batch : jnp.ndarray
+            The observed word counts for the current batch (batch_size, V).
+        d_batch : jnp.ndarray
+            Indices of documents in the current batch (batch_size,).
+        i_batch : jnp.ndarray
+            Indices of authors for the documents in the batch (batch_size,).
         """
         with plate("i", self.N):
             # Sample the per-unit latent variables (ideal points)
@@ -131,18 +178,19 @@ class TBIP(NumpyroModel):
                 # Sample observed words
                 sample("Y_batch", dist.Poisson(P), obs=Y_batch)
 
-    def _guide(self, Y_batch, d_batch, i_batch):
-        """
-        Define the variational guide for the model.
+    def _guide(self, Y_batch: jnp.ndarray, d_batch: jnp.ndarray, i_batch: jnp.ndarray) -> None:
+        """Define the variational guide for the model.
+
+        Uses Gamma and LogNormal variational families for approximate posterior inference.
 
         Parameters
         ----------
-        Y_batch : numpy.ndarray
-            The observed word counts for the current batch.
-        d_batch : numpy.ndarray
-            Indices of documents in the current batch.
-        i_batch : numpy.ndarray
-            Indices of authors for the documents in the batch.
+        Y_batch : jnp.ndarray
+            The observed word counts for the current batch (batch_size, V).
+        d_batch : jnp.ndarray
+            Indices of documents in the current batch (batch_size,).
+        i_batch : jnp.ndarray
+            Indices of authors for the documents in the batch (batch_size,).
         """
         mu_x = param("mu_x", init_value=-1 + 2 * random.uniform(random.PRNGKey(1), (self.N,)))
         sigma_x = param("sigma_y", init_value=jnp.ones([self.N]), constraint=constraints.positive)
@@ -196,8 +244,11 @@ class TBIP(NumpyroModel):
             with plate("d_k", size=self.K, dim=-1):
                 sample("theta", dist.LogNormal(mu_theta[d_batch], sigma_theta[d_batch]))
 
-    def _get_batch(self, rng, Y):
-        """
+    def _get_batch(
+        self, rng: jnp.ndarray, Y: sparse.csr_matrix
+    ) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+        """Sample a random mini-batch from the corpus.
+
         Helper function specified exclusively for TBIP objects.
 
         Parameters
@@ -209,13 +260,15 @@ class TBIP(NumpyroModel):
 
         Returns
         -------
-        tuple
-            Y_batch : numpy.ndarray
-                Word counts for the batch.
-            D_batch : numpy.ndarray
-                Indices of documents in the batch.
-            I_batch : numpy.ndarray
-                Indices of authors for the documents in the batch.
+        Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]
+            Y_batch : Word counts for the batch (batch_size, V).
+            D_batch : Indices of documents in the batch (batch_size,).
+            I_batch : Indices of authors for the documents in the batch (batch_size,).
+
+        Raises
+        ------
+        AssertionError
+            If batch dimensions don't match expected shape.
         """
         D_batch = random.choice(rng, jnp.arange(self.D), shape=(self.batch_size,))
         Y_batch = jnp.array(Y[D_batch].toarray())
@@ -230,21 +283,31 @@ class TBIP(NumpyroModel):
         return Y_batch, D_batch, I_batch
 
     def train_step(self, num_steps: int, lr: float) -> dict:
-        """
+        """Train the TBIP model using stochastic variational inference.
+
         Custom train function specified exclusively for TBIP objects.
 
         Parameters
         ----------
         num_steps : int
-            Number of training steps.
+            Number of training steps. Must be > 0.
         lr : float
-            Learning rate for the optimizer.
+            Learning rate for the optimizer. Must be > 0.
 
         Returns
-        ----------
+        -------
         dict
-            A dictionary containing the estimated parameter values
+            A dictionary containing the estimated parameter values after training.
+
+        Raises
+        ------
+        ValueError
+            If num_steps or lr are invalid.
         """
+        if num_steps <= 0:
+            raise ValueError(f"num_steps must be > 0, got {num_steps}")
+        if lr <= 0:
+            raise ValueError(f"lr must be > 0, got {lr}")
         svi_batch = SVI(
             model=self._model, guide=self._guide, optim=adam(lr), loss=TraceMeanField_ELBO()
         )
