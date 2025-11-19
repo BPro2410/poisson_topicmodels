@@ -8,7 +8,8 @@ import scipy.sparse as sparse
 from sklearn.feature_extraction.text import CountVectorizer
 
 import jax_config
-from poisson_topicmodels import topicmodels
+
+# from poisson_topicmodels import topicmodels
 
 # ---- Load data ----
 df1 = pd.read_csv("data/10k_amazon.csv")
@@ -54,19 +55,17 @@ keywords = {
 
 
 # ---- Initialize TM package ----
-tm1 = topicmodels("SPF", counts, vocab, keywords, residual_topics=0, batch_size=1024)
+from poisson_topicmodels import SPF
+
+tm1 = SPF(counts, vocab, keywords, residual_topics=0, batch_size=1024)
 print(tm1)
 
 # ---- Run inference -----
-import time
-
-start = time.time()
-estimated_params = tm1.train_step(num_steps=50, lr=0.1)
-end = time.time()
-print(f"Training time: {end - start} seconds")
+estimated_params = tm1.train_step(num_steps=500, lr=0.1)
 
 # ---- Inspect results ----
-estimated_params
+print(estimated_params)
+print(estimated_params.keys())
 topics, e_theta = tm1.return_topics()
 beta = tm1.return_beta()
 top_words = tm1.return_top_words_per_topic(n=10)
@@ -79,7 +78,9 @@ tm1.Metrics.loss
 # ### PF Test ###
 # ###############
 
-tm2 = topicmodels("PF", counts, vocab, num_topics=10, batch_size=1024)
+from poisson_topicmodels import PF
+
+tm2 = PF(counts, vocab, num_topics=10, batch_size=1024)
 estimated_params = tm2.train_step(num_steps=100, lr=0.01)
 topics, e_theta = tm2.return_topics()
 betas = tm2.return_beta()
@@ -88,6 +89,7 @@ betas = tm2.return_beta()
 # #################
 # ### CSPF Test ###
 # #################
+from poisson_topicmodels import CSPF
 
 category0 = ["grocery gourmet food", "toys games"]
 covariable = df1["Cat1"].apply(lambda x: 0 if x in category0 else 1)
@@ -96,8 +98,7 @@ print(df1["Cat1"].head(10))
 
 X_design_matrix = pd.DataFrame({"intercept": np.repeat(1, len(df1)), "var_infromative": covariable})
 
-tm3 = topicmodels(
-    "CSPF",
+tm3 = CSPF(
     counts,
     vocab,
     keywords,
@@ -110,23 +111,23 @@ topics, e_theta = tm3.return_topics()
 betas = tm3.return_beta()
 
 
+##############
+## TBIP Test #
+##############
 # ##############
 # ## CPF Test ##
 # ##############
+from poisson_topicmodels import CPF, TBIP
 
-# tm3 = topicmodels("CPF", counts, vocab, num_topics = 5, batch_size = 1024, X_design_matrix = X_design_matrix)
+# tm3 = CPF(counts, vocab, num_topics = 5, batch_size = 1024, X_design_matrix = X_design_matrix)
 # svi_batch, svi_state = tm3.train_step(num_steps = 100, lr = 0.01)
 # estimated_params = svi_batch.get_params(svi_state)
 
 
-##############
-## TBIP Test #
-##############
-
 df1["speaker"] = np.random.choice(
     ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"], size=len(df1), replace=True
 )
-tm4 = topicmodels("TBIP", counts, vocab, num_topics=10, authors=df1.speaker, batch_size=1024)
+tm4 = TBIP(counts, vocab, num_topics=10, authors=df1.speaker, batch_size=1024)
 estimated_params = tm4.train_step(num_steps=1000, lr=0.01)
 
 
@@ -150,8 +151,9 @@ path_to_embeddings = "data/embeds.bin"
 embeddings_mapping = load_embeds(path_to_embeddings)
 
 # -- RUN ETM --
-tm5 = topicmodels(
-    "ETM",
+from poisson_topicmodels import ETM
+
+tm5 = ETM(
     counts,
     vocab,
     num_topics=5,

@@ -27,7 +27,11 @@ class FlaxEncoder(nn.Module):
 
 # -- ETM class --
 class ETM(NumpyroModel):
+    """
+    Embedded Topic Model (ETM)."""
+
     def __init__(self, counts, vocab, num_topics, batch_size, embeddings_mapping, embed_size=300):
+        super().__init__()
         self.counts = counts
         self.D = counts.shape[0]
         self.K = num_topics
