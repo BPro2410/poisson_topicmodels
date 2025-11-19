@@ -48,7 +48,6 @@ class ETM(NumpyroModel):
         self.rho = rho
 
     def _model(self, Y_batch, d_batch):
-
         alpha = param(
             "alpha", init_value=random.normal(random.PRNGKey(42), shape=(self.embed_size, self.K))
         )
@@ -68,7 +67,6 @@ class ETM(NumpyroModel):
                 sample("Y_batch", dist.Poisson(P), obs=Y_batch)
 
     def _guide(self, Y_batch, d_batch):
-
         net = flax_module("encoder", self.encoder, input_shape=(1, self.V))
 
         with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):

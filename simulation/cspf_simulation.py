@@ -2,12 +2,15 @@
 #### ----- Simulation ----- ########
 ####################################
 
-import numpy as np
 import random
-from poisson_topicmodels import topicmodels
-import pandas as pd
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import seaborn as sns
+
+from poisson_topicmodels import topicmodels
+
 np.random.seed(42)
 
 # Parameters
@@ -62,8 +65,9 @@ for doc_id in range(num_documents):
 keywords = dict()
 vocab = vocabulary
 
+
 def print_topics(E_beta, num_words: int = 50):
-    top_words = np.argsort(-E_beta, axis = 1)
+    top_words = np.argsort(-E_beta, axis=1)
 
     hot_words = dict()
     for topic_idx in range(K):
@@ -74,61 +78,67 @@ def print_topics(E_beta, num_words: int = 50):
             hot_words[topic_name] = hot_words_topic
         else:
             words_per_topic = num_words
-            hot_words[f"Topic_{topic_idx - len(keywords) + 1}"] = \
-                    [vocab[word] for word in top_words[topic_idx, :words_per_topic]]
+            hot_words[f"Topic_{topic_idx - len(keywords) + 1}"] = [
+                vocab[word] for word in top_words[topic_idx, :words_per_topic]
+            ]
 
     return hot_words
 
 
 # -- Top 100 words per topic
-hot_words = print_topics(np.array(topic_word_distributions), num_words = 100)
+hot_words = print_topics(np.array(topic_word_distributions), num_words=100)
 
 # -- Sample of 10 words per topic for seed words
-keywords_selected = {k: np.random.choice(v, 10, replace = False) for k, v in hot_words.items()}
+keywords_selected = {k: np.random.choice(v, 10, replace=False) for k, v in hot_words.items()}
 keywords = keywords_selected
-
 
 
 ##################
 # Estimate model #
 ##################
 
-from sklearn.feature_extraction.text import CountVectorizer
 import scipy.sparse as sparse
+from sklearn.feature_extraction.text import CountVectorizer
 
 # --- hyperparameter ---
-model_hyperparameter = dict(
-    residual_topics = 0,
-    epochs = 150,
-    batch_size = 1024,
-    lr = 0.01
-)
+model_hyperparameter = dict(residual_topics=0, epochs=150, batch_size=1024, lr=0.01)
 seeded_topics = len(list(keywords.keys()))
 model_hyperparameter["num_topics"] = model_hyperparameter["residual_topics"] + seeded_topics
 
 # --- create corpus ---
-cv = CountVectorizer(vocabulary = vocab)
+cv = CountVectorizer(vocabulary=vocab)
 cv.fit(documents)
 counts = sparse.csr_matrix(cv.transform(documents), dtype=np.int8)
 
 # --- Create design matrix ---
-X_design_matrix = pd.DataFrame({"intercept": np.repeat(1, len(covariates)), "simulated_cov": covariates})
+X_design_matrix = pd.DataFrame(
+    {"intercept": np.repeat(1, len(covariates)), "simulated_cov": covariates}
+)
 
 # --- Run topicmodels package ---
-cspf = topicmodels("CSPF", counts, vocab, keywords, residual_topics = 0, batch_size = 1024, X_design_matrix = X_design_matrix)
-num_steps = model_hyperparameter["epochs"] * int(counts.shape[0] / model_hyperparameter["batch_size"])
-estimates = cspf.train_step(num_steps = num_steps, lr = 0.01)
+cspf = topicmodels(
+    "CSPF",
+    counts,
+    vocab,
+    keywords,
+    residual_topics=0,
+    batch_size=1024,
+    X_design_matrix=X_design_matrix,
+)
+num_steps = model_hyperparameter["epochs"] * int(
+    counts.shape[0] / model_hyperparameter["batch_size"]
+)
+estimates = cspf.train_step(num_steps=num_steps, lr=0.01)
 topic_prediction, e_theta = cspf.return_topics()
 
 # --- Analyze results ---
 estimated_categories = estimates["theta_shape"] / estimates["theta_rate"]
-estimated_categories = np.argmax(estimated_categories, axis = 1)
+estimated_categories = np.argmax(estimated_categories, axis=1)
 
-np.sum(document_topics == estimated_categories )/len(document_topics)
+np.sum(document_topics == estimated_categories) / len(document_topics)
 
 cov_effects = cspf.return_covariate_effects()
 print(cov_effects)
-
 
 
 z = 1.95
@@ -168,11 +178,13 @@ for i, row in enumerate(latex_matrix):
     print(f"Cov {i + 1} & " + " & ".join(row) + " \\\\")
 print("\\bottomrule")
 print("\\end{tabular}")
-print("""\\caption{
-    Posterior mean estimates of covariate effects on topic proportions with 95\% credible intervals. 
-    Values shown are the posterior means with corresponding 95\% credible intervals below each estimate, 
-    based on a normal approximation. Boldface indicates effects whose intervals do not include zero, 
+print(
+    """\\caption{
+    Posterior mean estimates of covariate effects on topic proportions with 95\% credible intervals.
+    Values shown are the posterior means with corresponding 95\% credible intervals below each estimate,
+    based on a normal approximation. Boldface indicates effects whose intervals do not include zero,
     suggesting strong evidence for a positive or negative association.
-    }""")
+    }"""
+)
 print("\\label{tab:simulation_cov_effects2}")
 print("\\end{table}")

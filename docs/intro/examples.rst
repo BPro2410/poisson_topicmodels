@@ -88,7 +88,7 @@ Next we fit the PF topic model with covariates
 
     # Initialize the model
     tm2 = CPF(counts=counts, vocab=vocab, num_topics=2, batch_size=100, X_design_matrix=X_design_matrix)
-    
+
     # Train the model
     estimated_params = tm2.train_step(num_steps = 100, lr = 0.01)
 
@@ -118,7 +118,7 @@ Therefore, we define two topics a-priori.
 Now we can fit the topic model with the a-priori specified topics 'smartphone' and 'pc'.
 
 .. code-block:: python
-    
+
     # Initialize the model
     tm3 = SPF(counts=counts, vocab=vocab, keywords=keywords, residual_topics=0, batch_size=100)
 
@@ -130,7 +130,7 @@ Now we can fit the topic model with the a-priori specified topics 'smartphone' a
     print(tm3.Metrics.loss) # Check model convergence
     topics, e_theta = tm2.return_topics() # See topic distribution across the documents
     betas = tm2.return_beta() # See topic distribution across the vocabulary
-    
+
 
 
 
@@ -170,7 +170,7 @@ To give a minimum example we also simulate artificial authors.
 Next we follow the topicmodels logic and initialize, train and analyze the TBIP model.
 
 .. code-block:: python
-    
+
     # Initialize the model
     tm5 = TBIP(counts=counts, vocab=vocab, num_topics=2, authors=speaker, batch_size=100)
 

@@ -1,8 +1,8 @@
 # Executive Summary: Publication Readiness Audit
 
-**Package:** topicmodels  
-**Audit Date:** November 19, 2025  
-**Target Venue:** JOSS / JMLR  
+**Package:** topicmodels
+**Audit Date:** November 19, 2025
+**Target Venue:** JOSS / JMLR
 **Current Status:** Alpha (0.1.0) → Needs ~60-80 hours of work for publication
 
 ---
@@ -29,48 +29,48 @@
 - pyproject.toml: `jax>=0.8.0,<0.9.0`, `numpyro>=0.19.0,<0.20.0`
 - requirements.txt: `jax==0.4.35`, `numpyro==0.15.3`
 
-**Impact:** Package fails to install  
-**Fix:** Reconcile versions (test both options), update both files  
+**Impact:** Package fails to install
+**Fix:** Reconcile versions (test both options), update both files
 **Time:** 1 hour
 
 ---
 
 ### ❌ 2. No Tests
 **Problem:** Zero unit tests, zero integration tests, 0% coverage
-**Impact:** Cannot verify functionality, JOSS rejects projects without tests  
-**Fix:** Create test suite targeting 70%+ coverage  
+**Impact:** Cannot verify functionality, JOSS rejects projects without tests
+**Fix:** Create test suite targeting 70%+ coverage
 **Time:** 12 hours
 
 ---
 
 ### ❌ 3. Missing License
 **Problem:** No LICENSE file in repository
-**Impact:** Cannot legally distribute, violates open-source standards  
-**Fix:** Add LICENSE file (MIT recommended)  
+**Impact:** Cannot legally distribute, violates open-source standards
+**Fix:** Add LICENSE file (MIT recommended)
 **Time:** 30 minutes
 
 ---
 
 ### ❌ 4. No CITATION.cff
 **Problem:** Citation metadata missing
-**Impact:** JOSS/JMLR requirement; GitHub doesn't show citation button  
-**Fix:** Create CITATION.cff with author/affiliation metadata  
+**Impact:** JOSS/JMLR requirement; GitHub doesn't show citation button
+**Fix:** Create CITATION.cff with author/affiliation metadata
 **Time:** 30 minutes
 
 ---
 
 ### ❌ 5. Non-Standard Package Structure
 **Problem:** Package is `packages/models/` instead of `topicmodels/`
-**Impact:** Awkward imports, not Pythonic, users can't do `from topicmodels import PF`  
-**Fix:** Restructure to standard layout  
+**Impact:** Awkward imports, not Pythonic, users can't do `from topicmodels import PF`
+**Fix:** Restructure to standard layout
 **Time:** 2 hours
 
 ---
 
 ### ❌ 6. No CI/CD
 **Problem:** No GitHub Actions or other CI/CD
-**Impact:** Cannot verify tests pass across Python versions  
-**Fix:** Create `.github/workflows/tests.yml`  
+**Impact:** Cannot verify tests pass across Python versions
+**Fix:** Create `.github/workflows/tests.yml`
 **Time:** 1 hour
 
 ---
@@ -104,11 +104,11 @@
 
 ## Strengths (Keep These)
 
-✅ **Good foundation:** Core algorithms implemented, Jupyter notebook example works  
-✅ **Reasonable structure:** Models inherit from proper base class  
-✅ **Sphinx docs setup:** Documentation infrastructure in place  
-✅ **Multiple models:** SPF, CSPF, TBIP, ETM already implemented  
-✅ **JAX backend:** Modern, GPU-capable scientific computing  
+✅ **Good foundation:** Core algorithms implemented, Jupyter notebook example works
+✅ **Reasonable structure:** Models inherit from proper base class
+✅ **Sphinx docs setup:** Documentation infrastructure in place
+✅ **Multiple models:** SPF, CSPF, TBIP, ETM already implemented
+✅ **JAX backend:** Modern, GPU-capable scientific computing
 
 ---
 

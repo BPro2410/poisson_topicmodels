@@ -4,13 +4,13 @@
 
 This document provides a clear, step-by-step roadmap for implementing the recommendations from `PUBLICATION_AUDIT.md`.
 
-**Total estimated effort:** 60-80 hours  
+**Total estimated effort:** 60-80 hours
 **Target completion:** 8 weeks at 8 hours/week
 
 ---
 
 ## Phase 1: Critical Blockers (Week 1-2)
-**Effort:** 8-10 hours  
+**Effort:** 8-10 hours
 **Blocking:** Everything else
 
 ### 1.1 Create LICENSE (30 min)
@@ -235,7 +235,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.11', '3.12', '3.13']
-    
+
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
@@ -281,7 +281,7 @@ pip install -e .
 ---
 
 ## Phase 2: High-Impact Documentation (Week 3-4)
-**Effort:** 10-12 hours  
+**Effort:** 10-12 hours
 **Blocking:** JOSS/JMLR submission
 
 ### 2.1 Update README (2 hours)
@@ -354,10 +354,10 @@ For each model class:
 class PF(NumpyroModel):
     """
     Poisson Factorization (PF) topic model.
-    
+
     Unsupervised baseline topic model using Poisson likelihood
     for word counts. Suitable for exploratory topic discovery.
-    
+
     Parameters
     ----------
     counts : scipy.sparse.csr_matrix
@@ -368,7 +368,7 @@ class PF(NumpyroModel):
         Number of topics K. Must be > 0.
     batch_size : int
         Mini-batch size for SVI. Must be ≤ D.
-    
+
     Examples
     --------
     >>> model = PF(counts, vocab, num_topics=10, batch_size=32)
@@ -551,13 +551,13 @@ def __init__(self, counts, vocab, num_topics, batch_size):
         raise TypeError("counts must be a scipy sparse matrix")
     if counts.shape[0] == 0 or counts.shape[1] == 0:
         raise ValueError("counts matrix is empty")
-    
+
     # Validate parameters
     if num_topics <= 0:
         raise ValueError(f"num_topics must be > 0, got {num_topics}")
     if batch_size <= 0 or batch_size > counts.shape[0]:
         raise ValueError(f"batch_size must be between 1 and {counts.shape[0]}")
-    
+
     # Store validated inputs
     self.counts = counts
     self.vocab = vocab
@@ -586,7 +586,7 @@ def train_step(
     random_seed: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Train model.
-    
+
     Parameters
     ----------
     random_seed : int, optional
@@ -597,7 +597,7 @@ def train_step(
         rng = jax.random.PRNGKey(random_seed)
     else:
         rng = jax.random.PRNGKey(int(time.time()))
-    
+
     # ... rest of training ...
 ```
 
@@ -653,11 +653,11 @@ from topicmodels import PF, SPF, TBIP
 def benchmark_model(model_class, *args, **kwargs):
     """Benchmark a single model."""
     model = model_class(*args, **kwargs)
-    
+
     start = time.time()
     model.train_step(num_steps=100, lr=0.01, random_seed=42)
     duration = time.time() - start
-    
+
     return duration
 
 # Results table

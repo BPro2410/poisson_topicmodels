@@ -1,15 +1,15 @@
 What is topicmodels
 ===================
 
-topicmodels is designed as an easy-to-use Python library for a general audience of practitioners that 
-are interested in applying text mining techniques to their own text analysis tasks. 
-The workflow for all text mining tasks with topicmodels can be divided in three steps: 
+topicmodels is designed as an easy-to-use Python library for a general audience of practitioners that
+are interested in applying text mining techniques to their own text analysis tasks.
+The workflow for all text mining tasks with topicmodels can be divided in three steps:
 
-+ model initialization, 
-+ model training and 
-+ model evaluation. 
++ model initialization,
++ model training and
++ model evaluation.
 
-topicmodels requires you to prespecify the model input. This way, users can pre-process their data with no limits to get the best results. 
+topicmodels requires you to prespecify the model input. This way, users can pre-process their data with no limits to get the best results.
 
 
 A simple example
@@ -81,12 +81,10 @@ To check model convergence, we advice so have a closer look at the convergence o
 What models are supported in PyPF
 ---------------------------------
 
-PyPF is engineered with high modularity to integrate various text mining techniques. 
+PyPF is engineered with high modularity to integrate various text mining techniques.
 As of today, it features a rich collection of Poisson factorization based text mining models and already supports:
 
 + PF: Basic Poisson factorization topic modeling (also a version including covariates, named 'CPF')
 + SPF `Seeded Poisson factorization <https://arxiv.org/abs/2503.02741>`_ (also a version including covariates, named 'CSPF')
 + TBIP: `Text-based ideal points <https://aclanthology.org/2020.acl-main.475/>`_
 + STBS: `Structual text-based scaling model <https://arxiv.org/abs/2410.11897>`_
-
-

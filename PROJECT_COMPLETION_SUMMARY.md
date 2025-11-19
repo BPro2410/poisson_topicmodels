@@ -1,8 +1,8 @@
 # 🎉 TOPICMODELS PUBLICATION JOURNEY - COMPLETE
 
-**Project:** topicmodels - Python Package for Probabilistic Topic Modeling  
-**Status:** ✅ PUBLICATION READY (85-90%)  
-**Completion Date:** November 19, 2025  
+**Project:** topicmodels - Python Package for Probabilistic Topic Modeling
+**Status:** ✅ PUBLICATION READY (85-90%)
+**Completion Date:** November 19, 2025
 **Target Journals:** JOSS, JMLR
 
 ---
@@ -114,7 +114,7 @@
   - mypy type checker
   - Basic pre-commit checks
   - Ready: `pre-commit install && pre-commit run --all-files`
-  
+
 - [x] 4 Progressive Example Scripts (1100+ lines total)
   - **Example 1: Getting Started** (200+ lines)
     - Basic PF model introduction
@@ -123,21 +123,21 @@
     - Topic extraction
     - Reproducibility demonstration
     - Audience: Beginners
-    
+
   - **Example 2: SPF with Keywords** (250+ lines)
     - Domain-guided topic discovery
     - Seed words specification
     - Guided vs unsupervised comparison
     - Keyword effect visualization
     - Audience: Intermediate
-    
+
   - **Example 3: CPF with Covariates** (280+ lines)
     - Metadata-aware topic modeling
     - Covariate handling
     - Document-level attributes
     - Covariate effect analysis
     - Audience: Intermediate
-    
+
   - **Example 4: Advanced CSPF** (350+ lines)
     - Combined keywords + metadata
     - Model comparison (PF vs SPF vs CPF vs CSPF)
@@ -386,9 +386,9 @@ python examples/01_getting_started.py  # If needed
 
 ## 📞 Contact & Support
 
-**Repository:** https://github.com/BPro2410/topicmodels_package  
-**License:** MIT  
-**Python:** 3.11+  
+**Repository:** https://github.com/BPro2410/topicmodels_package
+**License:** MIT
+**Python:** 3.11+
 **Author:** Bernd Prostmaier
 
 ---

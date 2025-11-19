@@ -18,10 +18,12 @@ import scipy.sparse as sparse
 
 # Try to import CSPF, fall back gracefully if not available
 try:
-    from poisson_topicmodels import CSPF, CPF, PF, SPF
+    from poisson_topicmodels import CPF, CSPF, PF, SPF
+
     HAS_CSPF = True
 except ImportError:
     from topicmodels import CPF, PF, SPF
+
     HAS_CSPF = False
 
 # ============================================================================
@@ -48,9 +50,10 @@ vocab[20:25] = ["technology", "software", "computer", "digital", "innovation"]
 
 # Create covariates
 covariates = np.random.randn(D, C)
-covariates = 2 * (covariates - covariates.min(axis=0)) / (
-    covariates.max(axis=0) - covariates.min(axis=0)
-) - 1
+covariates = (
+    2 * (covariates - covariates.min(axis=0)) / (covariates.max(axis=0) - covariates.min(axis=0))
+    - 1
+)
 
 covariate_df = pd.DataFrame(
     covariates,

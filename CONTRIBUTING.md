@@ -84,17 +84,17 @@ Feature requests are welcome! Please open an issue with:
      ```bash
      black topicmodels tests
      ```
-   
+
    - **Import organization:** Use `isort`
      ```bash
      isort topicmodels tests
      ```
-   
+
    - **Linting:** Check with `flake8`
      ```bash
      flake8 topicmodels tests --max-line-length=100
      ```
-   
+
    - **Type checking:** Use `mypy` (where applicable)
      ```bash
      mypy topicmodels --ignore-missing-imports
@@ -104,32 +104,32 @@ Feature requests are welcome! Please open an issue with:
    - Add unit tests for new functionality in `tests/`
    - Aim for >80% code coverage on new code
    - Test edge cases and error conditions
-   
+
    **Example test file structure:**
    ```python
    """Tests for new_module."""
-   
+
    import pytest
    import numpy as np
    from topicmodels.models.new_module import NewModel
-   
-   
+
+
    class TestNewModel:
        """Test suite for NewModel."""
-       
+
        @pytest.fixture
        def sample_data(self):
            """Fixture: sample input data."""
            counts = sparse.random(10, 20, density=0.5, format='csr')
            vocab = np.array([f'word_{i}' for i in range(20)])
            return counts, vocab
-       
+
        def test_initialization(self, sample_data):
            """Test model initializes with valid inputs."""
            counts, vocab = sample_data
            model = NewModel(counts, vocab, param=5)
            assert model.param == 5
-       
+
        def test_invalid_param(self, sample_data):
            """Test model rejects invalid parameters."""
            counts, vocab = sample_data
@@ -183,7 +183,7 @@ def train_step(
     ------
     ValueError
         If num_steps <= 0 or lr <= 0.
-    
+
     Examples
     --------
     >>> model = PF(counts, vocab, num_topics=10, batch_size=128)
@@ -335,7 +335,7 @@ When implementing a new topic model:
 1. **Inherit from `NumpyroModel`:**
    ```python
    from topicmodels.models import NumpyroModel
-   
+
    class NewModel(NumpyroModel):
        """Documentation of your model."""
    ```
@@ -345,7 +345,7 @@ When implementing a new topic model:
    def _model(self, Y_batch, d_batch):
        """NumPyro model definition."""
        pass
-   
+
    def _guide(self, Y_batch, d_batch):
        """NumPyro variational guide."""
        pass

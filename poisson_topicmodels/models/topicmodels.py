@@ -52,7 +52,6 @@ def get_base_class(model):
 
 
 class topicmodels:
-
     # inherits model() and guide() upon initialization
     def __new__(cls, model, *args, **kwargs):
         """

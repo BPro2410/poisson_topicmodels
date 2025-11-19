@@ -15,4 +15,3 @@ providing implementations of several state-of-the-art topic models:
 __version__ = "0.1.0"
 __author__ = "Bernd Prostmaier, Bettina Grün, Paul Hofmarcher"
 __email__ = "b.prostmaier@icloud.com"
-

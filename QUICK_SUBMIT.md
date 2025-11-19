@@ -1,7 +1,7 @@
 # ⚡ QUICK START: Submit Your Paper
 
-**Status:** ✅ READY NOW  
-**Publication Readiness:** 85-90%  
+**Status:** ✅ READY NOW
+**Publication Readiness:** 85-90%
 **Recommended Journal:** JOSS (Journal of Open Source Software)
 
 ---
@@ -47,13 +47,13 @@ python -c "from poisson_topicmodels import PF, SPF, CPF, CSPF; print('✅ Ready'
 ## 📝 Ready-to-Use Abstract
 
 ```
-Topicmodels is a comprehensive Python package for probabilistic topic 
-modeling using JAX and NumPyro. It implements Poisson Factorization (PF) 
-and three variants: Seeded PF (guided with keywords), Covariate PF 
-(with document metadata), and their combination (CSPF). The package 
-provides GPU-accelerated inference, full type hints, 150+ tests, and 
-4 progressive examples. We demonstrate how to use each model through 
-working examples that span from beginner to advanced topics. The package 
+Topicmodels is a comprehensive Python package for probabilistic topic
+modeling using JAX and NumPyro. It implements Poisson Factorization (PF)
+and three variants: Seeded PF (guided with keywords), Covariate PF
+(with document metadata), and their combination (CSPF). The package
+provides GPU-accelerated inference, full type hints, 150+ tests, and
+4 progressive examples. We demonstrate how to use each model through
+working examples that span from beginner to advanced topics. The package
 is production-ready with comprehensive documentation and CI/CD pipeline.
 ```
 

@@ -14,8 +14,8 @@ python examples/01_getting_started.py
 
 ### Example 1: Getting Started (`01_getting_started.py`)
 
-**Level:** Beginner  
-**Duration:** ~5 minutes  
+**Level:** Beginner
+**Duration:** ~5 minutes
 **Topics Covered:**
 - Loading/creating document-term matrices
 - Initializing a Poisson Factorization (PF) model
@@ -37,8 +37,8 @@ python examples/01_getting_started.py
 
 ### Example 2: Seeded Poisson Factorization (`02_spf_keywords.py`)
 
-**Level:** Intermediate  
-**Duration:** ~10 minutes  
+**Level:** Intermediate
+**Duration:** ~10 minutes
 **Topics Covered:**
 - Defining domain-specific vocabulary
 - Creating seed words (keywords) for topics
@@ -59,8 +59,8 @@ python examples/01_getting_started.py
 
 ### Example 3: Covariate Modeling (`03_cpf_covariates.py`)
 
-**Level:** Intermediate  
-**Duration:** ~10 minutes  
+**Level:** Intermediate
+**Duration:** ~10 minutes
 **Topics Covered:**
 - Working with document-level covariates
 - Using pandas DataFrames for covariates
@@ -82,8 +82,8 @@ python examples/01_getting_started.py
 
 ### Example 4: Advanced Combined Modeling (`04_advanced_cspf.py`)
 
-**Level:** Advanced  
-**Duration:** ~15 minutes  
+**Level:** Advanced
+**Duration:** ~15 minutes
 **Topics Covered:**
 - Combining keywords AND covariates (CSPF)
 - Comprehensive model comparison (PF vs SPF vs CPF vs CSPF)

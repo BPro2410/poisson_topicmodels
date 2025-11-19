@@ -1,6 +1,6 @@
 # 🚀 SUBMISSION QUICK START
 
-**Status:** Package Ready for Publication  
+**Status:** Package Ready for Publication
 **Publication Readiness:** 85-90%
 
 ---
@@ -100,13 +100,13 @@ echo "✓ All checks passed - Ready for submission!"
 ## 📝 Sample Abstract
 
 ```
-Topicmodels is a comprehensive Python package for probabilistic topic 
-modeling using Poisson Factorization (PF) and its variants. The package 
-implements both unsupervised and supervised topic discovery methods, 
-including Seeded PF (with keyword priors), Covariate PF (with document 
-metadata), and their combination (CSPF). Built on JAX and NumPyro, 
-topicmodels provides efficient GPU-accelerated inference with full type 
-hints, 150+ tests, and reproducible results. We include 4 progressive 
+Topicmodels is a comprehensive Python package for probabilistic topic
+modeling using Poisson Factorization (PF) and its variants. The package
+implements both unsupervised and supervised topic discovery methods,
+including Seeded PF (with keyword priors), Covariate PF (with document
+metadata), and their combination (CSPF). Built on JAX and NumPyro,
+topicmodels provides efficient GPU-accelerated inference with full type
+hints, 150+ tests, and reproducible results. We include 4 progressive
 examples demonstrating all models and best practices.
 ```
 
@@ -174,7 +174,7 @@ Before submitting, verify repository has:
 ```
 Dear Editor,
 
-I am submitting the paper "Topicmodels: Flexible Topic Modeling with 
+I am submitting the paper "Topicmodels: Flexible Topic Modeling with
 Probabilistic Inference" for consideration in [Journal Name].
 
 **Software Contributions:**
@@ -276,10 +276,10 @@ Sincerely,
 
 ## 📞 Key Contact Information
 
-**Repository Owner:** BPro2410  
-**Repository:** topicmodels_package  
-**License:** MIT  
-**Python:** 3.11+  
+**Repository Owner:** BPro2410
+**Repository:** topicmodels_package
+**License:** MIT
+**Python:** 3.11+
 **Dependencies:** JAX, NumPyro, NumPy, SciPy, pandas
 
 ---
@@ -317,8 +317,8 @@ This package meets or exceeds publication standards for:
 
 ---
 
-**Package Status: PUBLICATION READY** ✅  
-**Recommended Submission Timeline:** Next 1-2 days  
-**Expected Time to Publication:** 2-4 months  
+**Package Status: PUBLICATION READY** ✅
+**Recommended Submission Timeline:** Next 1-2 days
+**Expected Time to Publication:** 2-4 months
 
 Good luck with your submission! 🚀

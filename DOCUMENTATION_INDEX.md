@@ -1,8 +1,8 @@
 # 📑 TOPICMODELS IMPLEMENTATION INDEX
 
-**Project:** topicmodels - Probabilistic Topic Modeling with Bayesian Inference  
-**Status:** Phase 1 ✅ | Phase 2 ✅ | Phase 3 🔜 | Phase 4 📋  
-**Publication Readiness:** 65-70%  
+**Project:** topicmodels - Probabilistic Topic Modeling with Bayesian Inference
+**Status:** Phase 1 ✅ | Phase 2 ✅ | Phase 3 🔜 | Phase 4 📋
+**Publication Readiness:** 65-70%
 **Last Updated:** November 19, 2025
 
 ---
@@ -244,7 +244,7 @@ import scipy.sparse as sparse
 
 class PF(NumpyroModel):
     def __init__(
-        self, 
+        self,
         counts: sparse.csr_matrix,
         vocab: np.ndarray,
         num_topics: int,
@@ -266,7 +266,7 @@ class PF(NumpyroModel):
 def test_model_invalid_input_raises_error(self):
     """Test that invalid input raises appropriate error."""
     invalid_input = ...
-    
+
     with pytest.raises(ValueError):
         model = PF(invalid_input, ...)
 ```
@@ -366,9 +366,9 @@ mypy packages/ --ignore-missing-imports
 
 ---
 
-**Documentation Index Last Updated:** November 19, 2025  
-**Current Status:** Phase 2 Complete ✅  
-**Next Phase:** Phase 3 (Code Quality) 🔜  
+**Documentation Index Last Updated:** November 19, 2025
+**Current Status:** Phase 2 Complete ✅
+**Next Phase:** Phase 3 (Code Quality) 🔜
 **Ready to Begin:** Yes ✅
 
 ---

@@ -15,6 +15,7 @@ Requirements:
 import numpy as np
 import pandas as pd
 import scipy.sparse as sparse
+
 from poisson_topicmodels import CPF
 
 # ============================================================================
@@ -42,7 +43,10 @@ vocab = np.array([f"word_{i}" for i in range(V)])
 covariates = np.random.randn(D, C)
 
 # Normalize covariates to [-1, 1] for interpretability
-covariates = 2 * (covariates - covariates.min(axis=0)) / (covariates.max(axis=0) - covariates.min(axis=0)) - 1
+covariates = (
+    2 * (covariates - covariates.min(axis=0)) / (covariates.max(axis=0) - covariates.min(axis=0))
+    - 1
+)
 
 print(f"✓ Created {D} documents with {V} vocabulary terms")
 print(f"✓ Added {C} document-level covariates")

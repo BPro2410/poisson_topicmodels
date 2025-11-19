@@ -1,5 +1,5 @@
 # --- Import topicmodels package ---
-from packages.models import topicmodels, PF, SPF
+from packages.models import PF, SPF, topicmodels
 
 #######################
 
@@ -7,7 +7,7 @@ from packages.models import topicmodels, PF, SPF
 
 #######################
 
- 
+
 
 """
 
@@ -21,14 +21,12 @@ To Dos:
 
 """
 
- 
+
 
 import numpy as np
 import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer
 import scipy.sparse as sparse
-
- 
+from sklearn.feature_extraction.text import CountVectorizer
 
 #######
 
@@ -36,7 +34,7 @@ import scipy.sparse as sparse
 
 #######
 
- 
+
 
 # SPF Versuch1
 
@@ -44,7 +42,7 @@ import scipy.sparse as sparse
 # ---- Load data ----
 df1 = pd.read_csv("data/10k_amazon.csv")
 
- 
+
 
 # ---- Define keywords ----
 pets = ["dog","cat", "litter", "cats", "dogs", "food", "box", "collar", "water", "pet"]
@@ -58,7 +56,7 @@ keywords = {"pet supplies": pets, "toys games": toys, "beauty": beauty, "baby pr
 
             "health personal care": health, "grocery gourmet food": grocery}
 
- 
+
 
 # --- Create corpus ---
 cv = CountVectorizer(stop_words='english', min_df = 2)
@@ -76,7 +74,7 @@ print("test1")
 
 # ####################
 
- 
+
 
 # ---- Initialize TM package ----
 tm1 = topicmodels("SPF", counts, vocab, keywords, residual_topics = 0, batch_size = 1024)
@@ -112,14 +110,14 @@ print("PF TEST")
 
 # ###############
 
- 
+
 
 tm2 = topicmodels("PF", counts, vocab, num_topics = 10, batch_size = 1024)
 estimated_params = tm2.train_step(num_steps = 100, lr =0.01)
 topics, e_theta = tm2.return_topics()
 betas = tm2.return_beta()
 
- 
+
 
 # #################
 
@@ -127,7 +125,7 @@ betas = tm2.return_beta()
 
 # #################
 
- 
+
 
 category0 = ["grocery gourmet food", "toys games"]
 covariable = df1['Cat1'].apply(lambda x: 0 if x in category0 else 1)
@@ -141,7 +139,7 @@ estimated_params = tm3.train_step(num_steps = 1000, lr = 0.01)
 topics, e_theta = tm3.return_topics()
 betas = tm3.return_beta()
 
- 
+
 
 # ##############
 
@@ -149,7 +147,7 @@ betas = tm3.return_beta()
 
 # ##############
 
- 
+
 
 # tm3 = topicmodels("CPF", counts, vocab, num_topics = 5, batch_size = 1024, X_design_matrix = X_design_matrix)
 # svi_batch, svi_state = tm3.train_step(num_steps = 100, lr = 0.01)
@@ -165,13 +163,14 @@ betas = tm3.return_beta()
 
 ##############
 
- 
+
 
 df1['speaker'] = np.random.choice(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'], size=len(df1), replace=True)
 tm4 = topicmodels("TBIP", counts, vocab, num_topics = 10, authors = df1.speaker, batch_size = 1024)
 print("HELLO")
 svi_batch, svi_sate, losses = tm4.train_step(num_steps = 1000, lr = 0.01)
 import matplotlib.pyplot as plt
+
 plt.plot(losses[800:])
 
 # estimated_params
@@ -181,5 +180,3 @@ plt.plot(losses[800:])
 #  self.author_map = jnp.unique(authors)
 
 #         self.author_indices = jnp.array(list(range(len(self.author_map))))
-
-      

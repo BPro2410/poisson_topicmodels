@@ -11,6 +11,7 @@ from topicmodels import CPF, PF, SPF
 
 try:
     from topicmodels import CSPF
+
     HAS_CSPF = True
 except ImportError:
     HAS_CSPF = False
@@ -280,9 +281,7 @@ class TestSPFOutputExtraction:
         assert beta.shape[0] == 150  # V words
         assert beta.shape[1] == 4  # K topics
 
-    def test_spf_return_top_words_per_topic(
-        self, training_dtm, training_vocab, training_keywords
-    ):
+    def test_spf_return_top_words_per_topic(self, training_dtm, training_vocab, training_keywords):
         """SPF should extract top words per topic."""
         model = SPF(
             training_dtm,

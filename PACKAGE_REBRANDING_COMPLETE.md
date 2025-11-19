@@ -1,7 +1,7 @@
 # ✅ PACKAGE REBRANDING COMPLETE
 
-**Date:** November 19, 2025  
-**Status:** Package successfully renamed to `poisson-topicmodels`  
+**Date:** November 19, 2025
+**Status:** Package successfully renamed to `poisson-topicmodels`
 **Impact:** Ready for publication on PyPI
 
 ---
@@ -10,7 +10,7 @@
 
 The package has been successfully rebranded from `topicmodels` to `poisson-topicmodels` across the entire codebase.
 
-**PyPI Package Name:** `poisson-topicmodels` (install with: `pip install poisson-topicmodels`)  
+**PyPI Package Name:** `poisson-topicmodels` (install with: `pip install poisson-topicmodels`)
 **Python Import Name:** `poisson_topicmodels` (import with: `from poisson_topicmodels import PF, SPF, CPF, CSPF, TBIP, ETM`)
 
 ---

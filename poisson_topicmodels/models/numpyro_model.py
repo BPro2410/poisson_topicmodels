@@ -54,9 +54,7 @@ class NumpyroModel(ABC):
         """Define the variational guide."""
         pass
 
-    def _get_batch(
-        self, rng: jax.Array, Y: sparse.csr_matrix
-    ) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    def _get_batch(self, rng: jax.Array, Y: sparse.csr_matrix) -> Tuple[jnp.ndarray, jnp.ndarray]:
         """
         Helper function to obtain a batch of data, convert from scipy.sparse to jax.numpy.array.
 

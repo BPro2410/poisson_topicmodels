@@ -1,7 +1,7 @@
 # Publication Readiness Audit: topicmodels Package
 
-**Prepared for:** JOSS / JMLR Submission  
-**Date:** November 2025  
+**Prepared for:** JOSS / JMLR Submission
+**Date:** November 2025
 **Auditor:** Comprehensive Repository Assessment
 
 ---
@@ -615,7 +615,7 @@ class TestPFInitialization:
         """Test model initializes with valid inputs."""
         counts, vocab = sample_data
         model = PF(counts, vocab, num_topics=5, batch_size=32)
-        
+
         assert model.K == 5
         assert model.D == 3
         assert model.V == 4

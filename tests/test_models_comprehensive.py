@@ -12,6 +12,7 @@ from topicmodels import CPF, PF, SPF
 
 try:
     from topicmodels import CSPF
+
     HAS_CSPF = True
 except ImportError:
     HAS_CSPF = False
@@ -183,9 +184,7 @@ class TestSPFValidation:
                 batch_size=5,
             )
 
-    def test_spf_batch_size_exceeds_docs_raises_error(
-        self, small_dtm, small_vocab, keywords_dict
-    ):
+    def test_spf_batch_size_exceeds_docs_raises_error(self, small_dtm, small_vocab, keywords_dict):
         """Batch size > documents should raise error."""
         with pytest.raises(ValueError):
             SPF(
@@ -196,9 +195,7 @@ class TestSPFValidation:
                 batch_size=100,  # Greater than D=20
             )
 
-    def test_spf_negative_batch_size_raises_error(
-        self, small_dtm, small_vocab, keywords_dict
-    ):
+    def test_spf_negative_batch_size_raises_error(self, small_dtm, small_vocab, keywords_dict):
         """Negative batch size should raise error."""
         with pytest.raises(ValueError):
             SPF(
@@ -209,9 +206,7 @@ class TestSPFValidation:
                 batch_size=-1,
             )
 
-    def test_spf_zero_batch_size_raises_error(
-        self, small_dtm, small_vocab, keywords_dict
-    ):
+    def test_spf_zero_batch_size_raises_error(self, small_dtm, small_vocab, keywords_dict):
         """Zero batch size should raise error."""
         with pytest.raises(ValueError):
             SPF(
@@ -222,9 +217,7 @@ class TestSPFValidation:
                 batch_size=0,
             )
 
-    def test_spf_negative_residual_topics_raises_error(
-        self, small_dtm, small_vocab, keywords_dict
-    ):
+    def test_spf_negative_residual_topics_raises_error(self, small_dtm, small_vocab, keywords_dict):
         """Negative residual topics should raise error."""
         with pytest.raises(ValueError):
             SPF(
@@ -270,9 +263,7 @@ class TestCPFInitialization:
         assert model.D == 20
         assert model.C == 1
 
-    def test_cpf_with_dataframe_covariates(
-        self, small_dtm, small_vocab, covariates_df
-    ):
+    def test_cpf_with_dataframe_covariates(self, small_dtm, small_vocab, covariates_df):
         """CPF should accept DataFrame covariates."""
         model = CPF(
             small_dtm,
@@ -283,9 +274,7 @@ class TestCPFInitialization:
         )
         assert model.C == 3
 
-    def test_cpf_stores_covariate_data(
-        self, small_dtm, small_vocab, covariates_data
-    ):
+    def test_cpf_stores_covariate_data(self, small_dtm, small_vocab, covariates_data):
         """CPF should store covariate data."""
         model = CPF(
             small_dtm,
@@ -313,9 +302,7 @@ class TestCPFValidation:
                 X_design_matrix=covariates_data,
             )
 
-    def test_cpf_mismatched_covariates_shape_raises_error(
-        self, small_dtm, small_vocab
-    ):
+    def test_cpf_mismatched_covariates_shape_raises_error(self, small_dtm, small_vocab):
         """Covariates with wrong number of rows should raise error."""
         wrong_covariates = np.random.randn(10, 3)  # D=10 != 20
         with pytest.raises(ValueError):
@@ -430,9 +417,7 @@ class TestCSPFInitialization:
 class TestCSPFValidation:
     """Test CSPF input validation."""
 
-    def test_cspf_dense_matrix_raises_error(
-        self, small_vocab, keywords_dict, covariates_data
-    ):
+    def test_cspf_dense_matrix_raises_error(self, small_vocab, keywords_dict, covariates_data):
         """Dense counts matrix should raise TypeError."""
         dense = np.random.randn(20, 100).astype(np.float32)
         with pytest.raises(TypeError):
@@ -445,9 +430,7 @@ class TestCSPFValidation:
                 X_design_matrix=covariates_data,
             )
 
-    def test_cspf_non_dict_keywords_raises_error(
-        self, small_dtm, small_vocab, covariates_data
-    ):
+    def test_cspf_non_dict_keywords_raises_error(self, small_dtm, small_vocab, covariates_data):
         """Non-dict keywords should raise TypeError."""
         with pytest.raises(TypeError):
             CSPF(
@@ -459,9 +442,7 @@ class TestCSPFValidation:
                 X_design_matrix=covariates_data,
             )
 
-    def test_cspf_mismatched_covariates_raises_error(
-        self, small_dtm, small_vocab, keywords_dict
-    ):
+    def test_cspf_mismatched_covariates_raises_error(self, small_dtm, small_vocab, keywords_dict):
         """Covariates with wrong shape should raise error."""
         wrong_covariates = np.random.randn(10, 3)
         with pytest.raises(ValueError):

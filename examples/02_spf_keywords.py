@@ -13,6 +13,7 @@ Requirements:
 
 import numpy as np
 import scipy.sparse as sparse
+
 from poisson_topicmodels import SPF
 
 # ============================================================================

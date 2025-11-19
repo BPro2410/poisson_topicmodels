@@ -11,7 +11,7 @@ Poisson factorization (PF) is a powerful statistical tool used for modeling coun
 
     P(X = k) = \frac{\lambda^k  e^{-\lambda}}{k!}
 
-where :math:`\lambda` is the average number of occurrences within the interval, :math:`k` is the number of occurrences, :math:`e` is the base of the natural logarithm, and :math:`k!` is the factorial of :math:`k`. 
+where :math:`\lambda` is the average number of occurrences within the interval, :math:`k` is the number of occurrences, :math:`e` is the base of the natural logarithm, and :math:`k!` is the factorial of :math:`k`.
 
 Poisson factorization extends the use of the Poisson distribution by modeling a matrix of count data, often referred to as the frequency data matrix. This matrix can represent various types of data, such as word frequencies in documents or user activity in online platforms.
 

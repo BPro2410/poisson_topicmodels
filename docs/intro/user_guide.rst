@@ -2,15 +2,15 @@
 User Guide
 ==========
 
-This guide provides a gentle introduction to the functionality of ``topicmodels``. topicmodels is designed as an easy-to-use Python library for a general audience of practitioners that 
-are interested in applying text mining techniques to their own text analysis tasks. 
-The workflow for all text mining tasks with topicmodels can be divided in three steps: 
+This guide provides a gentle introduction to the functionality of ``topicmodels``. topicmodels is designed as an easy-to-use Python library for a general audience of practitioners that
+are interested in applying text mining techniques to their own text analysis tasks.
+The workflow for all text mining tasks with topicmodels can be divided in three steps:
 
-+ model initialization, 
-+ model training and 
-+ model evaluation. 
++ model initialization,
++ model training and
++ model evaluation.
 
-topicmodels requires you to prespecify the model input. This way, users can pre-process their data with no limits to get the best results. 
+topicmodels requires you to prespecify the model input. This way, users can pre-process their data with no limits to get the best results.
 
 Prerequisites
 ----------------

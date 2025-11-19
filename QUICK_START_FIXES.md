@@ -136,7 +136,7 @@ mv packages/utils/* topicmodels/utils/
 
 # 4. Create __init__.py files
 touch topicmodels/__init__.py
-touch topicmodels/models/__init__.py  
+touch topicmodels/models/__init__.py
 touch topicmodels/utils/__init__.py
 
 # 5. Remove old structure
@@ -193,7 +193,7 @@ __all__ = [
 ]
 ```
 
-**Verify:** 
+**Verify:**
 ```bash
 python -c "from topicmodels import PF, SPF, CPF; print('All imports work')"
 ```
@@ -224,31 +224,31 @@ def sample_data():
 
 class TestPFModel:
     """Test Poisson Factorization model."""
-    
+
     def test_pf_initialization(self, sample_data):
         """Test PF model initializes correctly."""
         counts, vocab = sample_data
         model = PF(counts, vocab, num_topics=5, batch_size=4)
-        
+
         assert model.K == 5
         assert model.D == 10
         assert model.V == 20
         assert model.batch_size == 4
-    
+
     def test_pf_invalid_params(self, sample_data):
         """Test PF rejects invalid parameters."""
         counts, vocab = sample_data
-        
+
         with pytest.raises((ValueError, AssertionError)):
             PF(counts, vocab, num_topics=0, batch_size=4)
-        
+
         with pytest.raises((ValueError, AssertionError)):
             PF(counts, vocab, num_topics=5, batch_size=0)
 
 
 class TestSPFModel:
     """Test Seeded Poisson Factorization model."""
-    
+
     def test_spf_initialization(self, sample_data):
         """Test SPF model initializes correctly."""
         counts, vocab = sample_data
@@ -256,7 +256,7 @@ class TestSPFModel:
             'topic1': ['word_0', 'word_1', 'word_2'],
             'topic2': ['word_10', 'word_11', 'word_12'],
         }
-        
+
         model = SPF(counts, vocab, keywords, residual_topics=1, batch_size=4)
         assert model.K == 3  # 2 seed topics + 1 residual
         assert model.D == 10
@@ -268,7 +268,7 @@ if __name__ == '__main__':
 
 Create: `tests/__init__.py` (empty file)
 
-**Verify:** 
+**Verify:**
 ```bash
 cd tests
 pytest test_models.py -v
@@ -312,28 +312,28 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.11', '3.12', '3.13']
-    
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -e ".[dev]"
-    
+
     - name: Lint with flake8
       run: |
         flake8 topicmodels tests --count --select=E9,F63,F7,F82 --show-source --statistics
-    
+
     - name: Type check with mypy
       run: |
         mypy topicmodels --ignore-missing-imports
-    
+
     - name: Run tests with pytest
       run: |
         pytest tests/ -v --cov=topicmodels --cov-report=term-only
@@ -355,7 +355,7 @@ import scipy.sparse as sparse
 
 class NumpyroModel(ABC):
     """Abstract base class for probabilistic models."""
-    
+
     def __init__(
         self,
         counts: sparse.csr_matrix,
@@ -364,7 +364,7 @@ class NumpyroModel(ABC):
     ) -> None:
         """Initialize model."""
         # ... existing code ...
-    
+
     def train_step(
         self,
         num_steps: int,

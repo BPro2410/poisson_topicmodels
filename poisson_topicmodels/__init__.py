@@ -15,7 +15,7 @@ Example:
     >>> model.fit(num_epochs=100)
 """
 
-from .models import CPF, CSPF, ETM, Metrics, NumpyroModel, PF, SPF, TBIP, topicmodels
+from .models import CPF, CSPF, ETM, PF, SPF, TBIP, Metrics, NumpyroModel, topicmodels
 
 __all__ = ["PF", "SPF", "CPF", "CSPF", "TBIP", "ETM", "Metrics", "NumpyroModel", "topicmodels"]
 
