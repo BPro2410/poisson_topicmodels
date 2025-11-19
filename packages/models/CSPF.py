@@ -1,3 +1,4 @@
+from typing import Dict, List, Tuple, Any, Optional
 import jax
 from jax import random, jit
 import jax.numpy as jnp
@@ -7,66 +8,176 @@ from numpyro.distributions import constraints
 import jax.nn as jnn
 import numpy as np
 import pandas as pd
-
+import scipy.sparse as sparse
 
 # Abstract class - defining the minimum requirements for the probabilistic model
 from packages.models.numpyro_model import NumpyroModel
 
+
 # Create numpyro model
 class CSPF(NumpyroModel):
     """
-    Implementation of the Seeded Poisson Factorization (SPF) topic model including covariates.
-
-    CSPF allows to fit a guided topic model and estimate covariate effects that drive topic polarization.
+    Covariate Seeded Poisson Factorization (CSPF) topic model.
+    
+    Combines guided topic discovery with covariate effects. CSPF incorporates both
+    keyword priors for topic guidance and document-level covariates to capture how
+    topics vary with external variables.
+    
+    Parameters
+    ----------
+    counts : scipy.sparse.csr_matrix
+        Document-term matrix of shape (D, V) with word counts.
+    vocab : np.ndarray
+        Vocabulary array of shape (V,) containing word terms.
+    keywords : Dict[int, List[str]]
+        Dictionary mapping topic indices to lists of seed words.
+    residual_topics : int
+        Number of residual (unsupervised) topics. Must be >= 0.
+    batch_size : int
+        Mini-batch size for stochastic variational inference.
+    X_design_matrix : np.ndarray or pd.DataFrame
+        Document-level covariates of shape (D, C).
+        
+    Attributes
+    ----------
+    D : int
+        Number of documents.
+    V : int
+        Vocabulary size.
+    K : int
+        Total number of topics (seeded + residual).
+    C : int
+        Number of covariate features.
     """
 
-    def __init__(self, counts, vocab, keywords, residual_topics, batch_size, X_design_matrix):
+    def __init__(
+        self,
+        counts: sparse.csr_matrix,
+        vocab: np.ndarray,
+        keywords: Dict[int, List[str]],
+        residual_topics: int,
+        batch_size: int,
+        X_design_matrix: Optional[np.ndarray] = None,
+    ) -> None:
         """
-        Initialize the CSPF model.
+        Initialize the CSPF model with input validation.
         
         Parameters
         ----------
-        counts : numpy.ndarray
-            A 2D array representing the word counts in each document.
-        vocab : list
-            A list of vocabulary terms.
-        keywords : dict
-            A dictionary where keys are topics and values are lists of keywords.
+        counts : scipy.sparse.csr_matrix
+            Document-term matrix.
+        vocab : np.ndarray
+            Vocabulary array.
+        keywords : Dict[int, List[str]]
+            Seed words for guided topics.
         residual_topics : int
-            The number of residual topics.
+            Number of unsupervised topics.
         batch_size : int
-            The number of documents to be processed in each batch.
-        X_design_matrix : pandas.DataFrame
-            Design matrix for covariates.
+            Mini-batch size.
+        X_design_matrix : np.ndarray or pd.DataFrame, optional
+            Document-level covariates.
+            
+        Raises
+        ------
+        TypeError
+            If inputs have wrong types.
+        ValueError
+            If dimensions or content are invalid.
         """
+        super().__init__()
+        
+        # Input validation (similar to SPF and CPF)
+        if not sparse.issparse(counts):
+            raise TypeError(
+                f"counts must be a scipy sparse matrix, got {type(counts).__name__}"
+            )
+        
+        D, V = counts.shape
+        if D == 0 or V == 0:
+            raise ValueError(f"counts matrix is empty: shape ({D}, {V})")
+        
+        if vocab.shape[0] != V:
+            raise ValueError(
+                f"vocab size {vocab.shape[0]} != counts columns {V}"
+            )
+        
+        if not isinstance(keywords, dict):
+            raise TypeError(
+                f"keywords must be dict, got {type(keywords).__name__}"
+            )
+        
+        if residual_topics < 0:
+            raise ValueError(
+                f"residual_topics must be >= 0, got {residual_topics}"
+            )
+        
+        if batch_size <= 0 or batch_size > D:
+            raise ValueError(
+                f"batch_size must satisfy 0 < batch_size <= {D}, got {batch_size}"
+            )
+        
+        if X_design_matrix is not None:
+            if isinstance(X_design_matrix, pd.DataFrame):
+                X_design_matrix = X_design_matrix.values
+            
+            X_design_matrix = np.asarray(X_design_matrix)
+            if X_design_matrix.ndim != 2:
+                raise ValueError(
+                    f"covariates must be 2D, got shape {X_design_matrix.shape}"
+                )
+            if X_design_matrix.shape[0] != D:
+                raise ValueError(
+                    f"covariates has {X_design_matrix.shape[0]} rows, expected {D}"
+                )
+        
+        # Validate keywords
+        vocab_set = set(vocab)
+        for topic_id, words in keywords.items():
+            for word in words:
+                if word not in vocab_set:
+                    raise ValueError(
+                        f"Keyword '{word}' (topic {topic_id}) not in vocabulary"
+                    )
+
+        # Store validated inputs
         self.counts = counts
-        self.D = counts.shape[0]
-        self.V = counts.shape[1]
+        self.D = D
+        self.V = V
         self.vocab = vocab
-        self.K = residual_topics + len(keywords.keys())
-        kw_indices_topics = [(idx, list(vocab).index(keyword)) for idx, topic in enumerate(keywords.keys()) for keyword in keywords[topic] if keyword in vocab]
-        self.Tilde_V = len(kw_indices_topics)
-        self.kw_indices = tuple(zip(*kw_indices_topics))
-        self.batch_size = batch_size
-        self.X_design_matrix = jnp.array(X_design_matrix)
-        self.C = self.X_design_matrix.shape[1]
+        self.K = residual_topics + len(keywords)
         self.keywords = keywords
         self.residual_topics = residual_topics
-        self.covariates = list(X_design_matrix.columns)
+        self.batch_size = batch_size
+        
+        # Compute keyword indices
+        kw_indices_topics = [
+            (idx, list(vocab).index(keyword))
+            for idx, topic_id in enumerate(keywords.keys())
+            for keyword in keywords[topic_id]
+            if keyword in vocab
+        ]
+        self.Tilde_V = len(kw_indices_topics)
+        self.kw_indices = tuple(zip(*kw_indices_topics)) if kw_indices_topics else ((), ())
+        
+        # Covariates
+        self.X_design_matrix = jnp.array(X_design_matrix) if X_design_matrix is not None else jnp.ones((D, 1))
+        self.C = self.X_design_matrix.shape[1]
+        self.covariates = list(X_design_matrix.columns) if isinstance(X_design_matrix, pd.DataFrame) else [f"cov_{i}" for i in range(self.C)]
 
     # -- Model --
-    def _model(self, Y_batch, d_batch):
+    def _model(self, Y_batch: jnp.ndarray, d_batch: jnp.ndarray) -> None:
         """
-        Define the probabilistic model using NumPyro.
+        Define the probabilistic generative model using NumPyro.
+        
+        Combines seeded topics with covariate effects.
         
         Parameters
         ----------
-        Y_batch : numpy.ndarray
-            The observed word counts for the current batch.
-        d_batch : numpy.ndarray
-            Indices of documents in the current batch.
+        Y_batch : jnp.ndarray
+            Batch of observed word counts.
+        d_batch : jnp.ndarray
+            Document indices in batch.
         """
-
         with plate("k", size = self.K, dim = -2):
             with plate("k_v", size = self.V, dim = -1):
                 beta = sample("beta", dist.Gamma(.3,.3))
