@@ -1,4 +1,5 @@
-from gensim.models import Word2Vec, KeyedVectors
+from gensim.models import KeyedVectors, Word2Vec
+
 
 # Class for a memory-friendly iterator over the dataset
 class MemoryFriendlyFileIterator(object):
@@ -11,9 +12,18 @@ class MemoryFriendlyFileIterator(object):
 
 
 def create_word2vec_embedding_from_dataset(
-        dataset, dim_rho=300, min_count=1, sg=1,
-        workers=25, negative_samples=10, window_size=4, iters=50,
-        embedding_file_path=None, save_c_format_w2vec=False, debug_mode=False) -> KeyedVectors:
+    dataset,
+    dim_rho=300,
+    min_count=1,
+    sg=1,
+    workers=25,
+    negative_samples=10,
+    window_size=4,
+    iters=50,
+    embedding_file_path=None,
+    save_c_format_w2vec=False,
+    debug_mode=False,
+) -> KeyedVectors:
     """
     Creates a Word2Vec embedding from dataset file or a list of sentences.
     If a file path is given, the file must be composed
@@ -41,25 +51,31 @@ def create_word2vec_embedding_from_dataset(
         Example:
             { 'water': nd.array([0.024187922, 0.053684134, 0.034520667, ... ]) }
     """
-    assert isinstance(dataset, str) or isinstance(dataset, list), \
-        'dataset must be file path or list of sentences'
+    assert isinstance(dataset, str) or isinstance(
+        dataset, list
+    ), "dataset must be file path or list of sentences"
 
     if isinstance(dataset, str):
-        assert isinstance(embedding_file_path, str), \
-            'if dataset is a file path, an output embeddings file path must be given'
+        assert isinstance(
+            embedding_file_path, str
+        ), "if dataset is a file path, an output embeddings file path must be given"
 
     if save_c_format_w2vec:
-        assert isinstance(embedding_file_path, str), \
-            'if save_c_format_w2vec is True, an output embeddings file path must be given'
+        assert isinstance(
+            embedding_file_path, str
+        ), "if save_c_format_w2vec is True, an output embeddings file path must be given"
 
     if debug_mode:
-        print('Creating memory-friendly iterator...')
+        print("Creating memory-friendly iterator...")
 
-    sentences = MemoryFriendlyFileIterator(dataset) if isinstance(
-        dataset, str) else [document.split() for document in dataset]
+    sentences = (
+        MemoryFriendlyFileIterator(dataset)
+        if isinstance(dataset, str)
+        else [document.split() for document in dataset]
+    )
 
     if debug_mode:
-        print('Training Word2Vec model with dataset...')
+        print("Training Word2Vec model with dataset...")
 
     model = Word2Vec(
         sentences,
@@ -69,26 +85,26 @@ def create_word2vec_embedding_from_dataset(
         epochs=iters,
         workers=workers,
         negative=negative_samples,
-        window=window_size)
+        window=window_size,
+    )
 
     embeddings = model.wv
 
     if embedding_file_path is not None:
         if debug_mode:
-            print('Saving word-vector mappings to file...')
+            print("Saving word-vector mappings to file...")
 
         embeddings.save(embedding_file_path)
 
     if save_c_format_w2vec:
         if debug_mode:
-            print('Saving BIN/TXT original C Word2vec files...')
+            print("Saving BIN/TXT original C Word2vec files...")
 
-        embeddings.save_word2vec_format(
-            f'{embedding_file_path}.bin', binary=True)
-        embeddings.save_word2vec_format(
-            f'{embedding_file_path}.txt', binary=False)
+        embeddings.save_word2vec_format(f"{embedding_file_path}.bin", binary=True)
+        embeddings.save_word2vec_format(f"{embedding_file_path}.txt", binary=False)
 
     return embeddings
+
 
 def save_embeds(embeds, path):
     """
@@ -101,7 +117,8 @@ def save_embeds(embeds, path):
     Returns:
 
     """
-    embeds.save_word2vec_format(path, binary = True)
+    embeds.save_word2vec_format(path, binary=True)
+
 
 def load_embeds(path):
     """
@@ -115,4 +132,4 @@ def load_embeds(path):
 
     """
 
-    return KeyedVectors.load_word2vec_format(path, binary = True)
+    return KeyedVectors.load_word2vec_format(path, binary=True)
