@@ -9,7 +9,7 @@ import pandas as pd
 import scipy.sparse as sparse
 from sklearn.feature_extraction.text import CountVectorizer
 
-from packages.models import topicmodels
+from poisson_topicmodels import topicmodels
 
 # ---- Load data ----
 df1 = pd.read_csv("data/10k_amazon.csv")
@@ -111,7 +111,7 @@ estimated_params = tm4.train_step(num_steps = 1000, lr = 0.01)
 ### ETM TEST #
 ##############
 
-from packages.utils.utils import create_word2vec_embedding_from_dataset, load_embeds, save_embeds
+from poisson_topicmodels.utils.utils import create_word2vec_embedding_from_dataset, load_embeds, save_embeds
 
 # -- Create embeddings --
 # embeds = create_word2vec_embedding_from_dataset(list(df1["Text"]))

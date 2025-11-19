@@ -53,7 +53,7 @@ All models are accessible through direct imports:
 
 .. code-block:: python
 
-   from packages.models import PF
+   from poisson_topicmodels import PF
 
    model = PF(counts=counts, vocab=cv.get_feature_names_out(), num_topics=20, batch_size=128)
 

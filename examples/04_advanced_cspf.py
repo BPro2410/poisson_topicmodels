@@ -18,7 +18,7 @@ import scipy.sparse as sparse
 
 # Try to import CSPF, fall back gracefully if not available
 try:
-    from topicmodels import CSPF, CPF, PF, SPF
+    from poisson_topicmodels import CSPF, CPF, PF, SPF
     HAS_CSPF = True
 except ImportError:
     from topicmodels import CPF, PF, SPF

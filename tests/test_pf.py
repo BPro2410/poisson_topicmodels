@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import scipy.sparse as sparse
 
-from packages.models import PF
+from poisson_topicmodels import PF
 
 
 class TestPFInitialization:

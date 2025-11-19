@@ -13,7 +13,7 @@ Requirements:
 
 import numpy as np
 import scipy.sparse as sparse
-from topicmodels import PF
+from poisson_topicmodels import PF
 
 # ============================================================================
 # STEP 1: Create or Load Data

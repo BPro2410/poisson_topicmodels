@@ -42,7 +42,7 @@
 
 **user_guide.rst**
 - ✅ All PyPF references → topicmodels
-- ✅ Updated imports: `from PyPF import topicmodels` → `from packages.models import PF`
+- ✅ Updated imports: `from PyPF import topicmodels` → `from poisson_topicmodels import PF`
 - ✅ Updated code examples to use class-based API
 - ✅ Fixed grammar and clarity
 
@@ -86,7 +86,7 @@ from PyPF import topicmodels
 model = topicmodels("PF", counts, vocab, num_topics=10)
 
 # NEW (Class-based API - correct)
-from packages.models import PF
+from poisson_topicmodels import PF
 model = PF(counts=counts, vocab=vocab, num_topics=10, batch_size=100)
 ```
 

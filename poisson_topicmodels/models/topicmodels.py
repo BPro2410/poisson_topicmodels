@@ -5,12 +5,12 @@ from numpyro.infer import SVI, TraceMeanField_ELBO
 from optax import adam
 from tqdm import tqdm
 
-from packages.models.CPF import CPF
-from packages.models.CSPF import CSPF
-from packages.models.ETM import ETM
-from packages.models.PF import PF
-from packages.models.SPF import SPF
-from packages.models.TBIP import TBIP
+from .CPF import CPF
+from .CSPF import CSPF
+from .ETM import ETM
+from .PF import PF
+from .SPF import SPF
+from .TBIP import TBIP
 
 os.getcwd()
 

@@ -4,7 +4,7 @@
 
 import numpy as np
 import random
-from packages.models.topicmodels import topicmodels
+from poisson_topicmodels import topicmodels
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns

@@ -10,7 +10,7 @@ from numpyro import param, plate, sample
 from numpyro.distributions import constraints
 
 # Abstract class - defining the minimum requirements for the probabilistic model
-from packages.models.numpyro_model import NumpyroModel
+from .numpyro_model import NumpyroModel
 
 
 class PF(NumpyroModel):

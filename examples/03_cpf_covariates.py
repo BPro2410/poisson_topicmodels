@@ -15,7 +15,7 @@ Requirements:
 import numpy as np
 import pandas as pd
 import scipy.sparse as sparse
-from topicmodels import CPF
+from poisson_topicmodels import CPF
 
 # ============================================================================
 # STEP 1: Create Data with Covariates

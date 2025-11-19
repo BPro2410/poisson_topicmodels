@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Optional, Tuple
 
 import jax
-import jax.nn as jnn
 import jax.numpy as jnp
 import numpy as np
 import numpyro.distributions as dist
@@ -10,19 +9,21 @@ import scipy.sparse as sparse
 from jax import jit, random
 from numpyro import param, plate, sample
 from numpyro.distributions import constraints
+from numpyro.infer import SVI, TraceMeanField_ELBO
+from optax import adam
+from tqdm import tqdm
 
 # Abstract class - defining the minimum requirements for the probabilistic model
-from packages.models.numpyro_model import NumpyroModel
+from .numpyro_model import NumpyroModel
 
 
-# Create numpyro model
-class CSPF(NumpyroModel):
+class SPF(NumpyroModel):
     """
-    Covariate Seeded Poisson Factorization (CSPF) topic model.
+    Seeded Poisson Factorization (SPF) topic model.
 
-    Combines guided topic discovery with covariate effects. CSPF incorporates both
-    keyword priors for topic guidance and document-level covariates to capture how
-    topics vary with external variables.
+    Guided topic modeling with keyword priors. SPF allows researchers to incorporate
+    domain knowledge by specifying seed words for each topic, which increases the
+    topical prevalence of those words in the model.
 
     Parameters
     ----------
@@ -32,12 +33,12 @@ class CSPF(NumpyroModel):
         Vocabulary array of shape (V,) containing word terms.
     keywords : Dict[int, List[str]]
         Dictionary mapping topic indices to lists of seed words.
+        Example: {0: ['climate', 'environment'], 1: ['economy', 'trade']}
     residual_topics : int
         Number of residual (unsupervised) topics. Must be >= 0.
     batch_size : int
         Mini-batch size for stochastic variational inference.
-    X_design_matrix : np.ndarray or pd.DataFrame
-        Document-level covariates of shape (D, C).
+        Must satisfy 0 < batch_size <= D.
 
     Attributes
     ----------
@@ -47,8 +48,28 @@ class CSPF(NumpyroModel):
         Vocabulary size.
     K : int
         Total number of topics (seeded + residual).
-    C : int
-        Number of covariate features.
+    counts : scipy.sparse.csr_matrix
+        Document-term matrix.
+    vocab : np.ndarray
+        Vocabulary array.
+    keywords : Dict[int, List[str]]
+        Seed words for guided topics.
+    residual_topics : int
+        Number of unsupervised topics.
+
+    Examples
+    --------
+    >>> from scipy.sparse import random
+    >>> import numpy as np
+    >>> from topicmodels import SPF
+    >>> counts = random(100, 500, density=0.01, format='csr')
+    >>> vocab = np.array([f'word_{i}' for i in range(500)])
+    >>> keywords = {
+    ...     0: ['word_1', 'word_2', 'word_3'],
+    ...     1: ['word_10', 'word_11', 'word_12'],
+    ... }
+    >>> model = SPF(counts, vocab, keywords, residual_topics=5, batch_size=32)
+    >>> params = model.train_step(num_steps=100, lr=0.01, random_seed=42)
     """
 
     def __init__(
@@ -58,10 +79,9 @@ class CSPF(NumpyroModel):
         keywords: Dict[int, List[str]],
         residual_topics: int,
         batch_size: int,
-        X_design_matrix: Optional[np.ndarray] = None,
     ) -> None:
         """
-        Initialize the CSPF model with input validation.
+        Initialize the SPF model with input validation.
 
         Parameters
         ----------
@@ -70,24 +90,22 @@ class CSPF(NumpyroModel):
         vocab : np.ndarray
             Vocabulary array.
         keywords : Dict[int, List[str]]
-            Seed words for guided topics.
+            Seed words for each seeded topic.
         residual_topics : int
             Number of unsupervised topics.
         batch_size : int
             Mini-batch size.
-        X_design_matrix : np.ndarray or pd.DataFrame, optional
-            Document-level covariates.
 
         Raises
         ------
         TypeError
-            If inputs have wrong types.
+            If counts is not sparse or keywords is not dict.
         ValueError
-            If dimensions or content are invalid.
+            If dimensions are invalid or keywords contain unknown terms.
         """
         super().__init__()
 
-        # Input validation (similar to SPF and CPF)
+        # Input validation
         if not sparse.issparse(counts):
             raise TypeError(f"counts must be a scipy sparse matrix, got {type(counts).__name__}")
 
@@ -107,17 +125,7 @@ class CSPF(NumpyroModel):
         if batch_size <= 0 or batch_size > D:
             raise ValueError(f"batch_size must satisfy 0 < batch_size <= {D}, got {batch_size}")
 
-        if X_design_matrix is not None:
-            if isinstance(X_design_matrix, pd.DataFrame):
-                X_design_matrix = X_design_matrix.values
-
-            X_design_matrix = np.asarray(X_design_matrix)
-            if X_design_matrix.ndim != 2:
-                raise ValueError(f"covariates must be 2D, got shape {X_design_matrix.shape}")
-            if X_design_matrix.shape[0] != D:
-                raise ValueError(f"covariates has {X_design_matrix.shape[0]} rows, expected {D}")
-
-        # Validate keywords
+        # Validate keywords are in vocabulary
         vocab_set = set(vocab)
         for topic_id, words in keywords.items():
             for word in words:
@@ -126,13 +134,12 @@ class CSPF(NumpyroModel):
 
         # Store validated inputs
         self.counts = counts
-        self.D = D
         self.V = V
+        self.D = D
         self.vocab = vocab
+        self.residual_topics = residual_topics
         self.K = residual_topics + len(keywords)
         self.keywords = keywords
-        self.residual_topics = residual_topics
-        self.batch_size = batch_size
 
         # Compute keyword indices
         kw_indices_topics = [
@@ -143,70 +150,51 @@ class CSPF(NumpyroModel):
         ]
         self.Tilde_V = len(kw_indices_topics)
         self.kw_indices = tuple(zip(*kw_indices_topics)) if kw_indices_topics else ((), ())
+        self.batch_size = batch_size
 
-        # Covariates
-        self.X_design_matrix = (
-            jnp.array(X_design_matrix) if X_design_matrix is not None else jnp.ones((D, 1))
-        )
-        self.C = self.X_design_matrix.shape[1]
-        self.covariates = (
-            list(X_design_matrix.columns)
-            if isinstance(X_design_matrix, pd.DataFrame)
-            else [f"cov_{i}" for i in range(self.C)]
-        )
-
-    # -- Model --
     def _model(self, Y_batch: jnp.ndarray, d_batch: jnp.ndarray) -> None:
         """
         Define the probabilistic generative model using NumPyro.
 
-        Combines seeded topics with covariate effects.
+        Model structure:
+        - Beta (K x V): topic-word distributions with keyword boosts
+        - Beta_tilde: additional weights for seeded words
+        - Theta (D x K): document-topic distributions
+        - Y_batch (batch_size x V): observed word counts
 
         Parameters
         ----------
         Y_batch : jnp.ndarray
-            Batch of observed word counts.
+            Batch of observed word counts (batch_size, V).
         d_batch : jnp.ndarray
-            Document indices in batch.
+            Document indices in batch (batch_size,).
         """
+
+        # Topic-word distributions: Beta ~ Gamma(0.3, 0.3)
         with plate("k", size=self.K, dim=-2):
             with plate("k_v", size=self.V, dim=-1):
                 beta = sample("beta", dist.Gamma(0.3, 0.3))
 
+        # Boost for seed words: Beta_tilde ~ Gamma(1, 0.3)
         with plate("tilde_v", size=self.Tilde_V):
             beta_tilde = sample("beta_tilde", dist.Gamma(1.0, 0.3))
 
-        # Update beta
+        # Add seed word boosts to beta
         beta = beta.at[self.kw_indices].add(beta_tilde)
 
-        # hier covariates
-        with plate("c", size=self.C):
-            zeta = sample("zeta", dist.Normal(0.0, 1.0))
-            rho = sample("rho", dist.Gamma(0.3, 1.0))
-            omega = sample("omega", dist.Gamma(0.3, rho))
-
-        with plate("c", size=self.C, dim=-2):
-            with plate("c_k", size=self.K, dim=-1):
-                lambda_ = sample(
-                    "lambda",
-                    dist.Normal(jnp.tile(zeta, (self.K, 1)).T, jnp.tile(omega, (self.K, 1)).T),
-                )
-
-        a_theta_S = jax.nn.softplus(jnp.matmul(self.X_design_matrix, lambda_))[d_batch]
-
-        # ACHTUNG: Hier haben wir eine subsample_size wegen der batch size!
+        # Document-topic distributions: Theta ~ Gamma(0.3, 0.3)
         with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
             with plate("d_k", size=self.K, dim=-1):
-                theta = sample("theta", dist.Gamma(a_theta_S, 0.3))
+                theta = sample("theta", dist.Gamma(0.3, 0.3))
 
-            # ACHTUNG: P = muss eingerückt sein in der d plate - ich weiß aber nicht genau warum das so ist
+            # Poisson rate parameter
             P = jnp.matmul(theta, beta)
 
-            with plate("d_v", size=self.V, dim=-1):
+            # Word counts likelihood
+            with plate("v", size=self.V, dim=-1):
                 sample("Y_batch", dist.Poisson(P), obs=Y_batch)
 
-    # -- Guide, i.e. variational family --
-    def _guide(self, Y_batch, d_batch):
+    def _guide(self, Y_batch: jnp.ndarray, d_batch: jnp.ndarray) -> None:
         """
         Define the variational guide for the model.
 
@@ -217,6 +205,7 @@ class CSPF(NumpyroModel):
         d_batch : numpy.ndarray
             Indices of documents in the current batch.
         """
+
         # Define variational parameter
         a_beta = param(
             "beta_shape", init_value=jnp.ones([self.K, self.V]), constraint=constraints.positive
@@ -226,7 +215,6 @@ class CSPF(NumpyroModel):
             init_value=jnp.ones([self.K, self.V]) * self.D / 1000 * 2,
             constraint=constraints.positive,
         )
-
         a_theta = param(
             "theta_shape", init_value=jnp.ones([self.D, self.K]), constraint=constraints.positive
         )
@@ -235,7 +223,6 @@ class CSPF(NumpyroModel):
             init_value=jnp.ones([self.D, self.K]) * self.D / 1000,
             constraint=constraints.positive,
         )
-
         a_beta_tilde = param(
             "beta_tilde_shape",
             init_value=jnp.ones([self.Tilde_V]) * 2,
@@ -245,51 +232,27 @@ class CSPF(NumpyroModel):
             "beta_tilde_rate", init_value=jnp.ones([self.Tilde_V]), constraint=constraints.positive
         )
 
-        location_lambda = param("lambda_location", init_value=jnp.zeros([self.C, self.K]))
-        scale_lambda = param(
-            "lambda_scale", init_value=jnp.ones([self.C, self.K]), constraint=constraints.positive
-        )
-
-        location_zeta = param("zeta_location", init_value=jnp.zeros(self.C))
-        scale_zeta = param(
-            "zeta_scale", init_value=jnp.ones(self.C), constraint=constraints.positive
-        )
-
-        a_rho = param("rho_shape", init_value=jnp.ones(self.C), constraint=constraints.positive)
-        b_rho = param("rho_rate", init_value=jnp.ones(self.C), constraint=constraints.positive)
-
-        a_omega = param("omega_shape", init_value=jnp.ones(self.C), constraint=constraints.positive)
-        b_omega = param("omega_rate", init_value=jnp.ones(self.C), constraint=constraints.positive)
-
         with plate("k", size=self.K, dim=-2):
             with plate("k_v", size=self.V, dim=-1):
-                beta = sample("beta", dist.Gamma(a_beta, b_beta))
+                sample("beta", dist.Gamma(a_beta, b_beta))
 
         with plate("tilde_v", size=self.Tilde_V):
-            beta_tilde = sample("beta_tilde", dist.Gamma(a_beta_tilde, b_beta_tilde))
-
-        with plate("c", size=self.C):
-            zeta = sample("zeta", dist.Normal(location_zeta, scale_zeta))
-            rho = sample("rho", dist.Gamma(a_rho, b_rho))
-            omega = sample("omega", dist.Gamma(a_omega, b_omega))
-
-        with plate("c", size=self.C, dim=-2):
-            with plate("c_k", size=self.K, dim=-1):
-                lambda_ = sample("lambda", dist.Normal(location_lambda, scale_lambda))
+            sample("beta_tilde", dist.Gamma(a_beta_tilde, b_beta_tilde))
 
         with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
             with plate("d_k", size=self.K, dim=-1):
-                theta = sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))
+                sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))
 
     def return_topics(self):
         """
-        Return the topics for each document.
+        Return the topics for each document. Reimplemented from the base class due to the guided
+        topic modeling approach, where topics are not fully unsupervised.
 
         Returns
         -------
         tuple
             topics : numpy.ndarray
-                Array of topic names for each document.
+                Array of recoded topics.
             E_theta : numpy.ndarray
                 Estimated topic proportions for each document.
         """
@@ -326,7 +289,8 @@ class CSPF(NumpyroModel):
 
     def return_beta(self):
         """
-        Return the beta matrix for the model.
+        Return the beta matrix for the model, i.e. topic-word intensities.
+        Reimplemented from the base class due to the higher rates approach for seed words.
 
         Returns
         -------
@@ -345,17 +309,56 @@ class CSPF(NumpyroModel):
             jnp.transpose(E_beta), index=self.vocab, columns=list(self.keywords.keys()) + rs_names
         )
 
-    def return_covariate_effects(self):
-        """
-        Return the covariate effects for the model.
+    def return_top_words_per_topic(self, n=10):
+        beta = self.return_beta()
+        return {topic: beta[topic].nlargest(n).index.tolist() for topic in beta}
 
-        Returns
-        -------
-        pandas.DataFrame
-            DataFrame containing the covariate effects with covariates as rows and topics as columns.
-        """
-        topic_names = list(self.keywords.keys())
-        rs_names = [f"residual_topic_{i+1}" for i in range(self.residual_topics)]
-        cols = topic_names + rs_names
-        index = self.covariates
-        return pd.DataFrame(self.estimated_params["lambda_location"], index=index, columns=cols)
+    def _recode_topics(self, indices: np.ndarray) -> np.ndarray:
+        keyword_keys = np.array(list(self.keywords.keys()))
+        num_keywords = len(keyword_keys)
+        indices_clipped = np.clip(indices, 0, num_keywords - 1)
+        return np.where(
+            indices < num_keywords,
+            keyword_keys[indices_clipped],
+            [f"No_keyword_topic_{i - num_keywords}" for i in indices],
+        )
+
+    # Not implemented yet.
+    # def infer_new_documents(self, new_counts):
+    #     """
+    #     Infer topic proportions for new documents using fixed learned parameters.
+
+    #     Parameters
+    #     ----------
+    #     new_counts : scipy.sparse.csr_matrix
+    #         Word counts for new documents.
+
+    #     Returns
+    #     -------
+    #     np.ndarray
+    #         Predicted topic names.
+    #     """
+    #     new_D = new_counts.shape[0]
+    #     Y_new = jnp.array(new_counts.toarray())
+
+    #     # Fixed learned topic-word matrix
+    #     E_beta = self.estimated_params["beta_shape"] / self.estimated_params["beta_rate"]
+    #     E_beta_tilde = self.estimated_params["beta_tilde_shape"] / self.estimated_params["beta_tilde_rate"]
+    #     E_beta = E_beta.at[self.kw_indices].add(E_beta_tilde)
+
+    #     # Set prior Gamma(.3, .3) for theta
+    #     a_theta = jnp.ones((new_D, self.K)) * 0.3
+    #     b_theta = jnp.ones((new_D, self.K)) * 0.3
+
+    #     # Posterior mean of theta (MAP estimation under Gamma-Poisson conjugacy)
+    #     P = jnp.dot(a_theta / b_theta, E_beta)  # Poisson rates
+    #     theta_est = a_theta / b_theta  # Posterior mean of theta
+
+    #     # Normalize to get topic proportions (optional)
+    #     theta_norm = theta_est / jnp.sum(theta_est, axis=1, keepdims=True)
+
+    #     # Predict topic index
+    #     topic_idx = np.argmax(theta_norm, axis=1)
+
+    #     # Return human-readable topic names
+    #     return self._recode_topics(topic_idx), theta_est

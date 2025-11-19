@@ -294,7 +294,7 @@ examples/
 
 ### Immediate (Next 24 hours)
 1. [ ] Review QUICK_SUBMIT.md
-2. [ ] Verify all files with: `python -c "from packages.models import *"`
+2. [ ] Verify all files with: `python -c "from poisson_topicmodels import *"`
 3. [ ] Run: `pytest tests/ -q` (if time permits)
 4. [ ] Choose target journal (recommend JOSS)
 

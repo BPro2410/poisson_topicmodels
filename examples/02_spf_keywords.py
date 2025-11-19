@@ -13,7 +13,7 @@ Requirements:
 
 import numpy as np
 import scipy.sparse as sparse
-from topicmodels import SPF
+from poisson_topicmodels import SPF
 
 # ============================================================================
 # STEP 1: Create Data

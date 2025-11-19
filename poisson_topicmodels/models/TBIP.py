@@ -12,7 +12,7 @@ from optax import adam
 from tqdm import tqdm
 
 # Abstract class - defining the minimum requirements for the probabilistic model
-from packages.models.numpyro_model import NumpyroModel
+from .numpyro_model import NumpyroModel
 
 
 class TBIP(NumpyroModel):

@@ -8,7 +8,7 @@ from numpyro import param, plate, sample
 from numpyro.contrib.module import flax_module
 
 # Abstract class - defining the minimum requirements for the probabilistic model
-from packages.models.numpyro_model import NumpyroModel
+from .numpyro_model import NumpyroModel
 
 
 # --- Define encoder ---

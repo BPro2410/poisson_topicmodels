@@ -52,7 +52,7 @@ Next, we can start to call the topicmodels API, select the hyperparameters and f
 
 .. code-block:: python
 
-    from packages.models import PF
+    from poisson_topicmodels import PF
 
     # We select the Poisson factorization model and initialize the model first
     tm = PF(counts=counts, vocab=vocab, num_topics=10, batch_size=100)

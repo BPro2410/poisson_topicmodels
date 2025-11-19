@@ -10,7 +10,7 @@ First we will create a corpus that will serve as the counts matrix for all subse
 .. code-block:: python
 
     # Imports
-    from packages.models import PF, SPF, CPF, CSPF, TBIP
+    from poisson_topicmodels import PF, SPF, CPF, CSPF, TBIP
     import numpy as np
     import pandas as pd
     from sklearn.feature_extraction.text import CountVectorizer

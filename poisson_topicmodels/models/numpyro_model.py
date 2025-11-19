@@ -11,7 +11,7 @@ from numpyro.infer import SVI, TraceMeanField_ELBO
 from optax import adam
 from tqdm import tqdm
 
-from packages.models.Metrics import Metrics
+from .Metrics import Metrics
 
 
 class NumpyroModel(ABC):

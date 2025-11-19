@@ -13,7 +13,7 @@
 cd /Users/bernd/Documents/01_Coding/02_GitHub/topicmodels_package
 
 # Test package imports
-python -c "from packages.models import PF, SPF, CPF, CSPF; print('✅ Ready')"
+python -c "from poisson_topicmodels import PF, SPF, CPF, CSPF; print('✅ Ready')"
 ```
 
 ### Step 2: Choose Your Journal
@@ -76,7 +76,7 @@ is production-ready with comprehensive documentation and CI/CD pipeline.
 
 Before submitting, verify:
 
-- [x] Code runs: `from packages.models import PF`
+- [x] Code runs: `from poisson_topicmodels import PF`
 - [x] Tests pass: `pytest tests/`
 - [x] Examples work: `python examples/01_getting_started.py`
 - [x] License included: MIT ✅
