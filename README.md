@@ -1,19 +1,16 @@
 # topicmodels: Probabilistic Topic Modeling with Bayesian Inference
 
-[![Tests](https://github.com/BPro2410/topicmodels_package/actions/workflows/tests.yml/badge.svg)](https://github.com/BPro2410/topicmodels_package/actions)
-[![codecov](https://codecov.io/gh/BPro2410/topicmodels_package/branch/main/graph/badge.svg)](https://codecov.io/gh/BPro2410/topicmodels_package)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI version](https://img.shields.io/pypi/v/topicmodels.svg)](https://pypi.org/project/seededPF/)
+[![codecov](https://codecov.io/gh/BPro2410/topicmodels_package/branch/main/graph/badge.svg)](https://codecov.io/gh/BPro2410/topicmodels_package)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 **topicmodels** is a modern Python package for probabilistic topic modeling using Bayesian inference, built on [JAX](https://github.com/google/jax) and [NumPyro](https://github.com/pyro-ppl/numpyro).
 
 ## Statement of Need
 
-
-**poisson-topicmodels**
-
-
-Traditional topic modeling packages (e.g., Gensim, scikit-learn's LDA) use older inference methods and lack flexibility for emerging research needs. **topicmodels** addresses key gaps:
+Traditional topic modeling packages (e.g., Gensim, scikit-learn's LDA) use older inference methods and lack flexibility for emerging research needs. **poisson-topicmodels** addresses key gaps:
 
 1. **Modern Probabilistic Inference**: Built on NumPyro, enabling automatic differentiation, probabilistic programming, and integration with cutting-edge Bayesian methods.
 
@@ -25,11 +22,11 @@ Traditional topic modeling packages (e.g., Gensim, scikit-learn's LDA) use older
 
 5. **Research-Friendly API**: Purpose-built for computational social science and NLP researchers who need interpretable, flexible models beyond black-box approaches.
 
-Whether analyzing legislative text, social media discourse, or scientific abstracts, **topicmodels** enables researchers to extract interpretable semantic structure with confidence in results.
+Whether analyzing legislative text, social media discourse, or scientific abstracts, **poisson-topicmodels** enables researchers to extract interpretable semantic structure with confidence in results.
 
 ## Features
 
-**topicmodels** provides multiple topic modeling approaches:
+**poisson-topicmodels** provides multiple topic modeling approaches:
 
 | Model | Use Case | Key Feature |
 |-------|----------|------------|
@@ -69,7 +66,7 @@ Get started in 5 minutes:
 ```python
 import numpy as np
 from scipy.sparse import csr_matrix
-from topicmodels import PF
+from poisson_topicmodels import PF
 
 # Prepare data: document-term matrix and vocabulary
 counts = csr_matrix(np.random.poisson(2, (100, 500)).astype(np.float32))
@@ -92,7 +89,7 @@ See `examples/` directory for detailed notebooks.
 
 ### From PyPI (recommended)
 ```bash
-pip install topicmodels
+pip install poisson-topicmodels
 ```
 
 ### From Source
@@ -131,7 +128,7 @@ See `pyproject.toml` for complete dependency list.
 ### 1. Unsupervised Topic Discovery (PF)
 
 ```python
-from topicmodels import PF
+from poisson_topicmodels import PF
 
 model = PF(counts, vocab, num_topics=10, batch_size=64)
 model.train_step(num_steps=500, lr=0.001, random_seed=42)
@@ -144,7 +141,7 @@ top_words = model.return_top_words_per_topic(n_words=15)
 ### 2. Guided Topic Modeling with Keywords (SPF)
 
 ```python
-from topicmodels import SPF
+from poisson_topicmodels import SPF
 
 keywords = {
     0: ['climate', 'environment', 'carbon'],
@@ -158,7 +155,7 @@ model.train_step(num_steps=500, lr=0.001, random_seed=42)
 ### 3. Covariate Effects (CPF)
 
 ```python
-from topicmodels import CPF
+from poisson_topicmodels import CPF
 
 # Include document-level covariates
 covariates = np.random.randn(100, 3)  # 100 documents, 3 covariates
@@ -187,11 +184,11 @@ docker run --rm -p 8888:8888 -v "$(pwd)":/workspace topicmodels-jupyter
 
 ## Citation
 
-If you use **topicmodels** in your research, please cite:
+If you use **poisson_topicmodels** in your research, please cite:
 
 ```bibtex
 @software{topicmodels2025,
-  title = {topicmodels: Probabilistic Topic Modeling with Bayesian Inference},
+  title = {Poisson-topicmodels: Probabilistic Topic Modeling with Bayesian Inference},
   author = {Prostmaier, Bernd and Grün, Bettina and Hofmarcher, Paul},
   year = {2025},
   url = {https://github.com/BPro2410/topicmodels_package},

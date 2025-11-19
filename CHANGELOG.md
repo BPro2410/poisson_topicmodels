@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Type hints on core model interfaces
 
 ### Changed
-- Updated package structure from `packages/models/` to standard layout
+- Updated package structure from `poisson_topicmodels/models/` to standard layout
 - Reconciled dependency versions (pyproject.toml and requirements.txt)
 - Improved metadata in pyproject.toml
 
@@ -39,7 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Created CONTRIBUTING.md with developer guidelines
 - Added CODE_OF_CONDUCT.md (Contributor Covenant v2.0)
 - Created CITATION.cff for automatic citation generation
-- Added PUBLICATION_AUDIT.md for quality standards tracking
 
 ### Development
 - Established GitHub Actions CI/CD workflow
@@ -48,24 +47,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set up code coverage tracking
 
 ### Known Limitations
-- Factory function (`topicmodels("PF", ...)`) to be deprecated in v0.2.0
+- Factory function (`topicmodels("PF", ...)`) to be deprecated in v0.1.0
 - GPU support requires JAX-compatible hardware
 - Metal GPU support on macOS requires special configuration
 
 ## Future Plans
 
 ### v0.2.0 (Q1 2026)
-- Deprecate factory function in favor of direct class imports
-- Add performance benchmarks
-- Expand test coverage to >85%
-- Add more example notebooks
-- Support for custom priors
-
-### v0.3.0 (Q2 2026)
-- GPU memory optimization
-- Distributed training support
-- Advanced hyperparameter tuning utilities
-- Additional topic models (LDA, HDP)
+- Add more probabilistic models to the stack
 
 ---
 

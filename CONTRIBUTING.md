@@ -27,7 +27,7 @@ When initializing SPF with an empty keywords dict, the model crashes with IndexE
 
 Minimal example:
 ```python
-from topicmodels import SPF
+from poisson_topicmodels import SPF
 keywords = {}  # Empty dict
 model = SPF(counts, vocab, keywords, residual_topics=2, batch_size=32)
 ```
@@ -289,7 +289,7 @@ pytest tests/ -k "test_pf" -v
 
 ```
 topicmodels_package/
-├── topicmodels/              # Main package
+├── poisson_topicmodels/              # Main package
 │   ├── __init__.py          # Package exports
 │   ├── models/              # Model implementations
 │   │   ├── __init__.py
