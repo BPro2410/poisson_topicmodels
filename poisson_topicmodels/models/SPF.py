@@ -125,6 +125,17 @@ class SPF(NumpyroModel):
         if batch_size <= 0 or batch_size > D:
             raise ValueError(f"batch_size must satisfy 0 < batch_size <= {D}, got {batch_size}")
 
+        # validate that keywords is not empty and that each topic has at least one keyword as string
+        if len(keywords) == 0:
+            raise ValueError(
+                "keywords dictionary is empty; must contain at least one topic with keywords"
+            )
+        for topic_id, words in keywords.items():
+            if not isinstance(words, list) or len(words) == 0:
+                raise ValueError(
+                    f"keywords for topic {topic_id} must be a non-empty list of strings"
+                )
+
         # Validate keywords are in vocabulary
         vocab_set = set(vocab)
         for topic_id, words in keywords.items():
