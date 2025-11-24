@@ -214,9 +214,7 @@ class ETM(NumpyroModel):
                 z_loc, z_std = net(Y_batch / (Y_batch.sum(axis=1).reshape(-1, 1)))
                 theta = sample("theta", dist.Normal(z_loc, z_std))
 
-    def get_batch(
-        self, rng: jnp.ndarray, Y: sparse.csr_matrix
-    ) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    def get_batch(self, rng: jnp.ndarray, Y: sparse.csr_matrix) -> Tuple[jnp.ndarray, jnp.ndarray]:
         """Sample a random mini-batch from the corpus.
 
         Parameters

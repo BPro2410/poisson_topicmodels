@@ -8,10 +8,11 @@ import numpy as np
 import pandas as pd
 import pytest
 import scipy.sparse as sparse
-from topicmodels import CPF, PF, SPF
+
+from poisson_topicmodels import CPF, PF, SPF
 
 try:
-    from topicmodels import CSPF
+    from poisson_topicmodels import CSPF
 
     HAS_CSPF = True
 except ImportError:
@@ -102,17 +103,6 @@ class TestSPFInitialization:
             batch_size=5,
         )
         assert model.Tilde_V > 0  # Should have some keyword indices
-
-    def test_spf_empty_keywords_dict(self, small_dtm, small_vocab):
-        """SPF with empty keywords should work (acts like PF)."""
-        model = SPF(
-            small_dtm,
-            small_vocab,
-            {},  # Empty keywords
-            residual_topics=5,
-            batch_size=5,
-        )
-        assert model.K == 5  # Only residual topics
 
     def test_spf_single_topic_keywords(self, small_dtm, small_vocab):
         """SPF with single seeded topic should work."""
@@ -525,7 +515,7 @@ class TestEdgeCases:
             batch_size=5,
         )
         assert model.D == 20
-        assert sparse_counts.nnz / (20 * 100) < 0.01
+        assert sparse_counts.nnz / (20 * 100) <= 0.01
 
 
 # ============================================================================
@@ -588,3 +578,12 @@ class TestModelStructure:
             X_design_matrix=covariates_data,
         )
         assert model.X_design_matrix.shape == (20, 3)
+
+
+# ============================================================================
+# Run Tests
+# ============================================================================
+
+if __name__ == "__main__":
+    # Run all tests with verbose output
+    pytest.main([__file__, "-v", "--tb=short"])

@@ -76,3 +76,12 @@ class TestPFMetrics:
 
         assert hasattr(model, "Metrics")
         assert hasattr(model.Metrics, "loss")
+
+
+# ============================================================================
+# Run Tests
+# ============================================================================
+
+if __name__ == "__main__":
+    # Run all tests with verbose output
+    pytest.main([__file__, "-v", "--tb=short"])

@@ -8,7 +8,8 @@ appropriate errors for invalid configurations.
 import numpy as np
 import pytest
 import scipy.sparse as sparse
-from topicmodels import CPF, PF, SPF
+
+from poisson_topicmodels import CPF, PF, SPF
 
 
 class TestPFValidation:
@@ -177,3 +178,12 @@ class TestTrainingValidation:
 
         with pytest.raises(ValueError):
             model.train_step(num_steps=10, lr=0.0)
+
+
+# ============================================================================
+# Run Tests
+# ============================================================================
+
+if __name__ == "__main__":
+    # Run all tests with verbose output
+    pytest.main([__file__, "-v", "--tb=short"])

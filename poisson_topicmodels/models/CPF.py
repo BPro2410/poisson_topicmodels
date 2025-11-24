@@ -1,13 +1,11 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Optional
 
-import jax
 import jax.nn as jnn
 import jax.numpy as jnp
 import numpy as np
 import numpyro.distributions as dist
 import pandas as pd
 import scipy.sparse as sparse
-from jax import jit, random
 from numpyro import param, plate, sample
 from numpyro.distributions import constraints
 

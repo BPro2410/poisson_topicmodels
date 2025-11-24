@@ -146,7 +146,7 @@ class NumpyroModel(ABC):
                 pbar.set_description(
                     "Init loss: "
                     + "{:10.4f}".format(self.Metrics.loss[0])
-                    + f"; Avg loss (last 10 iter): "
+                    + "; Avg loss (last 10 iter): "
                     + "{:10.4f}".format(jnp.array(self.Metrics.loss[-10:]).mean())
                 )
 

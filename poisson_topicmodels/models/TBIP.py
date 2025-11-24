@@ -1,8 +1,6 @@
+import warnings
 from typing import Tuple
 
-import warnings
-
-import jax
 import jax.numpy as jnp
 import numpy as np
 import numpyro.distributions as dist

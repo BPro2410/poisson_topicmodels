@@ -2,7 +2,6 @@
 
 import numpy as np
 import pytest
-import scipy.sparse as sparse
 
 from poisson_topicmodels import SPF
 
@@ -59,3 +58,12 @@ class TestSPFTraining:
         assert hasattr(model, "return_topics")
         assert hasattr(model, "return_beta")
         assert hasattr(model, "return_top_words_per_topic")
+
+
+# ============================================================================
+# Run Tests
+# ============================================================================
+
+if __name__ == "__main__":
+    # Run all tests with verbose output
+    pytest.main([__file__, "-v", "--tb=short"])

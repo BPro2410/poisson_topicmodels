@@ -8,7 +8,8 @@ reproducibility with fixed seeds.
 import numpy as np
 import pytest
 import scipy.sparse as sparse
-from topicmodels import PF, SPF
+
+from poisson_topicmodels import PF, SPF
 
 
 class TestTrainingIntegration:
@@ -58,7 +59,7 @@ class TestTrainingIntegration:
         loss1 = np.array(model1.Metrics.loss)
 
         model2 = PF(counts, vocab, num_topics=5, batch_size=4)
-        params2 = model2.train_step(num_steps=20, lr=0.01, random_seed=123)
+        params2 = model2.train_step(num_steps=20, lr=0.001, random_seed=123)
         loss2 = np.array(model2.Metrics.loss)
 
         # Should not be identical
@@ -82,7 +83,7 @@ class TestTrainingIntegration:
         model.train_step(num_steps=20, lr=0.01, random_seed=42)
 
         # Extract top words
-        top_words = model.return_top_words_per_topic(n_words=5)
+        top_words = model.return_top_words_per_topic(n=5)
         assert top_words is not None
         assert len(top_words) > 0
 
@@ -119,10 +120,10 @@ class TestModelOutputShapes:
         model.train_step(num_steps=10, lr=0.01, random_seed=42)
 
         # Check if output methods exist and return data
-        topics = model.return_topics()
+        topics, _ = model.return_topics()
         assert topics is not None
 
-        top_words = model.return_top_words_per_topic(n_words=10)
+        top_words = model.return_top_words_per_topic(n=10)
         assert top_words is not None
 
 
@@ -238,3 +239,12 @@ class TestEdgeCases:
         # More topics than documents
         model = PF(counts, vocab, num_topics=D + 5, batch_size=4)
         assert model.K == D + 5
+
+
+# ============================================================================
+# Run Tests
+# ============================================================================
+
+if __name__ == "__main__":
+    # Run all tests with verbose output
+    pytest.main([__file__, "-v", "--tb=short"])

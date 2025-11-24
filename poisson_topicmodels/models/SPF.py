@@ -1,17 +1,12 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List
 
-import jax
 import jax.numpy as jnp
 import numpy as np
 import numpyro.distributions as dist
 import pandas as pd
 import scipy.sparse as sparse
-from jax import jit, random
 from numpyro import param, plate, sample
 from numpyro.distributions import constraints
-from numpyro.infer import SVI, TraceMeanField_ELBO
-from optax import adam
-from tqdm import tqdm
 
 # Abstract class - defining the minimum requirements for the probabilistic model
 from .numpyro_model import NumpyroModel
