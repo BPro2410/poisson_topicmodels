@@ -4,6 +4,7 @@ Tests for model training and output extraction methods.
 Tests training workflows, reproducibility, and result extraction.
 """
 
+import jax.numpy as jnp
 import numpy as np
 import pytest
 import scipy.sparse as sparse

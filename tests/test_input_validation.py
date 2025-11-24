@@ -160,7 +160,7 @@ class TestTrainingValidation:
         model = PF(counts, vocab, num_topics=5, batch_size=4)
 
         # Should either raise or return empty/no training
-        result = model.train_step(num_steps=0, lr=0.01)
+        _ = model.train_step(num_steps=0, lr=0.01)
         # Depending on implementation, may raise or return None/empty
 
     def test_pf_negative_learning_rate_raises_error(self, small_document_term_matrix):

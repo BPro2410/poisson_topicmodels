@@ -1,4 +1,7 @@
-![logo](logo.svg#gh-light-mode-only) ![logo](logo.svg#gh-dark-mode-only)
+<div align="center">
+  <img src="logo.svg" alt="poisson-topicmodels" width="400" style="margin-bottom: 20px;"/>
+</div>
+
 
 # poisson-topicmodels: Probabilistic Topic Modeling with Bayesian Inference
 

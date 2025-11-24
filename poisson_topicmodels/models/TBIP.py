@@ -208,7 +208,7 @@ class TBIP(NumpyroModel):
         )
 
         # Add initial values for beta parameters if provided for the tv-tbip model
-        if self.beta_shape_init is not None and self.time_varying == True:
+        if self.beta_shape_init is not None and self.time_varying:
             mu_beta = param(
                 "mu_beta",
                 init_value=self.beta_shape_init,
@@ -217,7 +217,7 @@ class TBIP(NumpyroModel):
             mu_beta = param("mu_beta", init_value=jnp.zeros([self.K, self.V]))
 
         # check if beta_shape init is not none and self.time_yvarying is true
-        if self.beta_shape_init is not None and self.time_varying == True:
+        if self.beta_shape_init is not None and self.time_varying:
             sigma_beta = param(
                 "sigma_beta",
                 init_value=self.beta_rate_init,

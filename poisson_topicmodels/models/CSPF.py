@@ -1,13 +1,11 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import jax
-import jax.nn as jnn
 import jax.numpy as jnp
 import numpy as np
 import numpyro.distributions as dist
 import pandas as pd
 import scipy.sparse as sparse
-from jax import jit, random
 from numpyro import param, plate, sample
 from numpyro.distributions import constraints
 
@@ -263,23 +261,23 @@ class CSPF(NumpyroModel):
 
         with plate("k", size=self.K, dim=-2):
             with plate("k_v", size=self.V, dim=-1):
-                beta = sample("beta", dist.Gamma(a_beta, b_beta))
+                sample("beta", dist.Gamma(a_beta, b_beta))
 
         with plate("tilde_v", size=self.Tilde_V):
-            beta_tilde = sample("beta_tilde", dist.Gamma(a_beta_tilde, b_beta_tilde))
+            sample("beta_tilde", dist.Gamma(a_beta_tilde, b_beta_tilde))
 
         with plate("c", size=self.C):
-            zeta = sample("zeta", dist.Normal(location_zeta, scale_zeta))
-            rho = sample("rho", dist.Gamma(a_rho, b_rho))
-            omega = sample("omega", dist.Gamma(a_omega, b_omega))
+            sample("zeta", dist.Normal(location_zeta, scale_zeta))
+            sample("rho", dist.Gamma(a_rho, b_rho))
+            sample("omega", dist.Gamma(a_omega, b_omega))
 
         with plate("c", size=self.C, dim=-2):
             with plate("c_k", size=self.K, dim=-1):
-                lambda_ = sample("lambda", dist.Normal(location_lambda, scale_lambda))
+                sample("lambda", dist.Normal(location_lambda, scale_lambda))
 
         with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
             with plate("d_k", size=self.K, dim=-1):
-                theta = sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))
+                sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))
 
     def return_topics(self):
         """

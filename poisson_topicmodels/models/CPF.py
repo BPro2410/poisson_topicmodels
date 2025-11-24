@@ -223,15 +223,15 @@ class CPF(NumpyroModel):
 
         with plate("k", size=self.K, dim=-2):
             with plate("k_v", size=self.V, dim=-1):
-                beta = sample("beta", dist.Gamma(a_beta, b_beta))
+                sample("beta", dist.Gamma(a_beta, b_beta))
 
         with plate("c", size=self.C, dim=-2):
             with plate("c_k", size=self.K, dim=-1):
-                lambda_ = sample("phi", dist.Normal(location_lambda, scale_lambda))
+                sample("phi", dist.Normal(location_lambda, scale_lambda))
 
         with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
             with plate("d_k", size=self.K, dim=-1):
-                theta = sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))
+                sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))
 
     def return_covariate_effects(self):
         """

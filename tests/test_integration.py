@@ -21,7 +21,7 @@ class TestTrainingIntegration:
         model = PF(counts, vocab, num_topics=5, batch_size=4)
 
         # Train
-        params = model.train_step(num_steps=50, lr=0.01, random_seed=42)
+        _ = model.train_step(num_steps=50, lr=0.01, random_seed=42)
 
         # Loss should exist and have multiple entries
         assert hasattr(model.Metrics, "loss")
@@ -40,11 +40,11 @@ class TestTrainingIntegration:
 
         # Train twice with same seed
         model1 = PF(counts, vocab, num_topics=5, batch_size=4)
-        params1 = model1.train_step(num_steps=20, lr=0.01, random_seed=42)
+        _ = model1.train_step(num_steps=20, lr=0.01, random_seed=42)
         loss1 = np.array(model1.Metrics.loss)
 
         model2 = PF(counts, vocab, num_topics=5, batch_size=4)
-        params2 = model2.train_step(num_steps=20, lr=0.01, random_seed=42)
+        _ = model2.train_step(num_steps=20, lr=0.01, random_seed=42)
         loss2 = np.array(model2.Metrics.loss)
 
         # Losses should be identical or very close
@@ -55,11 +55,11 @@ class TestTrainingIntegration:
         counts, vocab = small_document_term_matrix
 
         model1 = PF(counts, vocab, num_topics=5, batch_size=4)
-        params1 = model1.train_step(num_steps=20, lr=0.01, random_seed=42)
+        _ = model1.train_step(num_steps=20, lr=0.01, random_seed=42)
         loss1 = np.array(model1.Metrics.loss)
 
         model2 = PF(counts, vocab, num_topics=5, batch_size=4)
-        params2 = model2.train_step(num_steps=20, lr=0.001, random_seed=123)
+        _ = model2.train_step(num_steps=20, lr=0.001, random_seed=123)
         loss2 = np.array(model2.Metrics.loss)
 
         # Should not be identical
@@ -100,7 +100,7 @@ class TestTrainingIntegration:
 
         if valid_keywords:
             model = SPF(counts, vocab, valid_keywords, residual_topics=2, batch_size=4)
-            params = model.train_step(num_steps=20, lr=0.01, random_seed=42)
+            _ = model.train_step(num_steps=20, lr=0.01, random_seed=42)
 
             # Should have trained
             assert hasattr(model.Metrics, "loss")
@@ -148,7 +148,7 @@ class TestBatchSizeVariations:
         assert model.batch_size == D
 
         # Should train
-        params = model.train_step(num_steps=10, lr=0.01, random_seed=42)
+        _ = model.train_step(num_steps=10, lr=0.01, random_seed=42)
 
     def test_pf_different_topic_counts(self, small_document_term_matrix):
         """PF should work with various topic counts."""
@@ -173,7 +173,7 @@ class TestLargerDataset:
         assert model.V == V
 
         # Quick training test
-        params = model.train_step(num_steps=5, lr=0.01, random_seed=42)
+        _ = model.train_step(num_steps=5, lr=0.01, random_seed=42)
 
     def test_pf_large_vocabulary(self):
         """PF should handle large vocabulary."""
@@ -185,7 +185,7 @@ class TestLargerDataset:
         assert model.V == V
 
         # Quick training test
-        params = model.train_step(num_steps=3, lr=0.01, random_seed=42)
+        _ = model.train_step(num_steps=3, lr=0.01, random_seed=42)
 
     def test_pf_dense_documents(self):
         """PF should handle denser word distributions."""
@@ -194,7 +194,7 @@ class TestLargerDataset:
         vocab = np.array([f"word_{i}" for i in range(V)])
 
         model = PF(counts, vocab, num_topics=10, batch_size=32)
-        params = model.train_step(num_steps=5, lr=0.01, random_seed=42)
+        _ = model.train_step(num_steps=5, lr=0.01, random_seed=42)
 
         assert len(model.Metrics.loss) > 0
 
@@ -208,7 +208,7 @@ class TestEdgeCases:
         model = PF(counts, vocab, num_topics=1, batch_size=4)
 
         assert model.K == 1
-        params = model.train_step(num_steps=10, lr=0.01, random_seed=42)
+        _ = model.train_step(num_steps=10, lr=0.01, random_seed=42)
 
     def test_pf_all_zeros_document(self):
         """PF should handle documents with all zero word counts."""
@@ -219,7 +219,7 @@ class TestEdgeCases:
         vocab = np.array([f"word_{i}" for i in range(50)])
 
         model = PF(counts, vocab, num_topics=5, batch_size=10)
-        params = model.train_step(num_steps=5, lr=0.01, random_seed=42)
+        _ = model.train_step(num_steps=5, lr=0.01, random_seed=42)
 
         assert len(model.Metrics.loss) > 0
 

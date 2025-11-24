@@ -7,7 +7,10 @@ import pandas as pd
 import scipy.sparse as sparse
 from sklearn.feature_extraction.text import CountVectorizer
 
-import jax_config
+from poisson_topicmodels import CSPF, ETM, PF, SPF, TBIP
+from poisson_topicmodels.utils.utils import load_embeds
+
+# import jax_config
 
 # from poisson_topicmodels import topicmodels
 
@@ -55,7 +58,6 @@ keywords = {
 
 
 # ---- Initialize TM package ----
-from poisson_topicmodels import SPF
 
 tm1 = SPF(counts, vocab, keywords, residual_topics=0, batch_size=1024)
 print(tm1)
@@ -78,7 +80,6 @@ tm1.Metrics.loss
 # ### PF Test ###
 # ###############
 
-from poisson_topicmodels import PF
 
 tm2 = PF(counts, vocab, num_topics=10, batch_size=1024)
 estimated_params = tm2.train_step(num_steps=100, lr=0.01)
@@ -89,7 +90,7 @@ betas = tm2.return_beta()
 # #################
 # ### CSPF Test ###
 # #################
-from poisson_topicmodels import CSPF
+
 
 category0 = ["grocery gourmet food", "toys games"]
 covariable = df1["Cat1"].apply(lambda x: 0 if x in category0 else 1)
@@ -111,13 +112,21 @@ topics, e_theta = tm3.return_topics()
 betas = tm3.return_beta()
 
 
-##############
-## TBIP Test #
-##############
+# ##############
+# ## TBIP Test #
+# ##############
+
+df1["speaker"] = np.random.choice(
+    ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"], size=len(df1), replace=True
+)
+tm4 = TBIP(counts, vocab, num_topics=10, authors=df1.speaker, batch_size=1024)
+estimated_params = tm4.train_step(num_steps=1000, lr=0.01)
+
+
 # ##############
 # ## CPF Test ##
 # ##############
-from poisson_topicmodels import CPF, TBIP
+
 
 # tm3 = CPF(counts, vocab, num_topics = 5, batch_size = 1024, X_design_matrix = X_design_matrix)
 # svi_batch, svi_state = tm3.train_step(num_steps = 100, lr = 0.01)
@@ -131,15 +140,10 @@ tm4 = TBIP(counts, vocab, num_topics=10, authors=df1.speaker, batch_size=1024)
 estimated_params = tm4.train_step(num_steps=1000, lr=0.01)
 
 
-##############
-### ETM TEST #
-##############
+# ##############
+# ### ETM TEST #
+# ##############
 
-from poisson_topicmodels.utils.utils import (
-    create_word2vec_embedding_from_dataset,
-    load_embeds,
-    save_embeds,
-)
 
 # -- Create embeddings --
 # embeds = create_word2vec_embedding_from_dataset(list(df1["Text"]))
@@ -151,7 +155,6 @@ path_to_embeddings = "data/embeds.bin"
 embeddings_mapping = load_embeds(path_to_embeddings)
 
 # -- RUN ETM --
-from poisson_topicmodels import ETM
 
 tm5 = ETM(
     counts,

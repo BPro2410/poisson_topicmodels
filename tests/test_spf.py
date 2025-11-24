@@ -1,6 +1,5 @@
 """Basic tests for SPF model initialization."""
 
-import numpy as np
 import pytest
 
 from poisson_topicmodels import SPF

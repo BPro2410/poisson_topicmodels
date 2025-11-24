@@ -14,7 +14,7 @@ Requirements:
 import numpy as np
 import scipy.sparse as sparse
 
-from poisson_topicmodels import SPF
+from poisson_topicmodels import PF, SPF
 
 # ============================================================================
 # STEP 1: Create Data
@@ -82,7 +82,7 @@ model = SPF(
     batch_size=batch_size,
 )
 
-print(f"✓ Initialized Seeded Poisson Factorization model")
+print("✓ Initialized Seeded Poisson Factorization model")
 print(f"✓ Seeded topics: {len(keywords)}")
 print(f"✓ Residual (unsupervised) topics: {residual_topics}")
 print(f"✓ Total topics (K): {model.K}")
@@ -105,7 +105,7 @@ params = model.train_step(
     random_seed=random_seed,
 )
 
-print(f"✓ Training completed")
+print("✓ Training completed")
 print(f"✓ Final loss: {model.Metrics.loss[-1]:.4f}")
 print()
 
@@ -177,7 +177,6 @@ print("Step 8: Comparison with Unsupervised Poisson Factorization")
 print("-" * 50)
 print()
 
-from topicmodels import PF
 
 # Train unsupervised model with same parameters
 pf_model = PF(

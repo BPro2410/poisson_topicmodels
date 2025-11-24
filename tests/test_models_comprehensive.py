@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 import scipy.sparse as sparse
 
-from poisson_topicmodels import CPF, PF, SPF
+from poisson_topicmodels import CPF, SPF
 
 try:
     from poisson_topicmodels import CSPF

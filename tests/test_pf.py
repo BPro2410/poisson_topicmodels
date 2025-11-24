@@ -2,7 +2,6 @@
 
 import numpy as np
 import pytest
-import scipy.sparse as sparse
 
 from poisson_topicmodels import PF
 

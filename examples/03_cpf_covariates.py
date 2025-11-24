@@ -89,7 +89,7 @@ model = CPF(
     X_design_matrix=covariate_df,  # Pass DataFrame with column names
 )
 
-print(f"✓ Initialized Covariate Poisson Factorization model")
+print("✓ Initialized Covariate Poisson Factorization model")
 print(f"✓ Number of topics: {num_topics}")
 print(f"✓ Number of covariates: {model.C}")
 print(f"✓ Model dimensions: {model.D} documents, {model.V} vocabulary terms")
