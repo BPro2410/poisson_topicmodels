@@ -112,7 +112,7 @@ params = model.train_step(
     random_seed=random_seed,
 )
 
-print(f"✓ Training completed")
+print("✓ Training completed")
 print(f"✓ Final loss: {model.Metrics.loss[-1]:.4f}")
 print()
 
@@ -125,17 +125,17 @@ print("-" * 50)
 
 # Get document-topic assignments
 topics, E_theta = model.return_topics()
-print(f"✓ Document-topic assignments extracted")
+print("✓ Document-topic assignments extracted")
 print(f"✓ Shape of document-topic matrix: {E_theta.shape}")
 
 # Get beta matrix (topic-word distributions)
 beta = model.return_beta()
-print(f"✓ Beta matrix extracted")
+print("✓ Beta matrix extracted")
 print(f"✓ Beta shape: {beta.shape}")
 
 # Get covariate effects
 covariate_effects = model.return_covariate_effects()
-print(f"✓ Covariate effects extracted")
+print("✓ Covariate effects extracted")
 print(f"✓ Covariate effects shape: {covariate_effects.shape}")
 print()
 

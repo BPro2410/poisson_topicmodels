@@ -56,7 +56,7 @@ model = PF(
     batch_size=batch_size,
 )
 
-print(f"✓ Initialized Poisson Factorization model")
+print("✓ Initialized Poisson Factorization model")
 print(f"✓ Number of topics: {num_topics}")
 print(f"✓ Batch size: {batch_size}")
 print(f"✓ Model dimensions: {model.D} documents, {model.V} vocabulary terms")
@@ -79,7 +79,7 @@ params = model.train_step(
     random_seed=random_seed,
 )
 
-print(f"✓ Training completed")
+print("✓ Training completed")
 print(f"✓ Trained for {num_steps} steps with learning rate {learning_rate}")
 print(f"✓ Final loss: {model.Metrics.loss[-1]:.4f}")
 print(f"✓ Loss history: {len(model.Metrics.loss)} values tracked")
@@ -94,7 +94,7 @@ print("-" * 50)
 
 # Get document-topic assignments
 topics, E_theta = model.return_topics()
-print(f"✓ Document-topic assignments extracted")
+print("✓ Document-topic assignments extracted")
 print(f"✓ Shape of document-topic matrix (E_theta): {E_theta.shape}")
 
 # Get top words per topic
@@ -116,7 +116,7 @@ for topic_id, words in top_words_per_topic.items():
 print()
 print("=" * 50)
 print(f"Document-topic matrix (E_theta) shape: {E_theta.shape}")
-print(f"First document topic proportions:")
+print("First document topic proportions:")
 print(f"  {E_theta[0]}")
 print()
 
@@ -143,7 +143,7 @@ params2 = model2.train_step(
 
 # Compare losses
 loss_diff = np.abs(np.array(model.Metrics.loss) - np.array(model2.Metrics.loss)).max()
-print(f"✓ Trained second model with same seed")
+print("✓ Trained second model with same seed")
 print(f"✓ Maximum difference in loss values: {loss_diff:.2e}")
 
 if loss_diff < 1e-5:

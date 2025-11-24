@@ -32,9 +32,6 @@ keywords = {}  # Empty dict
 model = SPF(counts, vocab, keywords, residual_topics=2, batch_size=32)
 ```
 
-Error: IndexError: tuple index out of range
-```
-
 ### 2. Request Features
 
 Feature requests are welcome! Please open an issue with:

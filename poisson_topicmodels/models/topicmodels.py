@@ -1,10 +1,5 @@
 import os
 
-from jax import jit
-from numpyro.infer import SVI, TraceMeanField_ELBO
-from optax import adam
-from tqdm import tqdm
-
 from .CPF import CPF
 from .CSPF import CSPF
 from .ETM import ETM

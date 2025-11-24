@@ -14,7 +14,7 @@ import pytest
 import scipy.sparse as sparse
 
 # These imports will work after the package is restructured
-from poisson_topicmodels import CPF, CSPF, PF, SPF, TBIP, Metrics, NumpyroModel
+from poisson_topicmodels import PF, SPF
 
 # ============================================================================
 # Fixtures (Module-level for pytest discovery)
@@ -108,7 +108,7 @@ class TestPFModelTraining:
         model = PF(counts, vocab, num_topics=3, batch_size=4)
 
         # Train for a few steps
-        params = model.train_step(num_steps=10, lr=0.01, random_seed=42)
+        _ = model.train_step(num_steps=10, lr=0.01, random_seed=42)
 
         # Check that loss is decreasing (on average)
         losses = model.Metrics.loss
@@ -234,7 +234,7 @@ class TestEdgeCases:
         vocab = np.array(["w0", "w1", "w2", "w3", "w4"])
 
         model = PF(counts, vocab, num_topics=2, batch_size=1)
-        params = model.train_step(num_steps=3, lr=0.01)
+        _ = model.train_step(num_steps=3, lr=0.01)
 
         assert model.D == 1
 
@@ -244,7 +244,7 @@ class TestEdgeCases:
         vocab = np.array([f"w{i}" for i in range(1000)])
 
         model = PF(counts, vocab, num_topics=5, batch_size=16)
-        params = model.train_step(num_steps=3, lr=0.01)
+        _ = model.train_step(num_steps=3, lr=0.01)
 
         assert model.D == 100
 
@@ -254,7 +254,7 @@ class TestEdgeCases:
         vocab = np.array([f"w{i}" for i in range(200)])
 
         model = PF(counts, vocab, num_topics=5, batch_size=8)
-        params = model.train_step(num_steps=3, lr=0.01)
+        _ = model.train_step(num_steps=3, lr=0.01)
 
         assert model.D == 50
 
@@ -275,10 +275,10 @@ class TestIntegration:
         model = PF(counts, vocab, batch_size=4, num_topics=3)
 
         # 2. Train
-        params = model.train_step(num_steps=10, lr=0.01, random_seed=42)
+        _ = model.train_step(num_steps=10, lr=0.01, random_seed=42)
 
         # 3. Extract results
-        topics, theta = model.return_topics()
+        _, theta = model.return_topics()
         beta = model.return_beta()
 
         # 4. Verify results
@@ -293,7 +293,7 @@ class TestIntegration:
         model = SPF(counts, vocab, keywords=keywords_dict, residual_topics=1, batch_size=4)
 
         # 2. Train
-        params = model.train_step(num_steps=10, lr=0.01, random_seed=42)
+        _ = model.train_step(num_steps=10, lr=0.01, random_seed=42)
 
         # 3. Extract results
         topics, theta = model.return_topics()
@@ -342,7 +342,7 @@ def test_various_model_sizes(num_topics, num_docs, num_words):
     vocab = np.array([f"w{i}" for i in range(num_words)])
 
     model = PF(counts, vocab, num_topics=num_topics, batch_size=max(1, num_docs // 2))
-    params = model.train_step(num_steps=3, lr=0.01)
+    _ = model.train_step(num_steps=3, lr=0.01)
 
     assert model.K == num_topics
 

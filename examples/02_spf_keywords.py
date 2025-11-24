@@ -39,7 +39,7 @@ vocab[20:25] = ["research", "science", "study", "experiment", "discovery"]
 vocab[30:35] = ["technology", "software", "computer", "digital", "innovation"]
 
 print(f"✓ Created {D} documents with {V} vocabulary terms")
-print(f"✓ Vocabulary includes domain-specific terms")
+print("✓ Vocabulary includes domain-specific terms")
 print()
 
 # ============================================================================

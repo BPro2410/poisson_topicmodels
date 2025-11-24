@@ -1,0 +1,29 @@
+<svg width="460" height="100" viewBox="0 0 460 100" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .logo-text {
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 32px;
+      font-weight: 600;
+      fill: #3B82F6;
+      dominant-baseline: middle;
+    }
+    .icon-shape {
+      fill: #3B82F6;
+    }
+  </style>
+
+  <!-- P-Fish Icon -->
+  <g transform="translate(15,15) scale(0.8)">
+    <!-- P Stem -->
+    <rect x="20" y="0" width="15" height="100" rx="7.5" class="icon-shape"/>
+    <!-- P Bowl -->
+    <circle cx="55" cy="35" r="35" class="icon-shape"/>
+    <circle cx="55" cy="35" r="20" fill="white"/>
+
+    <!-- Fish Tail -->
+    <path d="M 20,95 C 50,80 70,70 90,65 L 90,105 C 70,100 50,85 20,95 Z" class="icon-shape" transform="translate(-5, -5)"/>
+  </g>
+
+  <!-- Text -->
+  <text x="130" y="50" class="logo-text">Poisson Topicmodels</text>
+</svg>

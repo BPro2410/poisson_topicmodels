@@ -42,3 +42,12 @@ def test_utils_can_be_imported():
     from poisson_topicmodels.utils.utils import create_word2vec_embedding_from_dataset
 
     assert callable(create_word2vec_embedding_from_dataset)
+
+
+# ============================================================================
+# Run Tests
+# ============================================================================
+
+if __name__ == "__main__":
+    # Run all tests with verbose output
+    pytest.main([__file__, "-v", "--tb=short"])
