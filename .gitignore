@@ -46,6 +46,7 @@ MANIFEST
 htmlcov/
 .tox/
 coverage.xml
+.mypy_cache/
 
 # Documentation
 docs/_build/
@@ -58,3 +59,4 @@ Thumbs.db
 # Project specific
 .env
 *.log
+sensitive.md
