@@ -3,7 +3,7 @@
 Poisson Factorization
 =====================
 
-Since all the featured models in PyPF are based on Poisson Factorization (PF), we give a short introduction into PF.
+Since all the featured models in topicmodels are based on Poisson Factorization (PF), we give a short introduction into PF.
 
 Poisson factorization (PF) is a powerful statistical tool used for modeling count data, and it has garnered significant attention in various fields due to its flexibility and robustness. At its core, Poisson factorization leverages the Poisson distribution's capacity to model the frequency of events occurring within a fixed interval of time or space. The Poisson distribution expresses the probability of a given number of events happening in a fixed interval of time or space and is defined as:
 
@@ -11,7 +11,7 @@ Poisson factorization (PF) is a powerful statistical tool used for modeling coun
 
     P(X = k) = \frac{\lambda^k  e^{-\lambda}}{k!}
 
-where :math:`\lambda` is the average number of occurrences within the interval, :math:`k` is the number of occurrences, :math:`e` is the base of the natural logarithm, and :math:`k!` is the factorial of :math:`k`. 
+where :math:`\lambda` is the average number of occurrences within the interval, :math:`k` is the number of occurrences, :math:`e` is the base of the natural logarithm, and :math:`k!` is the factorial of :math:`k`.
 
 Poisson factorization extends the use of the Poisson distribution by modeling a matrix of count data, often referred to as the frequency data matrix. This matrix can represent various types of data, such as word frequencies in documents or user activity in online platforms.
 

@@ -1,7 +1,7 @@
-Module contents
-===============
+API Reference
+=============
 
-.. automodule:: models
+.. automodule:: packages.models
    :members:
    :undoc-members:
    :show-inheritance:

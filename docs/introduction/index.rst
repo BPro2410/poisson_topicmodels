@@ -1,7 +1,7 @@
-Getting started with PyPF
-=========================
+Getting started with topicmodels
+================================
 
-Here you will find all the relevant information to get started with PyPF.
+Here you will find all the relevant information to get started with topicmodels.
 
 .. toctree::
    :maxdepth: 1

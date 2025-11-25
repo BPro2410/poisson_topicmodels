@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+title: "topicmodels: Probabilistic Topic Modeling with JAX"
+authors:
+  - family-names: Prostmaier
+    given-names: Bernd
+    email: b.prostmaier@icloud.com
+  - family-names: Grün
+    given-names: Bettina
+  - family-names: Hofmarcher
+    given-names: Paul
+keywords:
+  - "topic-modeling"
+  - "bayesian-inference"
+  - "jax"
+  - "numpyro"
+  - "probabilistic-modeling"
+version: 0.1.0
+date-released: 2025-11-19
+repository-code: "https://github.com/BPro2410/topicmodels_package"
+license: MIT
+abstract: >
+  A Python package for probabilistic topic modeling using Bayesian
+  inference built on JAX and NumPyro. Provides implementations of
+  advanced topic models including Poisson Factorization (PF), Seeded
+  Poisson Factorization (SPF), Covariate Poisson Factorization (CPF),
+  Covariate Seeded Poisson Factorization (CSPF), Text-Based Ideal Points
+  (TBIP), and Embedded Topic Models (ETM).
+contact:
+  - name: "Bernd Prostmaier"
+    email: "b.prostmaier@icloud.com"
