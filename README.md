@@ -14,8 +14,6 @@
 **topicmodels** is a modern Python package for probabilistic topic modeling using Bayesian inference, built on [JAX](https://github.com/google/jax) and [NumPyro](https://github.com/pyro-ppl/numpyro).
 
 
-OVERCOME pre-commit: git add -A && git commit --no-verify -m "Update: Fix
-
 ## Statement of Need
 
 Traditional topic modeling packages (e.g., Gensim, scikit-learn's LDA) use older inference methods and lack flexibility for emerging research needs. **poisson-topicmodels** addresses key gaps:
