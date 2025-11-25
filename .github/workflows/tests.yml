@@ -29,18 +29,18 @@ jobs:
     - name: Lint with flake8
       run: |
         # Stop the build if there are Python syntax errors or undefined names
-        flake8 topicmodels tests --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 poisson_topicmodels tests --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings
-        flake8 topicmodels tests --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
+        flake8 poisson_topicmodels tests --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
 
     - name: Type check with mypy
       continue-on-error: true
       run: |
-        mypy topicmodels --ignore-missing-imports --no-error-summary 2>/dev/null || true
+        mypy poisson_topicmodels --ignore-missing-imports --no-error-summary 2>/dev/null || true
 
     - name: Run tests with pytest
       run: |
-        pytest tests/ -v --cov=topicmodels --cov-report=xml --cov-report=term-only
+        pytest tests/ -v --cov=poisson_topicmodels --cov-report=xml --cov-report=term-only
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
