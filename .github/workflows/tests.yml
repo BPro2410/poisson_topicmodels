@@ -40,7 +40,7 @@ jobs:
 
     - name: Run tests with pytest
       run: |
-        pytest tests/ -v --cov=poisson_topicmodels --cov-report=xml --cov-report=term-only
+        pytest tests/ -v --cov=poisson_topicmodels --cov-report=xml --cov-report=term
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3

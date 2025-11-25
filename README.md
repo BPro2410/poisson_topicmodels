@@ -172,6 +172,30 @@ model = CPF(counts, vocab, covariates, num_topics=10, batch_size=64)
 model.train_step(num_steps=500, lr=0.001, random_seed=42)
 ```
 
+
+## Custom Model Extension
+
+Due to its modular structure it is easy to implement your own custom models with **poisson-topicmodels**. Below you can see a short example.
+
+```python
+from poisson_topicmodels import NumpyroModel
+import numpyro
+from numpyro import plate, sample
+import numpyro.distributions as dist
+
+class MyModel(NumpyroModel):
+    def _model(self, Y_batch, d_batch):
+        with plate("n", len(Y_batch)):
+            mu = sample("mu", dist.Normal(0, 1))
+            sample("obs", dist.Normal(mu, 1), obs=Y_batch)
+
+    def _guide(self, Y_batch, d_batch):
+        mu_loc = numpyro.param("mu_loc", 0.0)
+        mu_scale = numpyro.param("mu_scale", 1.0)
+        with plate("n", len(Y_batch)):
+            sample("mu", dist.Normal(mu_loc, mu_scale))
+```
+
 ## Example Data
 
 The repository includes `data/10k_amazon.csv` with ~10,000 Amazon product reviews for quick experimentation. See `examples/01_getting_started.ipynb` for a complete walkthrough.
