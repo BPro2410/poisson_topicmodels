@@ -1,15 +1,15 @@
 More examples
 =============
 
-This section provides a minimal example of all the models featured in PyPF.
+This section provides a minimal example of all the models featured in topicmodels.
 
-First we will create a corpus that will serve as the counts matrix for all subsequent analysis and import the PyPF package.
+First we will create a corpus that will serve as the counts matrix for all subsequent analysis and import the topicmodels package.
 
 
 .. code-block:: python
 
     # Imports
-    from PyPF import topicmodels
+    from poisson_topicmodels import PF, SPF, CPF, CSPF, TBIP
     import numpy as np
     import pandas as pd
     from sklearn.feature_extraction.text import CountVectorizer
@@ -41,6 +41,7 @@ First we will create a corpus that will serve as the counts matrix for all subse
 
     cv = CountVectorizer(stop_words='english', min_df = 1)
     counts = sparse.csr_matrix(cv.fit_transform(documents), dtype = np.float32)
+    vocab = cv.get_feature_names_out()
 
 
 
@@ -52,7 +53,7 @@ We first fit a Poisson factorization topic model for 2 topics.
 .. code-block:: python
 
     # Initialize the model
-    tm1 = topicmodels("PF", counts, vocab, num_topics = 2, batch_size = 1024)
+    tm1 = PF(counts=counts, vocab=vocab, num_topics=2, batch_size=100)
 
     # Train the model
     estimated_params = tm1.train_step(num_steps = 100, lr =0.01)
@@ -85,8 +86,8 @@ Next we fit the PF topic model with covariates
 .. code-block:: python
 
     # Initialize the model
-    tm2 = topicmodels("CPF", counts, vocab, num_topics = 2, batch_size = 1024, X_design_matrix = X_design_matrix)
-    
+    tm2 = CPF(counts=counts, vocab=vocab, num_topics=2, batch_size=100, X_design_matrix=X_design_matrix)
+
     # Train the model
     estimated_params = tm2.train_step(num_steps = 100, lr = 0.01)
 
@@ -116,9 +117,9 @@ Therefore, we define two topics a-priori.
 Now we can fit the topic model with the a-priori specified topics 'smartphone' and 'pc'.
 
 .. code-block:: python
-    
+
     # Initialize the model
-    tm3 = topicmodels("SPF", counts, vocab, keywords, residual_topics = 0, batch_size = 1024)
+    tm3 = SPF(counts=counts, vocab=vocab, keywords=keywords, residual_topics=0, batch_size=100)
 
     # Train the model
     estimated_params = tm3.train_step(num_steps = 100, lr = 0.01)
@@ -128,7 +129,7 @@ Now we can fit the topic model with the a-priori specified topics 'smartphone' a
     print(tm3.Metrics.loss) # Check model convergence
     topics, e_theta = tm2.return_topics() # See topic distribution across the documents
     betas = tm2.return_beta() # See topic distribution across the vocabulary
-    
+
 
 
 
@@ -140,7 +141,7 @@ For the SPF topic model including covariates, we just follow the process and inc
 .. code-block:: python
 
     # Initialize the model
-    tm4 = topicmodels("CSPF", counts, vocab, keywords, residual_topics = 0, batch_size = 1024, X_design_matrix = X_design_matrix)
+    tm4 = CSPF(counts=counts, vocab=vocab, keywords=keywords, residual_topics=0, batch_size=100, X_design_matrix=X_design_matrix)
 
     # Train the model
     estimated_params = tm4.train_step(num_steps = 100, lr = 0.01)
@@ -165,12 +166,12 @@ To give a minimum example we also simulate artificial authors.
 
     speaker = np.random.choice(['A', 'B', 'C'], size=len(documents), replace=True)
 
-Next we follow the PyPF logic and initialize, train and analyze the TBIP model.
+Next we follow the topicmodels logic and initialize, train and analyze the TBIP model.
 
 .. code-block:: python
-    
+
     # Initialize the model
-    tm5 = topicmodels("TBIP", counts, vocab, num_topics = 2, authors = speaker, batch_size = 1024)
+    tm5 = TBIP(counts=counts, vocab=vocab, num_topics=2, authors=speaker, batch_size=100)
 
     # Train the model
     estimated_params = tm5.train_step(num_steps = 1000, lr = 0.01)
