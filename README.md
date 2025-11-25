@@ -85,8 +85,8 @@ model = PF(counts, vocab, num_topics=10, batch_size=32)
 params = model.train_step(num_steps=100, lr=0.01, random_seed=42)
 
 # Extract results
-topics = model.return_topics()
-top_words = model.return_top_words_per_topic(n_words=10)
+topics, _ = model.return_topics()
+top_words = model.return_top_words_per_topic(n=10)
 print(f"Found {topics.shape[1]} topics")
 print(f"Top words: {top_words[:3]}")
 ```
@@ -142,8 +142,8 @@ model = PF(counts, vocab, num_topics=10, batch_size=64)
 model.train_step(num_steps=500, lr=0.001, random_seed=42)
 
 # Extract topics
-topics, doc_ids = model.return_topics()
-top_words = model.return_top_words_per_topic(n_words=15)
+topics, topic_probs = model.return_topics()
+top_words = model.return_top_words_per_topic(n=15)
 ```
 
 ### 2. Guided Topic Modeling with Keywords (SPF)

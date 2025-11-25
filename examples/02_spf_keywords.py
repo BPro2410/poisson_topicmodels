@@ -123,7 +123,7 @@ topics, E_theta = model.return_topics()
 beta = model.return_beta()
 
 # Get top words per topic
-top_words = model.return_top_words_per_topic(n_words=10)
+top_words = model.return_top_words_per_topic(n=10)
 
 print(f"✓ Extracted results for {model.K} topics")
 print()
@@ -192,7 +192,7 @@ pf_params = pf_model.train_step(
     random_seed=random_seed,
 )
 
-pf_top_words = pf_model.return_top_words_per_topic(n_words=10)
+pf_top_words = pf_model.return_top_words_per_topic(n=10)
 
 print("Guided SPF topics are influenced by seed words:")
 for topic_id in range(min(3, len(keywords))):

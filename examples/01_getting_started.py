@@ -98,7 +98,7 @@ print("✓ Document-topic assignments extracted")
 print(f"✓ Shape of document-topic matrix (E_theta): {E_theta.shape}")
 
 # Get top words per topic
-top_words_per_topic = model.return_top_words_per_topic(n_words=10)
+top_words_per_topic = model.return_top_words_per_topic(n=10)
 print(f"✓ Top words extracted for {len(top_words_per_topic)} topics")
 print()
 

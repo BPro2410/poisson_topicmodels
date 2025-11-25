@@ -147,10 +147,11 @@ print("Step 6: Topic Interpretations")
 print("=" * 50)
 print()
 
-top_words_per_topic = model.return_top_words_per_topic(n_words=10)
-
-for topic_id in range(num_topics):
-    print(f"Topic {topic_id}: {', '.join(top_words_per_topic[topic_id][:5])}")
+# Note: CPF model does not have return_top_words_per_topic method
+# Use return_covariate_effects() to inspect covariate-topic interactions
+covariate_effects = model.return_covariate_effects()
+print("✓ Covariate effects retrieved")
+print("Covariate effects shape:", covariate_effects.shape)
 
 print()
 

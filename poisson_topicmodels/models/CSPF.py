@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import jax
 import jax.numpy as jnp
@@ -28,8 +28,9 @@ class CSPF(NumpyroModel):
         Document-term matrix of shape (D, V) with word counts.
     vocab : np.ndarray
         Vocabulary array of shape (V,) containing word terms.
-    keywords : Dict[int, List[str]]
-        Dictionary mapping topic indices to lists of seed words.
+    keywords : Dict[Any, List[str]]
+        Dictionary mapping topic identifiers to lists of seed words.
+        Keys can be strings or integers.
     residual_topics : int
         Number of residual (unsupervised) topics. Must be >= 0.
     batch_size : int
@@ -53,7 +54,7 @@ class CSPF(NumpyroModel):
         self,
         counts: sparse.csr_matrix,
         vocab: np.ndarray,
-        keywords: Dict[int, List[str]],
+        keywords: Dict[Any, List[str]],
         residual_topics: int,
         batch_size: int,
         X_design_matrix: Optional[np.ndarray] = None,
@@ -67,7 +68,7 @@ class CSPF(NumpyroModel):
             Document-term matrix.
         vocab : np.ndarray
             Vocabulary array.
-        keywords : Dict[int, List[str]]
+        keywords : Dict[Any, List[str]]
             Seed words for guided topics.
         residual_topics : int
             Number of unsupervised topics.

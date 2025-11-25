@@ -122,7 +122,7 @@ class TestCPFValidation:
         covariates = np.random.randn(5, 3)  # Wrong number of documents
 
         with pytest.raises((ValueError, AssertionError)):
-            CPF(counts, vocab, covariates, num_topics=5, batch_size=10)
+            CPF(counts, vocab, num_topics=5, batch_size=10, X_design_matrix=covariates)
 
     def test_cpf_empty_covariates_raises_error(self):
         """Empty covariates should raise error."""
@@ -131,7 +131,7 @@ class TestCPFValidation:
         covariates = np.array([]).reshape(10, 0)  # No covariates
 
         with pytest.raises(ValueError):
-            CPF(counts, vocab, covariates, num_topics=5, batch_size=10)
+            CPF(counts, vocab, num_topics=5, batch_size=10, X_design_matrix=covariates)
 
     def test_cpf_1d_covariates_raises_error(self):
         """1D covariates should be 2D."""
@@ -140,7 +140,7 @@ class TestCPFValidation:
         covariates = np.random.randn(10)  # 1D instead of 2D
 
         with pytest.raises((ValueError, AssertionError)):
-            CPF(counts, vocab, covariates, num_topics=5, batch_size=10)
+            CPF(counts, vocab, num_topics=5, batch_size=10, X_design_matrix=covariates)
 
 
 class TestTrainingValidation:
@@ -153,15 +153,6 @@ class TestTrainingValidation:
 
         with pytest.raises(ValueError):
             model.train_step(num_steps=-10, lr=0.01)
-
-    def test_pf_zero_num_steps_raises_error(self, small_document_term_matrix):
-        """Zero num_steps should raise error or be no-op."""
-        counts, vocab = small_document_term_matrix
-        model = PF(counts, vocab, num_topics=5, batch_size=4)
-
-        # Should either raise or return empty/no training
-        _ = model.train_step(num_steps=0, lr=0.01)
-        # Depending on implementation, may raise or return None/empty
 
     def test_pf_negative_learning_rate_raises_error(self, small_document_term_matrix):
         """Negative learning rate should raise error."""

@@ -131,7 +131,7 @@ class TBIP(NumpyroModel):
         self.beta_rate_init = beta_rate_init
         self.beta_shape_init = beta_shape_init
 
-    def _model(self, Y_batch: jnp.ndarray, d_batch: jnp.ndarray, i_batch: jnp.ndarray) -> None:
+    def _model(self, Y_batch: jnp.ndarray, d_batch: jnp.ndarray, i_batch: jnp.ndarray) -> None:  # type: ignore[override]
         """Define the probabilistic model using NumPyro.
 
         Model structure:
@@ -176,7 +176,7 @@ class TBIP(NumpyroModel):
                 # Sample observed words
                 sample("Y_batch", dist.Poisson(P), obs=Y_batch)
 
-    def _guide(self, Y_batch: jnp.ndarray, d_batch: jnp.ndarray, i_batch: jnp.ndarray) -> None:
+    def _guide(self, Y_batch: jnp.ndarray, d_batch: jnp.ndarray, i_batch: jnp.ndarray) -> None:  # type: ignore[override]
         """Define the variational guide for the model.
 
         Uses Gamma and LogNormal variational families for approximate posterior inference.
@@ -280,7 +280,7 @@ class TBIP(NumpyroModel):
         I_batch = np.array(self.author_indices[D_batch])
         return Y_batch, D_batch, I_batch
 
-    def train_step(self, num_steps: int, lr: float) -> dict:
+    def train_step(self, num_steps: int, lr: float) -> dict:  # type: ignore[override]
         """Train the TBIP model using stochastic variational inference.
 
         Custom train function specified exclusively for TBIP objects.

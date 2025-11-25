@@ -17,6 +17,6 @@ Example:
 
 from .models import CPF, CSPF, ETM, PF, SPF, TBIP, Metrics, NumpyroModel, topicmodels
 
-__all__ = ["PF", "SPF", "CPF", "CSPF", "TBIP", "ETM", "Metrics", "NumpyroModel", "topicmodels"]
+__all__ = ["CPF", "CSPF", "ETM", "PF", "SPF", "TBIP", "Metrics", "NumpyroModel", "topicmodels"]
 
 __version__ = "0.1.0"

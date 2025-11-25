@@ -17,14 +17,10 @@ import pandas as pd
 import scipy.sparse as sparse
 
 # Try to import CSPF, fall back gracefully if not available
-try:
-    from poisson_topicmodels import CPF, CSPF, PF, SPF
+from poisson_topicmodels import CPF, CSPF, PF, SPF
 
-    HAS_CSPF = True
-except ImportError:
-    from topicmodels import CPF, PF, SPF
+HAS_CSPF = True
 
-    HAS_CSPF = False
 
 # ============================================================================
 # STEP 1: Create Data
@@ -215,13 +211,13 @@ print("-" * 50)
 print()
 
 print("Top words for first 3 topics (PF baseline):")
-pf_top_words = pf_model.return_top_words_per_topic(n_words=5)
+pf_top_words = pf_model.return_top_words_per_topic(n=5)
 for topic_id in range(min(3, len(pf_top_words))):
     print(f"  Topic {topic_id}: {', '.join(pf_top_words[topic_id])}")
 
 print()
 print("Top words for first 3 topics (SPF with keywords):")
-spf_top_words = spf_model.return_top_words_per_topic(n_words=5)
+spf_top_words = spf_model.return_top_words_per_topic(n=5)
 for topic_id in range(min(3, len(spf_top_words))):
     print(f"  Topic {topic_id}: {', '.join(spf_top_words[topic_id])}")
 

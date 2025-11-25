@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import jax.numpy as jnp
 import numpy as np
@@ -26,9 +26,10 @@ class SPF(NumpyroModel):
         Document-term matrix of shape (D, V) with word counts.
     vocab : np.ndarray
         Vocabulary array of shape (V,) containing word terms.
-    keywords : Dict[int, List[str]]
-        Dictionary mapping topic indices to lists of seed words.
-        Example: {0: ['climate', 'environment'], 1: ['economy', 'trade']}
+    keywords : Dict[Any, List[str]]
+        Dictionary mapping topic identifiers to lists of seed words.
+        Keys can be strings or integers. Example: {0: ['climate', 'environment'], 1: ['economy', 'trade']}
+        or {'climate': ['climate', 'environment'], 'economy': ['economy', 'trade']}
     residual_topics : int
         Number of residual (unsupervised) topics. Must be >= 0.
     batch_size : int
@@ -71,7 +72,7 @@ class SPF(NumpyroModel):
         self,
         counts: sparse.csr_matrix,
         vocab: np.ndarray,
-        keywords: Dict[int, List[str]],
+        keywords: Dict[Any, List[str]],
         residual_topics: int,
         batch_size: int,
     ) -> None:
@@ -84,7 +85,7 @@ class SPF(NumpyroModel):
             Document-term matrix.
         vocab : np.ndarray
             Vocabulary array.
-        keywords : Dict[int, List[str]]
+        keywords : Dict[Any, List[str]]
             Seed words for each seeded topic.
         residual_topics : int
             Number of unsupervised topics.

@@ -21,40 +21,47 @@ class NumpyroModel(ABC):
 
     Attributes
     ----------
-    counts : scipy.sparse.csr_matrix
-        Document-term matrix.
-    D : int
-        Number of documents.
-    V : int
-        Size of vocabulary.
-    vocab : np.ndarray
-        Vocabulary array.
-    K : int
-        Number of topics.
-    batch_size : int
-        Size of mini-batches for training.
     Metrics : Metrics
         Instance metrics tracker (per instance, not shared).
     estimated_params : dict
         Estimated parameters after training.
+    D : int
+        Number of documents.
+    V : int
+        Vocabulary size.
+    batch_size : int
+        Mini-batch size for stochastic variational inference.
+    counts : scipy.sparse.csr_matrix
+        Document-term matrix.
+    vocab : np.ndarray
+        Vocabulary array.
+    K : int
+        Number of topics.
     """
 
     def __init__(self) -> None:
         """Initialize base model with per-instance metrics."""
         self.Metrics = Metrics(loss=[])
         self.estimated_params: Dict[str, Any] = {}
+        # These will be set by child classes, declared here for type checking
+        self.D: int
+        self.V: int
+        self.batch_size: int
+        self.counts: sparse.csr_matrix
+        self.vocab: np.ndarray
+        self.K: int
 
     @abstractmethod
-    def _model(self) -> None:
+    def _model(self, Y_batch: Any, d_batch: Any) -> None:
         """Define the probabilistic model."""
         pass
 
     @abstractmethod
-    def _guide(self) -> None:
+    def _guide(self, Y_batch: Any, d_batch: Any) -> None:
         """Define the variational guide."""
         pass
 
-    def _get_batch(self, rng: jax.Array, Y: sparse.csr_matrix) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    def _get_batch(self, rng: jax.Array, Y: sparse.csr_matrix) -> Tuple[jnp.ndarray, ...]:
         """
         Helper function to obtain a batch of data, convert from scipy.sparse to jax.numpy.array.
 

@@ -123,7 +123,7 @@ class TestSPFTraining:
             residual_topics=2,
             batch_size=6,
         )
-        model2.train_step(num_steps=50, lr=0.01, random_seed=123)
+        model2.train_step(num_steps=50, lr=0.001, random_seed=123)
         loss2 = np.array(model2.Metrics.loss)
 
         # Losses should differ

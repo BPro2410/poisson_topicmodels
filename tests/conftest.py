@@ -31,3 +31,12 @@ def keywords_dict():
         "topic_b": ["word_10", "word_11", "word_12"],
         "topic_c": ["word_20", "word_21", "word_22", "word_23", "word_24"],
     }
+
+
+# ============================================================================
+# Run Tests
+# ============================================================================
+
+if __name__ == "__main__":
+    # Run all tests with verbose output
+    pytest.main([__file__, "-v", "--tb=short"])
