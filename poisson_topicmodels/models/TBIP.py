@@ -2,9 +2,12 @@ import warnings
 from typing import Tuple
 
 import jax.numpy as jnp
+import matplotlib.pyplot as plt
 import numpy as np
 import numpyro.distributions as dist
+import pandas as pd
 import scipy.sparse as sparse
+import seaborn as sns
 from jax import jit, random
 from numpyro import param, plate, sample
 from numpyro.distributions import constraints
@@ -67,6 +70,9 @@ class TBIP(NumpyroModel):
         ValueError
             If dimensions are invalid or time_varying parameters have wrong shape.
         """
+
+        super().__init__()
+
         # Input validation
         if not sparse.issparse(counts):
             raise TypeError(f"counts must be a scipy sparse matrix, got {type(counts).__name__}")
@@ -327,7 +333,7 @@ class TBIP(NumpyroModel):
                 svi_state, Y_batch=Y_batch, d_batch=D_batch, i_batch=I_batch
             )
             loss = loss / self.D
-            self.Metrics.loss.append(loss)
+            self.Metrics.loss.append(float(loss))
             # losses.append(loss)
             if step % 10 == 0:
                 pbar.set_description(
@@ -340,3 +346,48 @@ class TBIP(NumpyroModel):
         self.estimated_params = svi_batch.get_params(svi_state)
 
         return self.estimated_params
+
+    def __create_author_ideal_map(self) -> dict:
+        """Create a mapping of authors to their estimated ideal points.
+
+        Returns
+        -------
+        dict
+            A dictionary mapping each author to their estimated ideal point.
+        """
+        x_est = self.estimated_params["mu_x"]
+        author_ideal_map = {author: x_est[idx] for author, idx in self.author_map.items()}
+        return author_ideal_map
+
+    def plot_ideal_points(self, selected_authors=None):
+        """Plot the ideal points of selected authors.
+
+        Parameters
+        ----------
+        selected_authors : list
+            A list of authors whose ideal points are to be plotted.
+        """
+
+        sns.set(style="whitegrid")
+        _ = plt.figure(figsize=(12, 1))
+        ax = plt.axes([0, 0, 1, 1], frameon=False)
+
+        if selected_authors is None:
+            selected_authors = self.authors_unique
+
+        authors = pd.Series(self.__create_author_ideal_map())
+        # authors.columns = ["author", "ideal_point"]
+
+        for idx in range(authors.shape[0]):
+            ax.scatter(authors[idx], 0, c="black", s=20)
+            if authors.index in selected_authors:
+                ax.annotate(
+                    authors.index[idx],
+                    xy=(authors[idx], 0.0),
+                    xytext=(authors[idx], 0),
+                    rotation=30,
+                    size=14,
+                )
+
+        ax.set_yticks([])
+        plt.show()

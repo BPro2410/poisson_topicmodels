@@ -214,36 +214,36 @@ class ETM(NumpyroModel):
                 z_loc, z_std = net(Y_batch / (Y_batch.sum(axis=1).reshape(-1, 1)))
                 sample("theta", dist.Normal(z_loc, z_std))
 
-    def get_batch(self, rng: jnp.ndarray, Y: sparse.csr_matrix) -> Tuple[jnp.ndarray, jnp.ndarray]:
-        """Sample a random mini-batch from the corpus.
+    # def get_batch(self, rng: jnp.ndarray, Y: sparse.csr_matrix) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    #     """Sample a random mini-batch from the corpus.
 
-        Parameters
-        ----------
-        rng : jnp.ndarray
-            JAX random key.
-        Y : scipy.sparse.csr_matrix
-            Document-term matrix.
+    #     Parameters
+    #     ----------
+    #     rng : jnp.ndarray
+    #         JAX random key.
+    #     Y : scipy.sparse.csr_matrix
+    #         Document-term matrix.
 
-        Returns
-        -------
-        Tuple[jnp.ndarray, jnp.ndarray]
-            Y_batch : Word counts for the batch (batch_size, V).
-            D_batch : Document indices in batch (batch_size,).
+    #     Returns
+    #     -------
+    #     Tuple[jnp.ndarray, jnp.ndarray]
+    #         Y_batch : Word counts for the batch (batch_size, V).
+    #         D_batch : Document indices in batch (batch_size,).
 
-        Raises
-        ------
-        AssertionError
-            If batch dimensions don't match expected shape.
-        """
-        D_batch = random.choice(rng, jnp.arange(self.D), shape=(self.batch_size,))
-        Y_batch = jnp.array(Y[D_batch].toarray())
-        # Ensure the shape of Y_batch is (batch_size, V)
-        assert Y_batch.shape == (
-            self.batch_size,
-            self.V,
-        ), f"Shape mismatch: {Y_batch.shape} != ({self.batch_size}, {self.V})"
+    #     Raises
+    #     ------
+    #     AssertionError
+    #         If batch dimensions don't match expected shape.
+    #     """
+    #     D_batch = random.choice(rng, jnp.arange(self.D), shape=(self.batch_size,))
+    #     Y_batch = jnp.array(Y[D_batch].toarray())
+    #     # Ensure the shape of Y_batch is (batch_size, V)
+    #     assert Y_batch.shape == (
+    #         self.batch_size,
+    #         self.V,
+    #     ), f"Shape mismatch: {Y_batch.shape} != ({self.batch_size}, {self.V})"
 
-        return Y_batch, D_batch
+    #     return Y_batch, D_batch
 
     def return_topics(self) -> Tuple[jnp.ndarray, jnp.ndarray]:
         """Extract learned topics from model parameters.
