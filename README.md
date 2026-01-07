@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="logo.svg" alt="poisson-topicmodels" width="400" style="margin-bottom: 20px;"/>
+  <img src="data/figures/logo.svg" alt="poisson-topicmodels" width="400" style="margin-bottom: 20px;"/>
 </div>
 
 
@@ -193,6 +193,13 @@ class MyModel(NumpyroModel):
         with plate("n", len(Y_batch)):
             sample("mu", dist.Normal(mu_loc, mu_scale))
 ```
+
+To implement a custom model, one has to only define the high-level model. The backbone of **poisson-topicmodels** handles training and inference.
+
+<div align="center">
+<img src="data/figures/architecture5.svg" width="50%">
+</div>
+
 
 ## Example Data
 

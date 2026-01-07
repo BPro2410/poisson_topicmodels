@@ -60,3 +60,6 @@ Thumbs.db
 .env
 *.log
 sensitive.md
+
+# Figs
+data/figures/architecture*

@@ -11,7 +11,6 @@ from poisson_topicmodels import CSPF, ETM, PF, SPF, TBIP
 from poisson_topicmodels.utils.utils import load_embeds
 
 # import jax_config
-
 # from poisson_topicmodels import topicmodels
 
 # ---- Load data ----
@@ -63,7 +62,7 @@ tm1 = SPF(counts, vocab, keywords, residual_topics=0, batch_size=1024)
 print(tm1)
 
 # ---- Run inference -----
-estimated_params = tm1.train_step(num_steps=500, lr=0.1)
+estimated_params = tm1.train_step(num_steps=50, lr=0.1)
 
 # ---- Inspect results ----
 print(estimated_params)
@@ -75,6 +74,10 @@ top_words = tm1.return_top_words_per_topic(n=10)
 # --- See loss within inherited metrics object ---
 tm1.Metrics.loss
 
+# ---- Plot model loss ----
+plot, _ = tm1.plot_model_loss(window=10, save_path=None)
+plot.show()
+
 
 # ###############
 # ### PF Test ###
@@ -85,6 +88,8 @@ tm2 = PF(counts, vocab, num_topics=10, batch_size=1024)
 estimated_params = tm2.train_step(num_steps=100, lr=0.01)
 topics, e_theta = tm2.return_topics()
 betas = tm2.return_beta()
+top_words = tm2.return_top_words_per_topic(n=10)
+tm2.plot_topic_wordclouds()
 
 
 # #################
@@ -120,7 +125,9 @@ df1["speaker"] = np.random.choice(
     ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"], size=len(df1), replace=True
 )
 tm4 = TBIP(counts, vocab, num_topics=10, authors=df1.speaker, batch_size=1024)
-estimated_params = tm4.train_step(num_steps=1000, lr=0.01)
+estimated_params = tm4.train_step(num_steps=10, lr=0.01)
+tm4.plot_model_loss()
+tm4.plot_ideal_points()
 
 
 # ##############
@@ -131,7 +138,6 @@ estimated_params = tm4.train_step(num_steps=1000, lr=0.01)
 # tm3 = CPF(counts, vocab, num_topics = 5, batch_size = 1024, X_design_matrix = X_design_matrix)
 # svi_batch, svi_state = tm3.train_step(num_steps = 100, lr = 0.01)
 # estimated_params = svi_batch.get_params(svi_state)
-
 
 df1["speaker"] = np.random.choice(
     ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"], size=len(df1), replace=True
@@ -167,7 +173,7 @@ tm5 = ETM(
 estimated_params = tm5.train_step(num_steps=100, lr=0.01)
 
 
-# --- TVTBIP, STBS and ETM to be added --- #
+# --- TVTBIP --- #
 # tvtbip already implemented in models/tbip.py #
 
 # e.g.,
