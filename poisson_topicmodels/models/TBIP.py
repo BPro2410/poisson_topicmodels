@@ -370,7 +370,7 @@ class TBIP(NumpyroModel):
 
         sns.set(style="whitegrid")
         _ = plt.figure(figsize=(12, 1))
-        ax = plt.gca()
+        ax = plt.axes([0, 0, 1, 1], frameon=False)
 
         if selected_authors is None:
             selected_authors = self.authors_unique
