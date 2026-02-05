@@ -51,20 +51,6 @@ Whether analyzing legislative text, social media discourse, or scientific abstra
 - ✨ >70% test coverage with continuous integration
 - ✨ Clear error messages and input validation
 
-## Comparison with Existing Tools
-
-| Feature | topicmodels | Gensim | scikit-learn | BTM |
-|---------|-------------|--------|--------------|-----|
-| GPU Support | ✅ JAX backend | ❌ | ❌ | ❌ |
-| Seeded Topics | ✅ SPF, CSPF | ⚠️ Limited | ❌ | ✅ |
-| Covariate Effects | ✅ CPF, CSPF | ❌ | ❌ | ❌ |
-| Ideal Points | ✅ TBIP | ❌ | ❌ | ❌ |
-| Embeddings | ✅ ETM | ⚠️ Limited | ❌ | ❌ |
-| Type Hints | ✅ Full | ⚠️ Partial | ✅ Full | ❌ |
-| Active Development | ✅ Modern stack | ⚠️ Mature | ✅ Active | ⚠️ Limited |
-| Research-Focused | ✅ By researchers | ⚠️ General-purpose | ⚠️ General | ✅ |
-
-
 ## Quick Start
 
 Get started in 5 minutes:
