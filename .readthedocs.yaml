@@ -4,54 +4,19 @@
 # Required
 version: 2
 
-# Set the OS, Python version and other tools
+# Set the OS, Python version, and other tools you might need
 build:
-  os: "ubuntu-22.04"
+  os: ubuntu-24.04
   tools:
-    python: "3.12"
+    python: "3.13"
 
-# Build documentation in the docs/ directory with Sphinx
+# Build documentation in the "docs/" directory with Sphinx
 sphinx:
-  configuration: docs/conf.py
-  fail_on_warning: false
+   configuration: docs/conf.py
 
-# Build HTML documentation using Sphinx
-python:
-  version: 3.12
-  install: "poetry"
-  poetry:
-    groups:
-      - docs
-
-# Optionally set the version of requirements file to be installed
-# This is useful if you want to set the versions of dependencies
-# If not specified, Read the Docs will try to detect dependencies from:
-# - setup.py
-# - setup.cfg
-# - pyproject.toml
-# - requirements.txt
-# - Pipfile
-
-# Optionally build PDF and ePub
-formats:
-  - pdf
-  - epub
-
-# Optional but recommended, declare the Python requirements file
-requirements: null
-
-# Read the Docs can install your project as a package with pip if you have a setup.py, setup.cfg, or pyproject.toml file
-# In those cases, it will install the project along with the dependencies specified there
-# This is useful to improve Sphinx's autodoc extension
-
-# Enable built-in preview on branches and tags
-preview:
-  enabled: true
-
-# If you have extra dependencies or special build steps, you can use the following
-# However, since your project uses Poetry, the dependencies are managed there
-# Just make sure the 'docs' extra group is properly defined in your pyproject.toml
-
-# Optional: define environment variables for the build
-# env:
-#   PYTHONPATH: .
+# Optionally, but recommended,
+# declare the Python requirements required to build your documentation
+# See https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
+# python:
+#    install:
+#    - requirements: docs/requirements.txt
