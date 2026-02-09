@@ -76,21 +76,45 @@ Which Model Should I Use?
 Model Comparison Table
 ======================
 
-+---------------------+---------------+-----------+----------+----------+
-| Model               | Unsupervised? | Guides?   | Covariates? | Embeddings? |
-+=====================+===============+===========+==========+==========+
-| **PF**              | ✓             |           |          |        |
-+---------------------+---------------+-----------+----------+----------+
-| **SPF**             | ✓ (guided)    | ✓         |          |        |
-+---------------------+---------------+-----------+----------+----------+
-| **CPF**             | ✓             |           | ✓        |        |
-+---------------------+---------------+-----------+----------+----------+
-| **CSPF**            | ✓ (guided)    | ✓         | ✓        |        |
-+---------------------+---------------+-----------+----------+----------+
-| **TBIP**            |               |           |          |        |
-+---------------------+---------------+-----------+----------+----------+
-| **ETM**             | ✓             |           |          | ✓      |
-+---------------------+---------------+-----------+----------+----------+
+.. list-table:: Model Comparison
+   :widths: 20 15 10 15 15
+   :header-rows: 1
+
+   * - Model
+     - Unsupervised?
+     - Guides?
+     - Covariates?
+     - Embeddings?
+   * - **PF**
+     - ✓
+     -
+     -
+     -
+   * - **SPF**
+     - ✓ (guided)
+     - ✓
+     -
+     -
+   * - **CPF**
+     - ✓
+     -
+     - ✓
+     -
+   * - **CSPF**
+     - ✓ (guided)
+     - ✓
+     - ✓
+     -
+   * - **TBIP**
+     - ✓
+     -
+     -
+     -
+   * - **ETM**
+     - ✓
+     -
+     -
+     - ✓
 
 Common Patterns
 ===============
@@ -116,12 +140,6 @@ All models in poisson-topicmodels follow a consistent API:
    topics = model.get_topics()
    doc_topics = model.get_document_topics()
    top_words = model.get_top_words(n=10)
-
-**Analyze**: Downstream analysis
-
-.. code-block:: python
-
-   coherence = model.compute_coherence()  # or other metrics
 
 Probabilistic Background
 =========================

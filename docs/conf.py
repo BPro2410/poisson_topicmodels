@@ -8,13 +8,12 @@ import sys
 
 # Add parent directory to path for autodoc
 sys.path.insert(0, os.path.abspath(".."))
-sys.path.insert(0, os.path.abspath("../packages"))
 
 # -- Project information -------------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "poisson-topicmodels"
-copyright = "2025, Bernd Prostmaier, Bettina Grün, Paul Hofmarcher"
+copyright = "2026, Bernd Prostmaier, Bettina Grün, Paul Hofmarcher"
 author = "Bernd Prostmaier, Bettina Grün, Paul Hofmarcher"
 release = "0.1.0"
 version = "0.1"
@@ -50,7 +49,16 @@ napoleon_use_rtype = True
 
 # Templates and patterns
 templates_path = ["_templates"]
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    "index_alt.rst",
+    "intro/*",
+    "introduction/*",
+    "models.rst",
+    "modules.rst",
+]
 
 # Language and encoding
 language = "en"
@@ -60,8 +68,8 @@ master_doc = "index"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "sphinx_rtd_theme"
-html_logo = "_static/pypf_logo.png"
-html_favicon = "_static/pypf_logo.png"
+html_logo = "_static/logo_small.png"
+html_favicon = "_static/logo_small.png"
 html_static_path = ["_static"]
 html_css_files = [
     "custom.css",

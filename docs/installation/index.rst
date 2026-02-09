@@ -8,7 +8,7 @@ poisson-topicmodels works with Python 3.11+. We recommend using a fresh environm
 for installation to avoid dependency conflicts.
 
 Quick Install (Recommended)
-==========================
+============================
 
 For most users, the simplest approach is to install from PyPI:
 

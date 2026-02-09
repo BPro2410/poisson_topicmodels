@@ -6,13 +6,11 @@ API Reference
 
 Complete API documentation for poisson-topicmodels.
 
-.. toctree::
-   :maxdepth: 2
-   :caption: API Components
+.. note::
 
-   models
-   utils
-   metrics
+   API documentation is auto-generated from docstrings in the source code.
+   For detailed documentation on specific classes and methods, see the
+   source code or use Python's ``help()`` function.
 
 Core Classes
 ============
@@ -93,7 +91,7 @@ All models follow the same interface:
    coherence = model.compute_coherence()
 
 Common Parameters
-================
+=================
 
 **Data**
 
@@ -151,16 +149,7 @@ Essential Documentation
 
 - :doc:`../getting_started/index` – Quick start
 - :doc:`../tutorials/tutorial_training` – Training guide
-
-**For model details**
-
-- :doc:`models` – All model classes
 - :doc:`../fundamentals/index` – Model explanations
-
-**For specific tasks**
-
-- :doc:`utils` – Utility functions
-- :doc:`metrics` – Evaluation metrics
 - :doc:`../how_to_guides/index` – Practical guides
 
 Type Hints

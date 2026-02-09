@@ -104,14 +104,14 @@ Next Steps
 
 Now that you have a working model, explore:
 
-1. **Data Preparation**: :doc:`../how_to_guides/load_data`
-   Learn how to prepare your own text data for topic modeling.
+1. **Model Variants**: :doc:`../fundamentals/index`
+   Explore all models like seeded PF (SPF) for guided discovery.
 
-2. **Model Variants**: :doc:`../fundamentals/index`
-   Explore other models like seeded PF (SPF) for guided discovery.
-
-3. **Training & Configuration**: :doc:`../tutorials/index`
+2. **Training & Configuration**: :doc:`../tutorials/index`
    Understand training options, hyperparameters, and GPU acceleration.
+
+3. **Practical Recipes**: :doc:`../how_to_guides/index`
+   Common tasks and advanced workflows.
 
 4. **Advanced Usage**: :doc:`../how_to_guides/index`
    Extract results, customize inference, and integrate with your pipeline.
@@ -192,13 +192,13 @@ Key Concepts
 Common Parameters
 =================
 
-**num_topics**: Number of topics to discover (usually 10-50 for start)
+**num_topics**: Number of topics to discover
 
-**batch_size**: Documents processed per training step (32-256 typical)
+**batch_size**: Documents processed per training step
 
-**num_iterations**: Training iterations (100-1000 typical)
+**num_iterations**: Training iterations
 
-**learning_rate**: Step size for optimization (0.001-0.1 typical, try 0.01 first)
+**learning_rate**: Step size for optimization
 
 **random_seed**: For reproducibility
 

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="data/figures/logo.svg" alt="poisson-topicmodels" width="400" style="margin-bottom: 20px;"/>
+  <img src="https://raw.githubusercontent.com/BPro2410/poisson_topicmodels/5b9c5b887fc2c61063223e5af35aea85e0525f40/data/figures/logo.svg" alt="poisson-topicmodels" width="400" style="margin-bottom: 20px;"/>
 </div>
 
 
@@ -71,7 +71,7 @@ params = model.train_step(num_steps=100, lr=0.01, random_seed=42)
 # Extract results
 topics, _ = model.return_topics()
 top_words = model.return_top_words_per_topic(n=10)
-print(f"Found {topics.shape[1]} topics")
+print(f"Found {topics.shape} topics")
 print(f"Top words: {top_words[:3]}")
 ```
 

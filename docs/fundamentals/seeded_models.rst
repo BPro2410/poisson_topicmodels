@@ -339,21 +339,28 @@ How to validate seeded models:
 Comparison with Unsupervised
 =============================
 
-+-------------------+-------------------+-------------------+
-| Aspect            | PF (Unsupervised) | SPF (Seeded)      |
-+===================+===================+===================+
-| Prior knowledge   | Not used          | Used as priors    |
-| needed?           |                   |                   |
-+-------------------+-------------------+-------------------+
-| Bias?             | None              | Toward seeds      |
-+-------------------+-------------------+-------------------+
-| Interpretability  | Variable          | Usually better    |
-+-------------------+-------------------+-------------------+
-| Time to insights  | Requires reading  | Fast (seeds guide) |
-|                   | top words         |                   |
-+-------------------+-------------------+-------------------+
-| Flexibility       | High              | Guided            |
-+-------------------+-------------------+-------------------+
+.. list-table:: PF vs SPF Comparison
+   :widths: 25 35 35
+   :header-rows: 1
+
+   * - Aspect
+     - PF (Unsupervised)
+     - SPF (Seeded)
+   * - Prior knowledge needed?
+     - Not used
+     - Used as priors
+   * - Bias?
+     - None
+     - Toward seeds
+   * - Interpretability
+     - Variable
+     - Usually better
+   * - Time to insights
+     - Requires reading top words
+     - Fast (seeds guide)
+   * - Flexibility
+     - High
+     - Guided
 
 Next Steps
 ==========

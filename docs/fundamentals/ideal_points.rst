@@ -108,18 +108,6 @@ Interpreting Ideal Points
    plt.xlabel('Ideal Point (left ← → right)')
    plt.show()
 
-**2D Case** (two position dimensions):
-
-.. code-block:: python
-
-   ideal_points = model.get_ideal_points()  # Shape: (num_authors, 2)
-
-   plt.scatter(ideal_points[:, 0], ideal_points[:, 1])
-   for i, name in enumerate(author_names):
-       plt.annotate(name, ideal_points[i])
-   plt.xlabel('Dimension 1')
-   plt.ylabel('Dimension 2')
-   plt.show()
 
 Topic-Word-Author Relationships
 ===============================
@@ -183,41 +171,6 @@ Practical Example: Political Speeches
    plt.legend()
    plt.show()
    # Expected: Democrats mostly negative, Republicans mostly positive
-
-Advanced: Multi-dimensional Ideal Points
-=========================================
-
-Estimate author positions on multiple dimensions:
-
-.. code-block:: python
-
-   # 2D space: (left-right, libertarian-authoritarian)
-   model = TBIP(
-       counts=counts,
-       vocab=vocab,
-       author_ids=author_ids,
-       num_topics=20,
-       num_dimensions=2,
-       batch_size=32
-   )
-
-   model.train(num_iterations=200)
-   ideal_points = model.get_ideal_points()  # Shape: (num_authors, 2)
-
-   # Visualization
-   plt.scatter(ideal_points[:, 0], ideal_points[:, 1])
-   for i, name in enumerate(author_names):
-       plt.annotate(name, ideal_points[i])
-   plt.xlabel('Economic (Left ← → Right)')
-   plt.ylabel('Authoritarian (↓ ← → ↑)')
-   plt.show()
-
-Interpretation Notes:
-
-- **Dimension selection**: Choose based on domain knowledge
-- **Axis meaning**: Not automatically labeled; determined by language patterns
-- **Stability**: Relative positions matter more than absolute values
-- **Sign flip**: Dimensions may flip sign; only relative order matters
 
 Validating Ideal Points
 =======================

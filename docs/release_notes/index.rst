@@ -6,23 +6,17 @@ Release Notes & Changelog
 
 Version history and changelog for poisson-topicmodels.
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Versions
-
-   changelog
-
 Current Version
 ===============
 
-**Latest**: 0.1.0 (February 2025)
+**Latest**: 0.1.0 (February 2026)
 
 For full changelog, see below.
 
 Version 0.1.0 - Initial Release
 ===============================
 
-*February 9, 2025*
+*February 5, 2026*
 
 **New Features**:
 
@@ -140,11 +134,18 @@ Upgrade to latest:
 Compatibility Matrix
 ====================
 
-+---------------------+-------+-------+-------+
-| poisson-topicmodels | Python 3.11 | Python 3.12 | Python 3.13 |
-+=====================+===============+===============+===============+
-| 0.1.0               | ✓           | ✓           | ✓           |
-+---------------------+-------+-------+-------+
+.. list-table::
+   :widths: 25 25 25 25
+   :header-rows: 1
+
+   * - poisson-topicmodels
+     - Python 3.11
+     - Python 3.12
+     - Python 3.13
+   * - 0.1.0
+     - ✓
+     - ✓
+     - ✓
 
 Dependency Versions
 ===================
@@ -174,16 +175,16 @@ If you use poisson-topicmodels in research, please cite:
 
 .. code-block:: bibtex
 
-   @software{prostmaier2025poisson,
+   @software{prostmaier2026poisson,
      title={poisson-topicmodels: Probabilistic Topic Modeling with Bayesian Inference},
      author={Prostmaier, Bernd and Grün, Bettina and Hofmarcher, Paul},
-     year={2025},
+     year={2026},
      url={https://github.com/BPro2410/topicmodels_package}
    }
 
 Or in plain text:
 
-Prostmaier, B., Grün, B., & Hofmarcher, P. (2025).
+Prostmaier, B., Grün, B., & Hofmarcher, P. (2026).
 poisson-topicmodels: Probabilistic Topic Modeling with Bayesian Inference.
 Retrieved from https://github.com/BPro2410/topicmodels_package
 

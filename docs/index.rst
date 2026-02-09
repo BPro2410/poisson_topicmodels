@@ -2,7 +2,7 @@
 poisson-topicmodels: Probabilistic Topic Modeling with Bayesian Inference
 ================================================================================
 
-.. image:: _static/pypf_logo.png
+.. image:: _static/logo_small.png
    :alt: poisson-topicmodels
    :align: center
    :width: 300px
@@ -123,7 +123,7 @@ Quick Start Example
    # Extract results
    topics = model.get_topics()
    top_words = model.get_top_words(n=10)
-   print(f"Discovered {topics.shape[1]} topics")
+   print(f"Discovered {topics.shape} topics")
    print(f"Top words: {top_words[:3]}")
 
 See :doc:`getting_started/index` for a detailed walkthrough.
@@ -150,9 +150,9 @@ If you use poisson-topicmodels in your research, please cite:
 
 .. code-block:: bibtex
 
-   @software{prostmaier2025poisson,
+   @software{prostmaier2026poisson,
      title={poisson-topicmodels: Probabilistic Topic Modeling with Bayesian Inference},
      author={Prostmaier, Bernd and Grün, Bettina and Hofmarcher, Paul},
-     year={2025},
+     year={2026},
      url={https://github.com/BPro2410/topicmodels_package}
    }

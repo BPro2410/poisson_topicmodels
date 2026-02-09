@@ -51,7 +51,7 @@ Without GPU:
      cpu
 
 Enabling GPU for poisson-topicmodels
-============================
+====================================
 
 **Option 1: Environment variable (recommended)**
 

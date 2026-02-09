@@ -142,23 +142,26 @@ Testing Best Practices
 Test Organization
 =================
 
-+---------------------+-----------------------------------+
-| File                | Purpose                           |
-+=====================+===================================+
-| test_imports.py     | Check packages import correctly   |
-+---------------------+-----------------------------------+
-| test_input_validation.py  | Validate input handling      |
-+---------------------+-----------------------------------+
-| test_pf.py          | Poisson Factorization tests       |
-+---------------------+-----------------------------------+
-| test_spf.py         | Seeded models tests               |
-+---------------------+-----------------------------------+
-| test_integration.py | End-to-end workflows              |
-+---------------------+-----------------------------------+
-| test_models_comprehensive.py | All models, all variants |
-+---------------------+-----------------------------------+
-| test_training_and_outputs.py | Training process & outputs |
-+---------------------+-----------------------------------+
+.. list-table::
+   :widths: 35 65
+   :header-rows: 1
+
+   * - File
+     - Purpose
+   * - test_imports.py
+     - Check packages import correctly
+   * - test_input_validation.py
+     - Validate input handling
+   * - test_pf.py
+     - Poisson Factorization tests
+   * - test_spf.py
+     - Seeded models tests
+   * - test_integration.py
+     - End-to-end workflows
+   * - test_models_comprehensive.py
+     - All models, all variants
+   * - test_training_and_outputs.py
+     - Training process & outputs
 
 Common Test Patterns
 ====================
@@ -276,7 +279,7 @@ Run GPU tests:
    pytest tests/ -m gpu
 
 Troubleshooting Tests
-====================
+=====================
 
 **Tests fail on import**:
 
