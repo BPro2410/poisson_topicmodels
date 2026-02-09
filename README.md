@@ -8,11 +8,14 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PyPI version](https://img.shields.io/pypi/v/topicmodels.svg)](https://pypi.org/project/poisson-topicmodels/)
-[![codecov](https://codecov.io/gh/BPro2410/topicmodels_package/branch/main/graph/badge.svg)](https://codecov.io/gh/BPro2410/topicmodels_package)
+[![codecov](https://codecov.io/gh/BPro2410/topicmodels_package/branch/main/graph/badge.svg)](https://app.codecov.io/github/bpro2410/poisson_topicmodels)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-**topicmodels** is a modern Python package for probabilistic topic modeling using Bayesian inference, built on [JAX](https://github.com/google/jax) and [NumPyro](https://github.com/pyro-ppl/numpyro).
+**poisson-topicmodels** is a modern Python package for probabilistic topic modeling using Bayesian inference, built on [JAX](https://github.com/google/jax) and [NumPyro](https://github.com/pyro-ppl/numpyro).
 
+## Package documentation
+
+There is a full package documentation available [here](https://poisson-topicmodels.readthedocs.io/en/latest/).
 
 ## Statement of Need
 
