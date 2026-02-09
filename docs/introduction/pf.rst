@@ -1,4 +1,4 @@
-.. _poisson_factorization:
+.. _intro_poisson_factorization:
 
 Poisson Factorization
 =====================
