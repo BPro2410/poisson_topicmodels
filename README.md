@@ -210,10 +210,10 @@ docker run --rm -p 8888:8888 -v "$(pwd)":/workspace topicmodels-jupyter
 If you use **poisson_topicmodels** in your research, please cite:
 
 ```bibtex
-@software{topicmodels2025,
+@software{topicmodels2026,
   title = {Poisson-topicmodels: Probabilistic Topic Modeling with Bayesian Inference},
   author = {Prostmaier, Bernd and Grün, Bettina and Hofmarcher, Paul},
-  year = {2025},
+  year = {2026},
   url = {https://github.com/BPro2410/topicmodels_package},
 }
 ```
