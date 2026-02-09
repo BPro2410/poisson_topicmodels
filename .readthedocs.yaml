@@ -14,9 +14,8 @@ build:
 sphinx:
    configuration: docs/conf.py
 
-# Install dependencies using Poetry
+# Install dependencies using pip with docs extra
 python:
   install:
-    - method: poetry
-      path: .
-      extra: docs
+    - method: pip
+      path: .[docs]
