@@ -7,7 +7,7 @@
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PyPI version](https://img.shields.io/pypi/v/topicmodels.svg)](https://pypi.org/project/seededPF/)
+[![PyPI version](https://img.shields.io/pypi/v/topicmodels.svg)](https://pypi.org/project/poisson-topicmodels/)
 [![codecov](https://codecov.io/gh/BPro2410/topicmodels_package/branch/main/graph/badge.svg)](https://codecov.io/gh/BPro2410/topicmodels_package)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
