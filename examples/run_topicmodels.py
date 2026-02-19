@@ -12,7 +12,11 @@ from poisson_topicmodels.utils.utils import load_embeds
 
 # import jax_config
 # from poisson_topicmodels import topicmodels
+# %% hi
 
+print("HI")
+
+# %% test
 # ---- Load data ----
 df1 = pd.read_csv("data/10k_amazon.csv")
 
@@ -62,7 +66,7 @@ tm1 = SPF(counts, vocab, keywords, residual_topics=0, batch_size=1024)
 print(tm1)
 
 # ---- Run inference -----
-estimated_params = tm1.train_step(num_steps=50, lr=0.1)
+estimated_params = tm1.train_step(num_steps=1350, lr=0.1)
 
 # ---- Inspect results ----
 print(estimated_params)
@@ -75,8 +79,12 @@ top_words = tm1.return_top_words_per_topic(n=10)
 tm1.Metrics.loss
 
 # ---- Plot model loss ----
-plot, _ = tm1.plot_model_loss(window=10, save_path=None)
+plot, _ = tm1.plot_model_loss(window=10)
 plot.show()
+
+
+# --- plot wc ---
+plot2, _ = tm1.plot_topic_wordclouds()
 
 
 # ###############
