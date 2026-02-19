@@ -1,6 +1,7 @@
 # --- JAX Configuration for Metal GPU ---
 # If you use Mac and want to enable Metal GPU for JAX,
 # make sure to call the appropriate functions in jax_config.py
+
 # --- Import topicmodels package ---
 import numpy as np
 import pandas as pd
@@ -79,12 +80,13 @@ top_words = tm1.return_top_words_per_topic(n=10)
 tm1.Metrics.loss
 
 # ---- Plot model loss ----
-plot, _ = tm1.plot_model_loss(window=10)
+plot, _ = tm1.plot_model_loss(window=10, save_path="./loss.png")
 plot.show()
 
 
 # --- plot wc ---
-plot2, _ = tm1.plot_topic_wordclouds()
+plot2, _ = tm1.plot_topic_wordclouds(save_path="./wc.png")
+
 
 
 # ###############
