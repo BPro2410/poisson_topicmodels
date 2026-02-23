@@ -60,3 +60,7 @@ Thumbs.db
 .env
 *.log
 sensitive.md
+JAX_pack*
+
+# Figs
+data/figures/architecture*

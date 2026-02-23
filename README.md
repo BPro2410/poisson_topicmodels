@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="logo.svg" alt="poisson-topicmodels" width="400" style="margin-bottom: 20px;"/>
+  <img src="https://raw.githubusercontent.com/BPro2410/poisson_topicmodels/5b9c5b887fc2c61063223e5af35aea85e0525f40/data/figures/logo.svg" alt="poisson-topicmodels" width="400" style="margin-bottom: 20px;"/>
 </div>
 
 
@@ -7,14 +7,15 @@
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PyPI version](https://img.shields.io/pypi/v/topicmodels.svg)](https://pypi.org/project/seededPF/)
-[![codecov](https://codecov.io/gh/BPro2410/topicmodels_package/branch/main/graph/badge.svg)](https://codecov.io/gh/BPro2410/topicmodels_package)
+[![PyPI version](https://img.shields.io/pypi/v/topicmodels.svg)](https://pypi.org/project/poisson-topicmodels/)
+[![codecov](https://codecov.io/gh/BPro2410/topicmodels_package/branch/main/graph/badge.svg)](https://app.codecov.io/github/bpro2410/poisson_topicmodels)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-**topicmodels** is a modern Python package for probabilistic topic modeling using Bayesian inference, built on [JAX](https://github.com/google/jax) and [NumPyro](https://github.com/pyro-ppl/numpyro).
+**poisson-topicmodels** is a modern Python package for probabilistic topic modeling using Bayesian inference, built on [JAX](https://github.com/google/jax) and [NumPyro](https://github.com/pyro-ppl/numpyro).
 
+## Package documentation
 
-OVERCOME pre-commit: git add -A && git commit --no-verify -m "Update: Fix
+There is a full package documentation available [here](https://poisson-topicmodels.readthedocs.io/en/latest/).
 
 ## Statement of Need
 
@@ -53,20 +54,6 @@ Whether analyzing legislative text, social media discourse, or scientific abstra
 - ✨ >70% test coverage with continuous integration
 - ✨ Clear error messages and input validation
 
-## Comparison with Existing Tools
-
-| Feature | topicmodels | Gensim | scikit-learn | BTM |
-|---------|-------------|--------|--------------|-----|
-| GPU Support | ✅ JAX backend | ❌ | ❌ | ❌ |
-| Seeded Topics | ✅ SPF, CSPF | ⚠️ Limited | ❌ | ✅ |
-| Covariate Effects | ✅ CPF, CSPF | ❌ | ❌ | ❌ |
-| Ideal Points | ✅ TBIP | ❌ | ❌ | ❌ |
-| Embeddings | ✅ ETM | ⚠️ Limited | ❌ | ❌ |
-| Type Hints | ✅ Full | ⚠️ Partial | ✅ Full | ❌ |
-| Active Development | ✅ Modern stack | ⚠️ Mature | ✅ Active | ⚠️ Limited |
-| Research-Focused | ✅ By researchers | ⚠️ General-purpose | ⚠️ General | ✅ |
-
-
 ## Quick Start
 
 Get started in 5 minutes:
@@ -87,7 +74,7 @@ params = model.train_step(num_steps=100, lr=0.01, random_seed=42)
 # Extract results
 topics, _ = model.return_topics()
 top_words = model.return_top_words_per_topic(n=10)
-print(f"Found {topics.shape[1]} topics")
+print(f"Found {topics.shape} topics")
 print(f"Top words: {top_words[:3]}")
 ```
 
@@ -196,6 +183,13 @@ class MyModel(NumpyroModel):
             sample("mu", dist.Normal(mu_loc, mu_scale))
 ```
 
+To implement a custom model, one has to only define the high-level model. The backbone of **poisson-topicmodels** handles training and inference.
+
+<div align="center">
+<img src="data/figures/architecture5.svg" width="50%">
+</div>
+
+
 ## Example Data
 
 The repository includes `data/10k_amazon.csv` with ~10,000 Amazon product reviews for quick experimentation. See `examples/01_getting_started.ipynb` for a complete walkthrough.
@@ -219,10 +213,10 @@ docker run --rm -p 8888:8888 -v "$(pwd)":/workspace topicmodels-jupyter
 If you use **poisson_topicmodels** in your research, please cite:
 
 ```bibtex
-@software{topicmodels2025,
+@software{topicmodels2026,
   title = {Poisson-topicmodels: Probabilistic Topic Modeling with Bayesian Inference},
   author = {Prostmaier, Bernd and Grün, Bettina and Hofmarcher, Paul},
-  year = {2025},
+  year = {2026},
   url = {https://github.com/BPro2410/topicmodels_package},
 }
 ```
