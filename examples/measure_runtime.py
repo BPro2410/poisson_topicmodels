@@ -72,8 +72,18 @@ print(tm1)
 
 # ---- Run inference -----
 estimated_params = tm1.train_step(
-    num_steps=50,
+    num_steps=1350,
     lr=0.1,
     jit_compile=True,
     cache_dense_counts=True,
 )
+
+
+topics, e_theta = tm1.return_topics()
+
+print(topics)
+
+print("ACCURACY")
+print("================" * 5)
+print(np.sum(topics == df1.Cat1))
+print("================" * 5)

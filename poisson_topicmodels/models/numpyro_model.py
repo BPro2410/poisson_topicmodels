@@ -68,6 +68,11 @@ class NumpyroModel(ABC):
         self, cache_dense_counts: Optional[bool], dense_cache_max_gb: float
     ) -> None:
         """Optionally cache counts as a dense JAX array for faster mini-batching."""
+        if jax.default_backend().lower() == "metal":
+            # Metal backend currently errors on this device_put path.
+            self._dense_counts_cache = None
+            return
+
         if cache_dense_counts is False:
             self._dense_counts_cache = None
             return
