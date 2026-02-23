@@ -52,6 +52,7 @@ class NumpyroModel(ABC):
         self.counts: sparse.csr_matrix
         self.vocab: np.ndarray
         self.K: int
+        self._dense_counts_cache: Optional[jax.Array] = None
 
     @abstractmethod
     def _model(self, Y_batch: Any, d_batch: Any) -> None:
@@ -62,6 +63,29 @@ class NumpyroModel(ABC):
     def _guide(self, Y_batch: Any, d_batch: Any) -> None:
         """Define the variational guide."""
         pass
+
+    def _prepare_dense_cache(
+        self, cache_dense_counts: Optional[bool], dense_cache_max_gb: float
+    ) -> None:
+        """Optionally cache counts as a dense JAX array for faster mini-batching."""
+        if jax.default_backend().lower() == "metal":
+            # Metal backend currently errors on this device_put path.
+            self._dense_counts_cache = None
+            return
+
+        if cache_dense_counts is False:
+            self._dense_counts_cache = None
+            return
+
+        if cache_dense_counts is None:
+            dense_size_bytes = self.D * self.V * np.dtype(np.float32).itemsize
+            cache_dense_counts = dense_size_bytes <= dense_cache_max_gb * (1024**3)
+
+        if cache_dense_counts:
+            dense_counts = np.asarray(self.counts.toarray(), dtype=np.float32, order="C")
+            self._dense_counts_cache = jax.device_put(jnp.asarray(dense_counts))
+        else:
+            self._dense_counts_cache = None
 
     def _get_batch(self, rng: jax.Array, Y: sparse.csr_matrix) -> Tuple[jnp.ndarray, ...]:
         """
@@ -82,9 +106,11 @@ class NumpyroModel(ABC):
             D_batch : numpy.ndarray
                 Indices of documents in the batch.
         """
-        D_batch = random.choice(rng, jnp.arange(self.D), shape=(self.batch_size,))
-        # Y_batch = jax.device_put(jnp.array(Y[D_batch].toarray()), jax.devices("cpu")[0])
-        Y_batch = jnp.array(Y[D_batch].toarray())
+        D_batch = random.randint(rng, shape=(self.batch_size,), minval=0, maxval=self.D)
+        if self._dense_counts_cache is not None:
+            Y_batch = self._dense_counts_cache[D_batch]
+        else:
+            Y_batch = jnp.asarray(Y[np.asarray(D_batch)].toarray(), dtype=jnp.float32)
 
         # Ensure the shape of Y_batch is (batch_size, V)
         assert Y_batch.shape == (
@@ -99,6 +125,9 @@ class NumpyroModel(ABC):
         num_steps: int,
         lr: float,
         random_seed: Optional[int] = None,
+        jit_compile: bool = True,
+        cache_dense_counts: Optional[bool] = None,
+        dense_cache_max_gb: float = 0.75,
     ) -> Dict[str, Any]:
         """
         Train the model using Stochastic Variational Inference (SVI).
@@ -112,6 +141,15 @@ class NumpyroModel(ABC):
         random_seed : int, optional
             Seed for JAX random number generator. If provided, ensures
             reproducible results. Default is None (random initialization).
+        jit_compile : bool, optional
+            Whether to JIT compile SVI updates. Keep enabled for long runs;
+            disable to avoid compile overhead in very short runs.
+        cache_dense_counts : bool | None, optional
+            If True, cache sparse counts as dense array for faster batching.
+            If None, auto-enable when estimated dense matrix size fits in
+            ``dense_cache_max_gb``.
+        dense_cache_max_gb : float, optional
+            Maximum dense cache size in GB used by auto mode.
 
         Returns
         -------
@@ -127,11 +165,17 @@ class NumpyroModel(ABC):
             raise ValueError(f"num_steps must be > 0, got {num_steps}")
         if lr <= 0:
             raise ValueError(f"lr must be > 0, got {lr}")
+        if dense_cache_max_gb <= 0:
+            raise ValueError(f"dense_cache_max_gb must be > 0, got {dense_cache_max_gb}")
 
         svi_batch = SVI(
             model=self._model, guide=self._guide, optim=adam(lr), loss=TraceMeanField_ELBO()
         )
-        svi_batch_update = jit(svi_batch.update)
+        svi_batch_update = jit(svi_batch.update) if jit_compile else svi_batch.update
+
+        self._prepare_dense_cache(
+            cache_dense_counts=cache_dense_counts, dense_cache_max_gb=dense_cache_max_gb
+        )
 
         # Initialize RNG
         if random_seed is not None:
@@ -160,6 +204,7 @@ class NumpyroModel(ABC):
                 )
 
         self.estimated_params = svi_batch.get_params(svi_state)
+        self._dense_counts_cache = None
 
         return self.estimated_params
 

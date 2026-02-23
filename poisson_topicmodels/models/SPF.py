@@ -149,11 +149,11 @@ class SPF(NumpyroModel):
         self.keywords = keywords
 
         # Compute keyword indices
+        vocab_lookup = {word: index for index, word in enumerate(vocab)}
         kw_indices_topics = [
-            (idx, list(vocab).index(keyword))
+            (idx, vocab_lookup[keyword])
             for idx, topic_id in enumerate(keywords.keys())
             for keyword in keywords[topic_id]
-            if keyword in vocab
         ]
         self.Tilde_V = len(kw_indices_topics)
         self.kw_indices = tuple(zip(*kw_indices_topics)) if kw_indices_topics else ((), ())
