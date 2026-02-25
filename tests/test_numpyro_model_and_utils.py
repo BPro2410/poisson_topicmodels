@@ -1,3 +1,12 @@
+"""Coverage-oriented tests for NumpyroModel helper paths and utils module.
+
+These tests validate:
+- base-class error handling and plotting utilities,
+- cache preparation branches (CPU/Metal guard),
+- metrics helper methods,
+- embedding utility I/O and input validation behavior.
+"""
+
 import numpy as np
 import pytest
 import scipy.sparse as sparse
@@ -14,6 +23,7 @@ from poisson_topicmodels.utils.utils import (
 
 
 def _pf_model():
+    """Build a minimal PF model used to exercise NumpyroModel inherited methods."""
     counts = sparse.csr_matrix(
         np.array(
             [
@@ -29,6 +39,7 @@ def _pf_model():
 
 
 def test_numpyro_model_error_paths_and_plotting(tmp_path, monkeypatch):
+    """Cover trained/untrained branches and plotting/cache helper behavior."""
     model = _pf_model()
 
     with pytest.raises(ValueError, match="must be trained"):
@@ -88,6 +99,7 @@ def test_numpyro_model_error_paths_and_plotting(tmp_path, monkeypatch):
 
 
 def test_metrics_reset_and_last_loss():
+    """Verify Metrics convenience methods for reset and last value lookup."""
     metrics = Metrics(loss=[1.0, 2.0])
     assert metrics.last_loss() == 2.0
     metrics.reset()
@@ -96,6 +108,7 @@ def test_metrics_reset_and_last_loss():
 
 
 def test_utils_embeddings_and_iterators(tmp_path):
+    """Test embedding creation in list/file modes and persistence round-trips."""
     data_file = tmp_path / "sentences.txt"
     data_file.write_text("alpha beta gamma\nbeta delta alpha\n", encoding="utf-8")
 
@@ -141,6 +154,7 @@ def test_utils_embeddings_and_iterators(tmp_path):
 
 
 def test_utils_input_validation_assertions(tmp_path):
+    """Assert the documented validation guards in embedding utility helpers."""
     with pytest.raises(AssertionError, match="dataset must be file path or list of sentences"):
         create_word2vec_embedding_from_dataset(dataset=123)
 

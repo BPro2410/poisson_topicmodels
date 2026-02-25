@@ -1,3 +1,11 @@
+"""Additional high-value model tests for previously under-covered paths.
+
+These tests focus on:
+- dynamic model factory behavior,
+- ETM initialization and probabilistic graph construction,
+- TBIP time-varying setup and plotting code paths.
+"""
+
 import numpy as np
 import pytest
 import scipy.sparse as sparse
@@ -9,6 +17,7 @@ from poisson_topicmodels.models.topicmodels import get_base_class, topicmodels
 
 
 def _small_counts_and_vocab():
+    """Create a tiny deterministic corpus used across model coverage tests."""
     counts = sparse.csr_matrix(
         np.array(
             [
@@ -25,6 +34,7 @@ def _small_counts_and_vocab():
 
 
 def test_topicmodels_factory_mapping_and_dynamic_instance():
+    """Verify factory routing for all supported model names and dynamic wrapper behavior."""
     assert get_base_class("PF").__name__ == "PF"
     assert get_base_class("SPF").__name__ == "SPF"
     assert get_base_class("CSPF").__name__ == "CSPF"
@@ -43,6 +53,7 @@ def test_topicmodels_factory_mapping_and_dynamic_instance():
 
 
 def test_etm_init_model_guide_and_notimplemented_methods():
+    """Cover ETM init/model/guide paths and explicit unimplemented API methods."""
     counts, vocab = _small_counts_and_vocab()
     embeddings_mapping = {
         "a": np.ones(4),
@@ -91,6 +102,7 @@ def test_etm_init_model_guide_and_notimplemented_methods():
 
 
 def test_tbip_time_varying_get_batch_model_guide_and_plot(monkeypatch):
+    """Exercise TBIP time-varying branches, traceable latent variables, and plotting."""
     counts, vocab = _small_counts_and_vocab()
     authors = np.array(["alice", "bob", "alice", "carol"])
     beta_shape_init = np.ones((2, counts.shape[1]), dtype=np.float32)
