@@ -380,7 +380,7 @@ class TBIP(NumpyroModel):
 
         for idx in range(authors.shape[0]):
             ax.scatter(authors[idx], 0, c="black", s=20)
-            if authors.index in selected_authors:
+            if authors.index[idx] in selected_authors:
                 ax.annotate(
                     authors.index[idx],
                     xy=(authors[idx], 0.0),
