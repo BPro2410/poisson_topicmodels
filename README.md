@@ -7,8 +7,8 @@
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PyPI version](https://img.shields.io/pypi/v/topicmodels.svg)](https://pypi.org/project/poisson-topicmodels/)
-[![codecov](https://codecov.io/gh/BPro2410/topicmodels_package/branch/main/graph/badge.svg)](https://app.codecov.io/github/bpro2410/poisson_topicmodels)
+[![PyPI version](https://img.shields.io/pypi/v/poisson-topicmodels.svg)](https://pypi.org/project/poisson-topicmodels/)
+[![codecov](https://codecov.io/gh/BPro2410/topicmodels_package/graph/badge.svg?branch=main)](https://app.codecov.io/gh/BPro2410/topicmodels_package)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 **poisson-topicmodels** is a modern Python package for probabilistic topic modeling using Bayesian inference, built on [JAX](https://github.com/google/jax) and [NumPyro](https://github.com/pyro-ppl/numpyro).
@@ -87,6 +87,32 @@ See `examples/` directory for detailed notebooks.
 pip install poisson-topicmodels
 ```
 
+### GPU installs (opt-in)
+Automatic GPU detection at install time is not reliable across macOS/Windows/Linux/cloud runtimes.
+Use explicit install targets:
+
+#### NVIDIA GPU (Linux x86_64/aarch64, CUDA 12)
+```bash
+pip install "poisson-topicmodels[gpu-cuda12]"
+```
+
+#### Apple Silicon GPU (Metal)
+```bash
+pip install "poisson-topicmodels[gpu-metal]"
+```
+Run with:
+```bash
+JAX_PLATFORMS=METAL python your_script.py
+```
+
+#### AMD GPU (ROCm)
+Install the package first, then follow the official JAX AMD instructions: [JAX AMD GPU install guide](https://docs.jax.dev/en/latest/installation.html#amd-gpu-linux).
+JAX's AMD install uses ROCm plugin wheels and environment-specific commands, so it is not encoded as a generic PyPI extra.
+
+#### Other GPU Installations
+For other cases we refer to manual Jax installation. See the [guide](https://docs.jax.dev/en/latest/installation.html#).
+
+
 ### From Source
 ```bash
 git clone https://github.com/BPro2410/topicmodels_package.git
@@ -105,7 +131,7 @@ pytest tests/  # Verify installation
 ## Requirements
 
 - Python ≥ 3.11
-- JAX ≥ 0.4.35 (with optional GPU support)
+- JAX 0.4.35 (GPU support via optional install targets above)
 - NumPyro ≥ 0.15.3
 - NumPy, SciPy, scikit-learn, pandas
 
