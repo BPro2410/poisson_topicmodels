@@ -9,16 +9,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential git curl ca-certificates libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy and install Python dependencies
-COPY requirements.txt /workspace/requirements.txt
+# Copy package metadata first to leverage Docker layer caching
+COPY pyproject.toml README.md /workspace/
+COPY poisson_topicmodels /workspace/poisson_topicmodels
+
+# Install the package directly from pyproject.toml
 RUN pip install --upgrade pip setuptools wheel
-# Install project's requirements (will fail if jax/jaxlib versions in requirements need platform-specific wheels)
-RUN pip install -r /workspace/requirements.txt
+RUN pip install .
 
 # Ensure JupyterLab is available for interactive use
 RUN pip install jupyterlab
 
-# Copy the repository into the container (includes run_topicmodels.py, data/, packages/, ...)
+# Copy the full repository for notebooks/examples/data usage
 COPY . /workspace
 
 # Expose notebook port
