@@ -87,6 +87,32 @@ See `examples/` directory for detailed notebooks.
 pip install poisson-topicmodels
 ```
 
+### GPU installs (opt-in)
+Automatic GPU detection at install time is not reliable across macOS/Windows/Linux/cloud runtimes.
+Use explicit install targets:
+
+#### NVIDIA GPU (Linux x86_64/aarch64, CUDA 12)
+```bash
+pip install "poisson-topicmodels[gpu-cuda12]"
+```
+
+#### Apple Silicon GPU (Metal)
+```bash
+pip install "poisson-topicmodels[gpu-metal]"
+```
+Run with:
+```bash
+JAX_PLATFORMS=METAL python your_script.py
+```
+
+#### AMD GPU (ROCm)
+Install the package first, then follow the official JAX AMD instructions: [JAX AMD GPU install guide](https://docs.jax.dev/en/latest/installation.html#amd-gpu-linux).
+JAX's AMD install uses ROCm plugin wheels and environment-specific commands, so it is not encoded as a generic PyPI extra.
+
+#### Other GPU Installations
+For other cases we refer to manual Jax installation. See the [guide](https://docs.jax.dev/en/latest/installation.html#).
+
+
 ### From Source
 ```bash
 git clone https://github.com/BPro2410/topicmodels_package.git
@@ -105,7 +131,7 @@ pytest tests/  # Verify installation
 ## Requirements
 
 - Python ≥ 3.11
-- JAX ≥ 0.4.35 (with optional GPU support)
+- JAX 0.4.35 (GPU support via optional install targets above)
 - NumPyro ≥ 0.15.3
 - NumPy, SciPy, scikit-learn, pandas
 
