@@ -15,12 +15,12 @@ Key Hyperparameters
 Three main hyperparameters control model quality and training:
 
 1. **num_topics (K)**: How many topics to discover
-2. **learning_rate (lr)**: Optimization step size
+2. **lr**: Optimization step size
 3. **batch_size**: Documents per training iteration
 
 Lesser-used but important:
 
-- **num_iterations**: Training steps (usually 100-1000)
+- **num_steps**: Training steps (usually 100-1000)
 - **random_seed**: Reproducibility
 
 num_topics: The Critical Parameter
@@ -57,24 +57,21 @@ Selecting num_topics:
    for k in num_topics_to_try:
        print(f"Training with {k} topics...")
        model = PF(counts, vocab, num_topics=k, batch_size=64)
-       model.train(num_iterations=100, learning_rate=0.01)
+       model.train_step(num_steps=100, lr=0.01)
 
-       coherence = model.compute_coherence()
+       # Note: there is no compute_coherence() method in this package.
+       # Use external coherence metrics (e.g., from gensim) or inspect topics:
+       topics, topic_probs = model.return_topics()
+       top_words = model.return_top_words_per_topic(n=10)
        results[k] = {
-           'coherence_mean': coherence.mean(),
-           'coherence_std': coherence.std(),
-           'coherence_min': coherence.min(),
+           'num_topics': k,
            'model': model
        }
 
-   # Analyze results
-   import pandas as pd
-   df = pd.DataFrame(results).T
-   print(df)
-
-   # Best by coherence
-   best_k = df['coherence_mean'].idxmax()
-   print(f"\nOptimal num_topics: {best_k}")
+   # Analyze results: inspect top words for each K to find the best
+   for k, result in results.items():
+       print(f"\nK={k}:")
+       print(result['model'].return_top_words_per_topic(n=10))
 
 **Practical guideline**:
 
@@ -82,8 +79,8 @@ Selecting num_topics:
 - **Medium corpus** (10-100k docs): K=20-50
 - **Large corpus** (100k+ docs): K=50-200
 
-learning_rate: Optimization Speed
-==================================
+lr: Optimization Speed
+======================
 
 Controls how fast the model learns.
 
@@ -112,13 +109,13 @@ Finding optimal learning rate:
    lrs_to_try = [0.001, 0.005, 0.01, 0.05, 0.1]
 
    for lr in lrs_to_try:
-       print(f"\nTraining with learning_rate={lr}")
+       print(f"\nTraining with lr={lr}")
        model = PF(counts, vocab, num_topics=20, batch_size=64)
 
-       # Track loss over iterations
+       # Track loss over training steps
        loss_history = []
        for i in range(10):
-           params = model.train(num_iterations=10, learning_rate=lr, verbose=False)
+           params = model.train_step(num_steps=10, lr=lr)
            loss_history.append(params.get('loss', float('nan')))
 
        avg_loss = np.mean(loss_history)
@@ -166,7 +163,7 @@ Choosing batch_size:
 
        import time
        t0 = time.time()
-       model.train(num_iterations=50, learning_rate=0.01)
+       model.train_step(num_steps=50, lr=0.01)
        elapsed = time.time() - t0
 
        print(f"batch_size={bs:3d}: {elapsed:.1f}s")
@@ -190,32 +187,25 @@ Grid search over parameter combinations:
    # Parameter grid
    param_grid = {
        'num_topics': [10, 20],
-       'learning_rate': [0.01, 0.05],
+       'lr': [0.01, 0.05],
        'batch_size': [64, 128]
    }
 
-   best_score = -float('inf')
    best_params = None
 
    # Grid search
    for (k, lr, bs) in product(*param_grid.values()):
-       params = {'num_topics': k, 'learning_rate': lr, 'batch_size': bs}
+       model = PF(counts, vocab, num_topics=k, batch_size=bs)
+       model.train_step(num_steps=100, lr=lr)
 
-       model = PF(counts, vocab, **params)
-       model.train(num_iterations=100)
+       # Note: there is no compute_coherence() method in this package.
+       # Inspect topics manually or use external coherence metrics.
+       top_words = model.return_top_words_per_topic(n=10)
 
-       # Evaluate
-       coherence = model.compute_coherence()
-       score = coherence.mean()
+       print(f"K={k}, lr={lr}, bs={bs}:")
+       print(top_words)
 
-       print(f"K={k}, lr={lr}, bs={bs}: coherence={score:.3f}")
-
-       if score > best_score:
-           best_score = score
-           best_params = params
-
-   print(f"\nBest parameters: {best_params}")
-   print(f"Best coherence: {best_score:.3f}")
+   print(f"\nCompare topic quality above to select best parameters.")
 
 **Warning**: Grid search is expensive. With 100 combinations and 100 iterations each:
 
@@ -244,22 +234,23 @@ Random Search (More Efficient)
        bs = np.random.choice([32, 64, 128, 256])
 
        model = PF(counts, vocab, num_topics=k, batch_size=bs)
-       model.train(num_iterations=100, learning_rate=lr)
+       model.train_step(num_steps=100, lr=lr)
 
-       coherence = model.compute_coherence()
+       # Note: there is no compute_coherence() method in this package.
+       # Inspect topics manually or use external coherence metrics.
+       top_words = model.return_top_words_per_topic(n=10)
        results.append({
            'num_topics': k,
-           'learning_rate': lr,
+           'lr': lr,
            'batch_size': bs,
-           'coherence': coherence.mean()
+           'top_words': top_words
        })
 
-       print(f"Trial {trial+1}/{n_trials}: coherence={results[-1]['coherence']:.3f}")
+       print(f"Trial {trial+1}/{n_trials}: K={k}, lr={lr:.4f}, bs={bs}")
 
-   # Best configuration
-   best_idx = np.argmax([r['coherence'] for r in results])
-   best_config = results[best_idx]
-   print(f"Best: {best_config}")
+   # Compare results to find best configuration
+   for i, r in enumerate(results):
+       print(f"Trial {i+1}: K={r['num_topics']}, lr={r['lr']:.4f}")
 
 Practical Tuning Strategy
 =========================
@@ -271,9 +262,10 @@ Practical Tuning Strategy
    # Try 5 values: rough search
    for k in [10, 20, 35, 50, 75]:
        model = PF(counts, vocab, num_topics=k)
-       model.train(num_iterations=100, learning_rate=0.01)
-       coherence = model.compute_coherence()
-       print(f"K={k}: {coherence.mean():.3f}")
+       model.train_step(num_steps=100, lr=0.01)
+       # Note: there is no compute_coherence() method; inspect topics instead
+       print(f"K={k}:")
+       print(model.return_top_words_per_topic(n=10))
 
 **Step 2: Refine around best K**
 
@@ -283,9 +275,10 @@ Practical Tuning Strategy
    best_k = 35
    for k in range(30, 41, 1):  # 30-40
        model = PF(counts, vocab, num_topics=k)
-       model.train(num_iterations=100, learning_rate=0.01)
-       coherence = model.compute_coherence()
-       print(f"K={k}: {coherence.mean():.3f}")
+       model.train_step(num_steps=100, lr=0.01)
+       # Note: there is no compute_coherence() method; inspect topics instead
+       print(f"K={k}:")
+       print(model.return_top_words_per_topic(n=10))
 
 **Step 3: Tune lr and batch_size**
 
@@ -296,22 +289,23 @@ Practical Tuning Strategy
 
    for lr in [0.005, 0.01, 0.02, 0.05]:
        model = PF(counts, vocab, num_topics=best_k)
-       model.train(num_iterations=100, learning_rate=lr)
-       coherence = model.compute_coherence()
-       print(f"lr={lr}: {coherence.mean():.3f}")
+       model.train_step(num_steps=100, lr=lr)
+       # Note: there is no compute_coherence() method; inspect topics instead
+       print(f"lr={lr}:")
+       print(model.return_top_words_per_topic(n=10))
 
 **Step 4: Final validation**
 
 .. code-block:: python
 
    # Train final model with best parameters
-   best_params = {'num_topics': 35, 'learning_rate': 0.02, 'batch_size': 128}
-   final_model = PF(counts, vocab, **best_params)
-   final_model.train(num_iterations=200)  # More iterations for final
+   final_model = PF(counts, vocab, num_topics=35, batch_size=128)
+   final_model.train_step(num_steps=200, lr=0.02)  # More steps for final
 
-   # Validate
-   coherence = final_model.compute_coherence()
-   print(f"Final model coherence: {coherence.mean():.3f}")
+   # Validate: inspect topics
+   # Note: there is no compute_coherence() method; inspect topics instead
+   topics, topic_probs = final_model.return_topics()
+   print(final_model.return_top_words_per_topic(n=10))
 
 Early Stopping
 ==============
@@ -323,12 +317,12 @@ Stop training when loss plateaus:
    model = PF(counts, vocab, num_topics=20, batch_size=64)
 
    loss_history = []
-   patience = 10  # Stop if no improvement for 10 iterations
+   patience = 10  # Stop if no improvement for 10 steps
    best_loss = float('inf')
    patience_counter = 0
 
    for epoch in range(100):
-       params = model.train(num_iterations=10, learning_rate=0.01)
+       params = model.train_step(num_steps=10, lr=0.01)
        current_loss = params.get('loss', float('nan'))
        loss_history.append(current_loss)
 
@@ -364,15 +358,16 @@ Track your hyperparameter explorations:
 
    for k in [20, 30, 50]:
        model = PF(counts, vocab, num_topics=k)
-       model.train(num_iterations=100, learning_rate=0.01)
-       coherence = model.compute_coherence()
+       model.train_step(num_steps=100, lr=0.01)
+       # Note: there is no compute_coherence() method; inspect topics instead
+       top_words = model.return_top_words_per_topic(n=10)
 
-       logging.info(f"K={k}: coherence={coherence.mean():.3f}")
+       logging.info(f"K={k}: top_words={top_words}")
 
 Common Mistakes & Solutions
 ============================
 
-**Mistake**: Tuning learning_rate too aggressively
+**Mistake**: Tuning lr too aggressively
 
 *Solution*: It's usually not the bottleneck. Focus on K first.
 

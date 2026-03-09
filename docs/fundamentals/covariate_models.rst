@@ -70,10 +70,10 @@ Usage Example
        random_seed=42
    )
 
-   params = model.train(num_iterations=100, learning_rate=0.01)
+   params = model.train_step(num_steps=100, lr=0.01)
 
    # Extract covariate effects
-   effects = model.get_covariate_effects()  # Shape: (num_topics, num_covariates)
+   effects = model.return_covariate_effects()  # Shape: (num_topics, num_covariates)
    # effects[k, j] = effect of covariate j on topic k
 
 Interpreting Covariate Effects
@@ -81,7 +81,7 @@ Interpreting Covariate Effects
 
 .. code-block:: python
 
-   effects = model.get_covariate_effects()
+   effects = model.return_covariate_effects()
    # Shape: (num_topics, num_covariates)
 
    # Topic 0: how does each covariate affect it?
@@ -116,10 +116,10 @@ Analyze how topics change across time periods:
    covariates = time_covariate.reshape(-1, 1) / 10  # Normalize
 
    model = CPF(counts, vocab, num_topics=5, covariates=covariates)
-   model.train(num_iterations=100, learning_rate=0.01)
+   model.train_step(num_steps=100, lr=0.01)
 
    # Topic 0's time effect
-   effects = model.get_covariate_effects()
+   effects = model.return_covariate_effects()
    time_effect = effects[0, 0]
    # If positive: topic 0 increases over time
    # If negative: topic 0 decreases over time
@@ -162,7 +162,7 @@ Usage
        random_seed=42
    )
 
-   params = model.train(num_iterations=100, learning_rate=0.01)
+   params = model.train_step(num_steps=100, lr=0.01)
 
 Practical Example: Geographic Topic Analysis
 ---------------------------------------------
@@ -188,10 +188,10 @@ Practical Example: Geographic Topic Analysis
        random_seed=42
    )
 
-   model.train(num_iterations=100, learning_rate=0.01)
+   model.train_step(num_steps=100, lr=0.01)
 
    # Analyze regional topic differences
-   effects = model.get_covariate_effects()
+   effects = model.return_covariate_effects()
    # Row i = effect on topic i
    # Column j = region j
 
@@ -265,7 +265,7 @@ Visualization Examples
 
 .. code-block:: python
 
-   effects = model.get_covariate_effects()
+   effects = model.return_covariate_effects()
    import seaborn as sns
    sns.heatmap(effects, cmap='RdBu_r', center=0, annot=True)
    plt.title('Covariate Effects by Topic')
@@ -287,7 +287,7 @@ Visualization Examples
 
 .. code-block:: python
 
-   doc_topics = model.get_document_topics()
+   doc_topics = model.return_beta()
 
    # Average topics by category
    for category_id in range(num_categories):

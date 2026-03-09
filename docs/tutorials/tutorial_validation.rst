@@ -25,9 +25,12 @@ Coherence measures if top words of a topic are semantically related.
 
 .. code-block:: python
 
-   coherence = model.compute_coherence()
-   print(f"Coherence per topic: {coherence}")
-   print(f"Average: {coherence.mean():.3f}")
+   # Coherence must be computed externally (e.g., with gensim)
+   # from gensim.models.coherencemodel import CoherenceModel
+   # coherence_model = CoherenceModel(topics=top_words, texts=tokenized_docs, dictionary=dictionary, coherence='c_v')
+   # coherence = coherence_model.get_coherence_per_topic()
+   # print(f"Coherence per topic: {coherence}")
+   # print(f"Average: {np.mean(coherence):.3f}")
 
    # High coherence: top words are related (good!)
    # Low coherence: top words are scattered (bad)
@@ -45,7 +48,7 @@ Finding low-coherence topics:
 
    worst_topics = np.argsort(coherence)[:5]
    for topic_id in worst_topics:
-       words = model.get_top_words(n=10)[topic_id]
+       words = model.return_top_words_per_topic(n=10)[topic_id]
        print(f"Topic {topic_id} (coherence={coherence[topic_id]:.3f}):")
        print(f"  {', '.join(words)}")
        print("  → Consider improving or merging with other topics")
@@ -59,7 +62,7 @@ Manual topic interpretation:
 
    def evaluate_topics_manually(model, num_to_show=10):
        """Inspect top words for each topic."""
-       top_words = model.get_top_words(n=20)
+       top_words = model.return_top_words_per_topic(n=20)
 
        ratings = {}
 
@@ -104,9 +107,13 @@ Compare multiple model configurations:
    # Try different numbers of topics
    for num_topics in [5, 10, 20, 50]:
        model = PF(counts, vocab, num_topics=num_topics)
-       model.train(num_iterations=100, learning_rate=0.01)
+       model.train_step(num_steps=100, lr=0.01)
 
-       coherence = model.compute_coherence()
+       # Coherence must be computed externally (e.g., with gensim)
+       # coherence = compute_coherence_externally(model)
+       top_words = model.return_top_words_per_topic(n=10)
+       # Use your preferred coherence library here
+       # coherence = ...
        results[num_topics] = {
            'coherence_mean': coherence.mean(),
            'coherence_std': coherence.std(),
@@ -133,7 +140,7 @@ If you have a downstream task, evaluate model performance there:
    from sklearn.ensemble import RandomForestClassifier
 
    # Get document-topic representations
-   doc_topics = model.get_document_topics()
+   doc_topics = model.return_beta()
 
    # Train classifier on topics
    clf = RandomForestClassifier()
@@ -155,7 +162,7 @@ Are topics overlapping? Check similarity:
 
    from sklearn.metrics.pairwise import cosine_similarity
 
-   topics = model.get_topics()
+   topics, topic_probs = model.return_topics()
    similarity = cosine_similarity(topics.T)
    np.fill_diagonal(similarity, 0)
 
@@ -164,8 +171,8 @@ Are topics overlapping? Check similarity:
    for i, j in zip(similar[0], similar[1]):
        if i < j:
            print(f"Topic {i} and {j} are similar (sim={similarity[i, j]:.3f})")
-           print(f"  Topic {i}: {', '.join(model.get_top_words()[i][:5])}")
-           print(f"  Topic {j}: {', '.join(model.get_top_words()[j][:5])}")
+           print(f"  Topic {i}: {', '.join(model.return_top_words_per_topic(n=5)[i])}")
+           print(f"  Topic {j}: {', '.join(model.return_top_words_per_topic(n=5)[j])}")
            print()
 
 Document Coverage
@@ -175,7 +182,7 @@ Do all documents get meaningful topic assignments?
 
 .. code-block:: python
 
-   doc_topics = model.get_document_topics()
+   doc_topics = model.return_beta()
 
    # Topic concentration per document
    doc_entropy = -np.sum(doc_topics * np.log(doc_topics + 1e-10), axis=1)
@@ -202,8 +209,8 @@ Visualization for Validation
 
    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
 
-   # 1. Coherence distribution
-   coherence = model.compute_coherence()
+   # 1. Coherence distribution (computed externally, e.g., with gensim)
+   # coherence = compute_coherence_externally(model)
    axes[0, 0].hist(coherence, bins=20, edgecolor='black')
    axes[0, 0].set_xlabel('Coherence')
    axes[0, 0].set_ylabel('Number of topics')
@@ -212,7 +219,7 @@ Visualization for Validation
    axes[0, 0].legend()
 
    # 2. Topic prevalence
-   doc_topics = model.get_document_topics()
+   doc_topics = model.return_beta()
    avg_topics = doc_topics.mean(axis=0)
    axes[0, 1].bar(range(len(avg_topics)), avg_topics)
    axes[0, 1].set_xlabel('Topic ID')

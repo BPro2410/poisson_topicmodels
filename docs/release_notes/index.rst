@@ -9,11 +9,11 @@ Version history and changelog for poisson-topicmodels.
 Current Version
 ===============
 
-**Latest**: 0.1.0 (February 2026)
+**Latest**: 0.1.2 (February 2026)
 
 For full changelog, see below.
 
-Version 0.1.0 - Initial Release
+Version 0.1.2 - Current Release
 ===============================
 
 *February 5, 2026*
@@ -117,7 +117,7 @@ Install specific version:
 
 .. code-block:: bash
 
-   pip install poisson-topicmodels==0.1.0
+   pip install poisson-topicmodels==0.1.2
 
 List available versions:
 
@@ -142,7 +142,7 @@ Compatibility Matrix
      - Python 3.11
      - Python 3.12
      - Python 3.13
-   * - 0.1.0
+   * - 0.1.2
      - ✓
      - ✓
      - ✓
@@ -150,16 +150,17 @@ Compatibility Matrix
 Dependency Versions
 ===================
 
-Core dependencies for 0.1.0:
+Core dependencies for 0.1.2:
 
-- jax==0.8.0
-- jaxlib==0.8.0
-- numpyro==0.19.0
-- numpy>=2.2.0,<3.0.0
+- jax==0.4.35
+- numpyro==0.15.3
+- numpy==2.2.4
 - scipy>=1.15.0,<2.0.0
 - pandas>=2.2.0,<3.0.0
 - scikit-learn>=1.6.0,<2.0.0
 - matplotlib>=3.10.0,<4.0.0
+- optax==0.2.4
+- flax==0.8.4
 
 Optional dependencies:
 
@@ -179,14 +180,14 @@ If you use poisson-topicmodels in research, please cite:
      title={poisson-topicmodels: Probabilistic Topic Modeling with Bayesian Inference},
      author={Prostmaier, Bernd and Grün, Bettina and Hofmarcher, Paul},
      year={2026},
-     url={https://github.com/BPro2410/topicmodels_package}
+     url={https://github.com/BPro2410/poisson_topicmodels}
    }
 
 Or in plain text:
 
 Prostmaier, B., Grün, B., & Hofmarcher, P. (2026).
 poisson-topicmodels: Probabilistic Topic Modeling with Bayesian Inference.
-Retrieved from https://github.com/BPro2410/topicmodels_package
+Retrieved from https://github.com/BPro2410/poisson_topicmodels
 
 Community Feedback
 ==================
@@ -213,13 +214,7 @@ Found a bug? Please report it:
    - Minimal reproducible example
    - Full error traceback
 
-See :doc:`../contributing_guide/index#reporting-bugs` for detailed instructions.
-
-Acknowledgments
-===============
-
-**Core Team**:
-
+See :doc:`../contributing_guide/index` for detailed instructions.
 - Bernd Prostmaier
 - Bettina Grün
 - Paul Hofmarcher
@@ -243,7 +238,7 @@ License
 
 poisson-topicmodels is licensed under the MIT License.
 
-See `LICENSE <https://github.com/BPro2410/topicmodels_package/blob/main/LICENSE>`_
+See `LICENSE <https://github.com/BPro2410/poisson_topicmodels/blob/main/LICENSE>`_
 for details.
 
 Next Steps
@@ -251,7 +246,7 @@ Next Steps
 
 - **Update to latest**: ``pip install --upgrade poisson-topicmodels``
 - **Get started**: See :doc:`../getting_started/index`
-- **Report issues**: `GitHub Issues <https://github.com/BPro2410/topicmodels_package/issues>`_
+- **Report issues**: `GitHub Issues <https://github.com/BPro2410/poisson_topicmodels/issues>`_
 - **Contribute**: :doc:`../contributing_guide/index`
 
 **Questions?** Open a discussion or create an issue on GitHub!
@@ -269,7 +264,7 @@ A: Open an issue or discussion to propose it, or submit a PR!
 
 **Q: Can I use development version?**
 
-A: Yes: ``pip install git+https://github.com/BPro2410/topicmodels_package.git``
+A: Yes: ``pip install git+https://github.com/BPro2410/poisson_topicmodels.git``
 
 **Q: What about backwards compatibility?**
 

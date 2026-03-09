@@ -72,10 +72,10 @@ Basic Usage
        random_seed=42
    )
 
-   params = model.train(num_iterations=100, learning_rate=0.01)
+   params = model.train_step(num_steps=100, lr=0.01)
 
    # Results similar to PF
-   top_words = model.get_top_words(n=10)
+   top_words = model.return_top_words_per_topic(n=10)
 
 How Seeding Works
 =================
@@ -231,10 +231,10 @@ Iterative Seeding
 
    # Step 1: Unsupervised discovery
    pf_model = PF(counts, vocab, num_topics=5)
-   pf_model.train(num_iterations=100, learning_rate=0.01)
+   pf_model.train_step(num_steps=100, lr=0.01)
 
    # Step 2: Inspect and design seeds
-   top_words_pf = pf_model.get_top_words(n=10)
+   top_words_pf = pf_model.return_top_words_per_topic(n=10)
    print("Top words from unsupervised model:")
    for topic_id, words in enumerate(top_words_pf):
        print(f"Topic {topic_id}: {', '.join(words)}")
@@ -247,10 +247,10 @@ Iterative Seeding
 
    # Step 4: Train seeded model
    spf_model = SPF(counts, vocab, num_topics=5, seeds=seeds)
-   spf_model.train(num_iterations=100, learning_rate=0.01)
+   spf_model.train_step(num_steps=100, lr=0.01)
 
    # Step 5: Compare and evaluate
-   top_words_spf = spf_model.get_top_words(n=10)
+   top_words_spf = spf_model.return_top_words_per_topic(n=10)
 
 Practical Example
 =================
@@ -279,11 +279,11 @@ Seeding a corpus of news articles:
        random_seed=42
    )
 
-   params = model.train(num_iterations=150, learning_rate=0.01)
+   params = model.train_step(num_steps=150, lr=0.01)
 
    # Expected: Topics strongly align with seed themes
    # but include additional related words from data
-   top_words = model.get_top_words(n=15)
+   top_words = model.return_top_words_per_topic(n=15)
    for topic_id, words in enumerate(top_words):
        print(f"Topic {topic_id}: {', '.join(words)}")
 
@@ -320,21 +320,20 @@ How to validate seeded models:
 .. code-block:: python
 
    # 1. Check top words include seeds
-   top_words = model.get_top_words(n=20)
+   top_words = model.return_top_words_per_topic(n=20)
    for topic_id, words in enumerate(top_words):
        topic_seeds = [s for s in news_seeds[topic_id] if s in words]
        coverage = len(topic_seeds) / len(news_seeds[topic_id])
        print(f"Topic {topic_id} seed coverage: {coverage:.1%}")
 
-   # 2. Measure coherence
-   coherence = model.compute_coherence()
-   print(f"Average coherence: {coherence.mean():.3f}")
+   # 2. Evaluate using external coherence metrics
+   # Note: There is no built-in compute_coherence() method.
+   # Use external tools (e.g., gensim or octis) for coherence evaluation.
 
    # 3. Compare with unsupervised
    pf_model = PF(counts, vocab, num_topics=4, random_seed=42)
-   pf_model.train(num_iterations=150)
-   pf_coherence = pf_model.compute_coherence()
-   print(f"PF coherence: {pf_coherence.mean():.3f} vs SPF: {coherence.mean():.3f}")
+   pf_model.train_step(num_steps=150, lr=0.01)
+   # Use external coherence metrics to compare PF vs SPF
 
 Comparison with Unsupervised
 =============================

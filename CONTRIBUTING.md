@@ -1,6 +1,6 @@
-# Contributing to topicmodels
+# Contributing to poisson-topicmodels
 
-Thank you for your interest in contributing to **topicmodels**! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to **poisson-topicmodels**! This document provides guidelines and instructions for contributing.
 
 ## Code of Conduct
 
@@ -48,8 +48,8 @@ Feature requests are welcome! Please open an issue with:
 1. **Fork the repository** to your GitHub account
 2. **Clone your fork** locally:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/topicmodels_package.git
-   cd topicmodels_package
+   git clone https://github.com/YOUR_USERNAME/poisson_topicmodels.git
+   cd poisson_topicmodels
    ```
 3. **Create a virtual environment:**
    ```bash
@@ -79,22 +79,22 @@ Feature requests are welcome! Please open an issue with:
 
    - **Formatting:** Use `black` (line length: 100)
      ```bash
-     black topicmodels tests
+     black poisson_topicmodels tests
      ```
 
    - **Import organization:** Use `isort`
      ```bash
-     isort topicmodels tests
+     isort poisson_topicmodels tests
      ```
 
    - **Linting:** Check with `flake8`
      ```bash
-     flake8 topicmodels tests --max-line-length=100
+     flake8 poisson_topicmodels tests --max-line-length=100
      ```
 
    - **Type checking:** Use `mypy` (where applicable)
      ```bash
-     mypy topicmodels --ignore-missing-imports
+     mypy poisson_topicmodels --ignore-missing-imports
      ```
 
 4. **Write tests:**
@@ -108,7 +108,7 @@ Feature requests are welcome! Please open an issue with:
 
    import pytest
    import numpy as np
-   from topicmodels.models.new_module import NewModel
+   from poisson_topicmodels.models.new_module import NewModel
 
 
    class TestNewModel:
@@ -136,7 +136,7 @@ Feature requests are welcome! Please open an issue with:
 
 5. **Run tests locally:**
    ```bash
-   pytest tests/ -v --cov=topicmodels --cov-report=term-only
+   pytest tests/ -v --cov=poisson_topicmodels --cov-report=term-only
    ```
 
 6. **Update documentation:**
@@ -248,11 +248,11 @@ def train_step(
 pip install -e ".[dev]"
 
 # Run all checks
-black topicmodels tests                          # Format code
-isort topicmodels tests                          # Organize imports
-flake8 topicmodels tests --max-line-length=100   # Lint
-mypy topicmodels --ignore-missing-imports        # Type check
-pytest tests/ -v --cov=topicmodels               # Run tests with coverage
+black poisson_topicmodels tests                          # Format code
+isort poisson_topicmodels tests                          # Organize imports
+flake8 poisson_topicmodels tests --max-line-length=100   # Lint
+mypy poisson_topicmodels --ignore-missing-imports        # Type check
+pytest tests/ -v --cov=poisson_topicmodels               # Run tests with coverage
 ```
 
 ### Building Documentation
@@ -285,7 +285,7 @@ pytest tests/ -k "test_pf" -v
 ## Project Structure
 
 ```
-topicmodels_package/
+poisson_topicmodels/
 ├── poisson_topicmodels/              # Main package
 │   ├── __init__.py          # Package exports
 │   ├── models/              # Model implementations
@@ -295,32 +295,31 @@ topicmodels_package/
 │   │   ├── SPF.py           # Seeded PF
 │   │   ├── CPF.py           # Covariate PF
 │   │   ├── CSPF.py          # Covariate Seeded PF
+│   │   ├── CSPF2.py         # Covariate Seeded PF v2
 │   │   ├── TBIP.py          # Text-Based Ideal Points
 │   │   ├── ETM.py           # Embedded Topic Models
 │   │   ├── Metrics.py       # Metrics tracking
-│   │   └── topicmodels.py   # Factory function (being refactored)
+│   │   └── topicmodels.py   # Factory function
 │   └── utils/               # Utility functions
-│       ├── __init__.py
 │       └── utils.py         # Helpers (embeddings, etc.)
 ├── tests/                    # Test suite
 │   ├── __init__.py
-│   ├── test_models.py       # Model tests
-│   └── test_utils.py        # Utility tests
+│   ├── conftest.py      # Shared fixtures
+│   ├── test_pf.py       # PF model tests
+│   ├── test_spf.py      # SPF model tests
+│   ├── test_integration.py  # End-to-end workflows
+│   └── test_models_comprehensive.py  # All models
 ├── docs/                     # Sphinx documentation
 │   ├── conf.py
-│   ├── index.rst
-│   └── intro/
+│   └── index.rst
 ├── data/                     # Example datasets
 │   └── 10k_amazon.csv
-├── examples/                 # Example notebooks
-│   └── tutorial_spf.ipynb
-├── pyproject.toml            # Project metadata
-├── requirements.txt          # Dependencies
+├── examples/                 # Example scripts
+│   └── 01_getting_started.py
+├── pyproject.toml            # Project metadata & dependencies
 ├── LICENSE                   # MIT License
 ├── CITATION.cff             # Citation metadata
-├── CONTRIBUTING.md          # This file
-├── CODE_OF_CONDUCT.md       # Community guidelines
-└── CHANGELOG.md             # Version history
+└── CONTRIBUTING.md          # This file
 ```
 
 ## Guidelines & Best Practices
@@ -331,7 +330,7 @@ When implementing a new topic model:
 
 1. **Inherit from `NumpyroModel`:**
    ```python
-   from topicmodels.models import NumpyroModel
+   from poisson_topicmodels.models import NumpyroModel
 
    class NewModel(NumpyroModel):
        """Documentation of your model."""
@@ -386,4 +385,4 @@ Contributors are recognized in:
 - `CHANGELOG.md`
 - GitHub contributors page
 
-Thank you for helping improve topicmodels! 🚀
+Thank you for helping improve poisson-topicmodels! 🚀

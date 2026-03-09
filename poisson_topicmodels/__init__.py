@@ -19,4 +19,4 @@ from .models import CPF, CSPF, ETM, PF, SPF, TBIP, Metrics, NumpyroModel, topicm
 
 __all__ = ["CPF", "CSPF", "ETM", "PF", "SPF", "TBIP", "Metrics", "NumpyroModel", "topicmodels"]
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"

@@ -95,15 +95,15 @@ Test structure:
            """Test model trains successfully."""
            counts, vocab = sample_data
            model = PF(counts, vocab, num_topics=5)
-           params = model.train(num_iterations=10, learning_rate=0.01)
+           params = model.train_step(num_steps=10, lr=0.01)
            assert 'loss' in params or params is not None
 
        def test_get_topics(self, sample_data):
            """Test topic extraction."""
            counts, vocab = sample_data
            model = PF(counts, vocab, num_topics=5)
-           model.train(num_iterations=10, learning_rate=0.01)
-           topics = model.get_topics()
+           model.train_step(num_steps=10, lr=0.01)
+           topics, _ = model.return_topics()
            assert topics.shape == (100, 5)
 
 Continuous Integration
@@ -170,14 +170,14 @@ Common Test Patterns
 
 .. code-block:: python
 
-   topics = model.get_topics()
+   topics, _ = model.return_topics()
    assert topics.shape == (vocab_size, num_topics)
 
 **Checking values**:
 
 .. code-block:: python
 
-   topics = model.get_topics()
+   topics, _ = model.return_topics()
    assert np.all(topics >= 0)  # Non-negative
    assert np.allclose(topics.sum(axis=0), 1.0)  # Normalized
 
@@ -197,8 +197,9 @@ Common Test Patterns
        """Test with different numbers of topics."""
        counts, vocab = sample_data
        model = PF(counts, vocab, num_topics=num_topics)
-       model.train(num_iterations=5)
-       assert model.get_topics().shape[1] == num_topics
+       model.train_step(num_steps=5, lr=0.01)
+       topics, _ = model.return_topics()
+       assert topics.shape[1] == num_topics
 
 Debugging Tests
 ===============

@@ -1,0 +1,162 @@
+\section{Model specification}\label{sec:model_cspf}
+
+
+% -- PLAIN SPF --
+The covariate-informed seeded Poisson factorization model builds upon SPF \citep{PROSTMAIER2025114116}. The SPF topic model incorporates prior domain knowledge in the Poisson factorization model by including seed words to guide topic discovery. The model operates under the bag-of-words assumption, where the corpus is represented by a document–term matrix (DTM) $\mathbb{Y}\in\mathbb{N}_0^{D\times V}$, where $D$ is the number of documents and $V$ is the size of the vocabulary $\mathcal{V}$. Row $d\in\{1,\ldots,D\}$ corresponds to a document and column $v\in\{1,\ldots,V\}$ to a term $v\in\mathcal{V}$. The entry $y_{dv}$ records the frequency of term $v$ in document $d$. Word counts are assumed to follow a Poisson distribution where the rate is modeled as a sum over latent topics:
+\[
+y_{dv} \sim \Pois\left( \sum_{k=1}^K \theta_{dk} \beta_{kv} \right),
+\]
+where $\bm{\theta} \in \mathbb{R}_{>0}^{D \times K}$ captures document-topic intensities, and $\bm{\beta} \in \mathbb{R}_{>0}^{K \times V}$ captures topic-term intensities. The number of topics $K$ is specified a~priori, and both $\theta_{dk}$ and $\beta_{kv}$ are constrained to be positive and typically drawn from gamma priors. This specification corresponds to the PF model.
+
+The SPF model enhances PF by allowing users to inject domain knowledge through \emph{seed words}, i.e., terms strongly associated with specific topics. This is achieved by decomposing the topic-term intensity $\beta_{kv}$ into two additive components:
+\[
+\beta_{kv} = \beta_{kv}^\star + \widetilde{\beta}_{kv},
+\]
+where $\beta_{kv}^\star$ represents the unsupervised (neutral) component, and $\widetilde{\beta}_{kv}$ is a seed-specific component related to the set of seed words $\mathcal{V}_k \subset \mathcal{V}$ for topics~$k=1,\ldots, K$. The model activates $\bm{\widetilde{\beta}}$ only for the predefined seed word-topic pairs, denoted by $\mathcal{S} = \bigcup_{k=1}^K \mathcal{S}_k$, $\mathcal{S}_k = \{(k,v), v\in \mathcal{V}_k\}$, and sets it to zero otherwise. This approach ensures that non-seeded vocabulary terms are treated in an unsupervised fashion, while seed words receive targeted prior emphasis.
+
+Both components follow independent gamma priors:
+\[
+\beta_{kv}^\star \sim \Gamma(a_{\beta^\star}, b_{\beta^\star}), \quad
+\widetilde{\beta}_{kv} \sim 
+\begin{cases}
+\Gamma(a_{\widetilde{\beta}}, b_{\widetilde{\beta}}), & \text{if } (k,v) \in \mathcal{S}, \\
+0, & \text{otherwise},
+\end{cases}
+\]
+with hyperparameters $a_{\widetilde{\beta}} \gg a_{\beta^\star}$ to amplify the effect of seed words. The document-topic intensities are similarly modeled as gamma-distributed:
+\[
+\theta_{dk} \sim \Gamma(a_\theta, b_\theta).
+\]
+
+In the absence of seed words (i.e., when $\mathcal{S} = \emptyset$), SPF reduces to the standard PF model. The integration of seed word priors allows SPF to guide the latent topic structure toward more interpretable and domain-relevant themes, without entirely sacrificing the data-driven nature of PF \citep[see][]{PROSTMAIER2025114116}.
+
+
+% -- COVARIATES --
+The seeding procedure in the SPF topic model adjusts the global topic-word distribution $\bm{\beta}$. In addition, we aim to include metadata information on local document level, i.e., $\bm{\theta}$. To capture metadata effects, i.e., covariate effects, we impose a hierarchical prior structure on the mean parameter $\mu_\theta = \frac{a_\theta}{b_\theta}$ of the document-topic distribution $\bm{\theta}$ (see Figure~\ref{fig:SPF_graphical_representation}). Let $\bm{x}_d\in\mathbb{R}^{C}$ denote the vector of covariates observed for document $d$. Collecting these vectors row-wise yields the design matrix $\mathbb{X}\in\mathbb{R}^{D\times C}$. To measure covariate effects on topic level, we introduce a coefficient matrix $\bm{\lambda}$ at the topic level, with $\bm{\lambda}\in\mathbb{R}^{C\times K}$. We link the parameters to covariates via a positive link function:
+%
+\begin{align}
+    \theta_{dk} &\sim \gammadist{b_{\theta}}{\frac{b_{\theta}}{\mu_{\theta, kd}}},
+\end{align}
+%
+with $\beta_{\theta} = 0.3$ and
+%
+\begin{align}
+    \mu_{\theta, kd} &= \eta(\lambda_{k0} + \bm{\lambda}_k^\top \bm{x}_d),
+\end{align}
+%
+where $\lambda_{k0}$ corresponds to the intercept and $\eta:\mathbb{R} \xrightarrow{} \mathbb{R^+}$ maps the linear predictor to the positive reals as the shape parameter of a gamma distribution must be positive. We set $\eta$ to be the softplus function \citep{dugas2001softplus}, defined as $\eta(z)=\log\!\bigl(1+e^{z}\bigr)$, to ensure positive real valued mean parameter values. 
+
+We specify different priors on the intercepts as well as the regression coefficients. For the regression coefficients we impose a group structure for categorical variables. For the intercept, we ensure that in case all covariate effects are zero, we obtain a mean of one for $\mu_{\theta, kd}$. 
+Assuming a normal prior on the intercepts, this implies
+%
+\begin{align}
+    \lambda_{k0} &\sim \norm{\eta^{-1}(1)}{s^2_{\lambda_0}}, \qquad k=1,\ldots,K.
+\end{align}
+%
+% Assuming that not all available metadata information impacts the topic prevalence, we would like to perform variable selection. We specify shrinkage priors on the regression coefficients assuming that variables are either not impacting on any topic, i.e., variables can be completely omitted from the model, or only impacting specific topics, i.e., variables can be omitted from some topics. 
+
+%neu1
+% We posit that only a subset of topics exhibit sensitivity to specific covariates. Consequently, we impose a shrinkage prior on the covariate-topic effect, $\lambda_{ck}$, to promote sparsity and regularization. To account for the overall influence of a covariate at the topic level, we adopt the following prior structure:
+%
+%\begin{equation}\label{eq:lambda_zeta}
+%    \lambda_{ck} \sim \norm{\zeta_c}{\omega_c} \qquad \text{and} 
+%    \qquad \zeta_c \sim \norm{m_\zeta}{s_\zeta},
+%\end{equation}
+%
+%where $\zeta_c$ express the aggregated effect of covariate $c \in \{1, \ldots, C\}$ and $\omega_c$ denotes the precision specific to each covariate. Assuming that most topics exhibit a similar effect for a covariate, with only a few deviating significantly, we follow \citet{vavra2024structuraltextbasedscalingmodel} and employ a triple-gamma prior, leading to:
+%
+%\begin{equation}\label{eq:omega_rho}
+%    \omega_{c} \sim \gammadist{a_\omega}{\rho_c} \qquad \text{and}
+%    \qquad \rho_c \sim \gammadist{a_\rho}{b_\rho}.
+%\end{equation}
+%
+%neu
+% The prior hypermarameter of the covariate-topic distribution $\bm{\lambda}$ are set to $\lambda_\mu = 0$ and $\lambda_\sigma = 1$. A summary of all prior parameter can be seen in table~\ref{tab:param_summary}. Our prior structure imposes a GLM regression, where the random component is represented as the gamma distribution of $\bm{\theta}_d$, the systematic component is represented as the linear combination between the explanatory variables $(x_1, x_2, \cdots, x_d)$ and the regression coefficients $(\lambda_1, \lambda_2, \cdots, \lambda_C)$ and the link function $\eta$ specifies the link between the random component and the systematic component and is defined as the softplus function to ensure positive real valued shape parameter values. \textcolor{red}{We tried various response/link functions, i.e. softplus with a = 1, a = 10, exp, relu, etc.}
+
+
+\begin{figure*}[t!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figures/2025_BMW/CSPF_complex.png}
+    \caption{Directed graphical representation of the CSPF topic model. Shaded nodes are observed, unshaded nodes are latent variables, double circles indicate transformations of parent nodes, rectangles are deterministic and points are fixed parameters.}
+    \label{fig:SPF_graphical_representation}
+\end{figure*}
+
+
+\clearpage\newpage
+
+
+
+\subsection{Grouped covariate effects via design-adaptive shrinkage}
+\label{subsec:grouped-covariates}
+
+In the following we assume that the document metadata consists only of  categorical variables, e.g., respondent characteristic such as country, vehicle attribute such as engine type. We follow \cite{paul2025} to specify the priors on the covariate effects taking the grouping structure induced by this categorical nature into account. In particular, all dummy covariates corresponding to the same categorical variable form one group. We therefore extend CSPF to enable \emph{group-wise} relevance assessment: we first determine whether an entire covariate group, i.e., categorical variable, is relevant for a topic, and conditional on relevance we interpret the within-group coefficients.
+
+\paragraph{Grouped design.}
+Let each categorical variable represent one group, resulting in $G$ groups (e.g., region, engine type) and each group $g$ have $m_g$ categories. For document $d$, write
+$x_d = (x_{d1}^\top,\ldots,x_{dG}^\top)^\top$ where $x_{dg}\in\{0, 1\}^{m_g}$ denotes the
+binary indicator vector for group $g$, i.e., where all entries but one are equal to zero. Thus, we have $\sum_{g=1}^G m_g = C$ with $C$ denoting the total number of covariates. Using matrix notation we have $X = [X_1,\ldots,X_G]$ with $X_g\in\{0, 1\}^{D\times m_g}$.  Note that for each $g$ the matrix $X_g$ has full column rank. 
+
+As we are interested to determine (1) whether a group (= categorical variable) has an influence on a topic and (2) if yes, which group related covariates (= categories) have an influence, we partition for each topic $k$ the regression coefficients analogously as
+$\lambda_k = (\lambda_{1k}^\top,\ldots,\lambda_{Gk}^\top)^\top$ with $\lambda_{gk}\in\mathbb{R}^{m_g}$.
+As before, the mean of the document-topic intensity remains linked through a positive function,
+\begin{align}
+\theta_{dk} &\sim \gammadist{b_{\theta}}{\frac{b_{\theta}}{\mu_{\theta,kd}}},\\
+\mu_{\theta,kd} &= \eta\!\left(\lambda_{0k} + \sum_{g=1}^G x_{dg}^\top \lambda_{gk}\right),
+\end{align}
+where $\eta(\cdot)$ is the softplus link.
+
+\paragraph{Design-adaptive group prior.}
+We impose a design-adaptive Gaussian prior on each
+group vector,
+\begin{equation}
+\label{eq:gprior_group}
+\lambda_{gk}\mid \tau_k^2,\delta_{gk}^2 \;\sim\;
+\mathcal N_{m_g}\!\Big(0,\; \tau_k^2\,\delta_{gk}^2\, (X_g^\top X_g)^{-1}\Big),
+\end{equation}
+where $\tau_k^2$ is a topic-specific global shrinkage parameter and $\delta_{gk}^2$ is a local
+(group-topic specific) shrinkage parameter. 
+
+% In our CSPF setting $(X_g^\top X_g)^{-1}$ is used as a \emph{geometric scaling} of the parameter space rather than as Fisher information of a linear Gaussian likelihood as in \cite{paul2025}. Here, it normalizes the group coefficients by the empirical second moments of $X_g$ and thereby prevents groups with many columns or different coding scales from dominating inference. 
+
+Given that $X_g$ contains only dummy variables, $X_g^{\top}X_g$ results in a diagonal matrix $\text{diag}(n_1, \ldots, n_{m_g})$ where the entry in the $j$th row and column corresponds to the number of documents for which dummy $j$ equals 1. Thus, the variance of $\lambda_{gk,j}$ is
+
+\begin{equation}
+\label{eq:dummy_variance_scaling}
+\mathrm{Var}\!\left(\lambda_{gk,j}\right)
+\;=\;
+\tau_k^2\,\delta_{gk}^2\,\frac{1}{n_j},
+\end{equation}
+
+
+We employ a global-local shrinkage structure by placing a shrinkage prior on the
+global scale $\tau_k^2$ and the local group-topic scales $\delta_{gk}^2$. In particular, we use a normal-gamma-gamma specification with
+\begin{align}
+\tau^2_k \mid \rho_k^{(\tau)} &\sim \mathrm{Gamma}\!\left(a_{\tau},\, \rho_k^{(\tau)}\right),
+&
+\rho_k^{(\tau)} &\sim \mathrm{Gamma}\!\left(a_{\rho\tau},\, b_{\rho\tau}\right),
+\label{eq:triple_gamma_tau}
+\\
+\delta^2_{gk} \mid \rho_{gk}^{(\delta)} &\sim \mathrm{Gamma}\!\left(a_{\delta},\, \rho_{gk}^{(\delta)}\right),
+&
+\rho_{gk}^{(\delta)} &\sim \mathrm{Gamma}\!\left(a_{\rho\delta},\, b_{\rho\delta}\right).
+\label{eq:triple_gamma_delta}
+\end{align}
+% Equivalently, $\tau_k^2 = 1/\omega_k^{(\tau)}$ and $\delta_{gk}^2 = 1/\omega_{gk}^{(\delta)}$.
+
+Maybe we should start with $\rho^{(\tau)}_k=0.5$ and same for $\rho^{(\delta)}_k=0.5$. this would be the LASSO.
+For this prior specification, the horseshoe prior results in case the hyperparameters are selected in the following way:
+\begin{align*}
+    a_{\tau} &= 0.5 & a_{\rho\tau} &= 0.5 & b_{\rho\tau} = 1\\
+    a_{\delta} &= 0.5 & a_{\rho\delta} &= 0.5 & b_{\rho\delta} = 1.
+\end{align*}
+
+Note that the $a_.$ parameters need to be in $(0, 0.5]$ to induce a pole at zero. Following \citet{CadonnaFruehwirth-SchnatterKnaus_triple_gamma:2019}, a better shrinkage behavior may even be achieved for smaller values of $a_.$, e.g., using:
+\begin{align*}
+    a_{\tau} &= 0.1 & a_{\rho\tau} &= 0.1 & b_{\rho\tau} = 1\\
+    a_{\delta} &= 0.1 & a_{\rho\delta} &= 0.1 & b_{\rho\delta} = 1.
+\end{align*}
+In addition, we specify
+\begin{align*}
+    b_{\theta} &= 0.3& s^2_{\lambda} &= 1,
+\end{align*}
+with the variance parameter potentially also be selected smaller, e.g., $s^2_{\lambda} = 0.5$ or $s_{\lambda} = 0.5$.
