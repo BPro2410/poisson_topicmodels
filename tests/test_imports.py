@@ -8,7 +8,7 @@ def test_package_imports():
     import poisson_topicmodels
 
     assert hasattr(poisson_topicmodels, "__version__")
-    assert poisson_topicmodels.__version__ == "0.1.2"
+    assert poisson_topicmodels.__version__ == "0.1.3"
 
 
 def test_package_metadata():

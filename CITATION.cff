@@ -4,6 +4,8 @@ authors:
   - family-names: Prostmaier
     given-names: Bernd
     email: b.prostmaier@icloud.com
+  - family-names: Pekarek-Kostka
+    given-names: Karina
   - family-names: Grün
     given-names: Bettina
   - family-names: Hofmarcher
@@ -14,7 +16,7 @@ keywords:
   - "jax"
   - "numpyro"
   - "probabilistic-modeling"
-version: 0.1.2
+version: 0.1.3
 date-released: 2026-02-05
 repository-code: "https://github.com/BPro2410/poisson_topicmodels"
 license: MIT

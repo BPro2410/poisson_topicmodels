@@ -13,10 +13,10 @@ sys.path.insert(0, os.path.abspath(".."))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "poisson-topicmodels"
-copyright = "2026, Bernd Prostmaier, Bettina Grün, Paul Hofmarcher"
-author = "Bernd Prostmaier, Bettina Grün, Paul Hofmarcher"
-release = "0.1.2"
-version = "0.1.2"
+copyright = "2026, Bernd Prostmaier, Karina Pekarek-Kostka, Bettina Grün, Paul Hofmarcher"
+author = "Bernd Prostmaier, Karina Pekarek-Kostka, Bettina Grün, Paul Hofmarcher"
+release = "0.1.3"
+version = "0.1.3"
 
 # -- General configuration --------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
