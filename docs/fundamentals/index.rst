@@ -131,15 +131,15 @@ All models in poisson-topicmodels follow a consistent API:
 
 .. code-block:: python
 
-   params = model.train(num_iterations=100, learning_rate=0.01)
+   params = model.train_step(num_steps=100, lr=0.01)
 
 **Extract**: Get interpretable results
 
 .. code-block:: python
 
-   topics = model.get_topics()
-   doc_topics = model.get_document_topics()
-   top_words = model.get_top_words(n=10)
+   topics, topic_probs = model.return_topics()
+   beta = model.return_beta()
+   top_words = model.return_top_words_per_topic(n=10)
 
 Probabilistic Background
 =========================

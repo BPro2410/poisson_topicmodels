@@ -83,7 +83,7 @@ Running into issues? Check relevant tutorials:
 - **Results don't look good?** See :doc:`tutorial_validation`
 - **Training is slow?** See :doc:`tutorial_gpu`
 - **Not sure about settings?** See :doc:`tutorial_hyperparameters`
-- **Data format issues?** See :doc:`../how_to_guides/load_data`
+- **Data format issues?** See :doc:`../getting_started/index`
 
 Feedback
 ========
@@ -94,4 +94,4 @@ Tutorials can always be improved! If you:
 - Discovered an error
 - Have a topic you'd like a tutorial for
 
-Please open an issue on `GitHub <https://github.com/BPro2410/topicmodels_package/issues>`_.
+Please open an issue on `GitHub <https://github.com/BPro2410/poisson_topicmodels/issues>`_.

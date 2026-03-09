@@ -62,7 +62,7 @@ docs = [
 ]
 
 [project.urls]
-repository = "https://github.com/BPro2410/topicmodels_package"
+repository = "https://github.com/BPro2410/poisson_topicmodels"
 documentation = "https://poisson-topicmodels.readthedocs.io"
 issues = "https://github.com/BPro2410/poisson_topicmodels/issues"
 

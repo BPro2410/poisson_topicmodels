@@ -90,10 +90,10 @@ Basic Usage
        random_seed=42
    )
 
-   params = model.train(num_iterations=100, learning_rate=0.01)
+   params = model.train_step(num_steps=100, lr=0.01)
 
    # Results similar to other models
-   top_words = model.get_top_words(n=10)
+   top_words = model.return_top_words_per_topic(n=10)
 
 Loading Pre-trained Embeddings
 ==============================
@@ -184,10 +184,10 @@ Practical Example: News Classification
        batch_size=64
    )
 
-   model.train(num_iterations=150, learning_rate=0.01)
+   model.train_step(num_steps=150, lr=0.01)
 
    # Inspect topics
-   top_words = model.get_top_words(n=15)
+   top_words = model.return_top_words_per_topic(n=15)
    for topic_id, words in enumerate(top_words):
        print(f"Topic {topic_id}: {', '.join(words)}")
 
@@ -200,18 +200,13 @@ Comparing ETM vs Standard Models
 
    # Train multiple models
    pf_model = PF(counts, vocab, num_topics=10)
-   pf_model.train(num_iterations=100)
+   pf_model.train_step(num_steps=100, lr=0.01)
 
    etm_model = ETM(counts, vocab, embeddings, num_topics=10)
-   etm_model.train(num_iterations=100)
+   etm_model.train_step(num_steps=100, lr=0.01)
 
-   # Calculate coherence
-   pf_coherence = pf_model.compute_coherence()
-   etm_coherence = etm_model.compute_coherence()
-
-   print(f"PF Coherence: {pf_coherence.mean():.3f}")
-   print(f"ETM Coherence: {etm_coherence.mean():.3f}")
-   # ETM usually has higher coherence
+   # Note: There is no built-in compute_coherence() method.
+   # Use external tools (e.g., gensim or octis) for coherence evaluation.
 
 **Visual comparison**:
 
@@ -224,14 +219,14 @@ Comparing ETM vs Standard Models
 
    # PF topics
    for topic_id in range(5):
-       top_words_pf = pf_model.get_top_words(n=5)[topic_id]
+       top_words_pf = pf_model.return_top_words_per_topic(n=5)[topic_id]
        axes[0].text(0.1, 0.9 - topic_id * 0.15,
                     f"T{topic_id}: {', '.join(top_words_pf)}")
    axes[0].set_title('PF Topics')
 
    # ETM topics
    for topic_id in range(5):
-       top_words_etm = etm_model.get_top_words(n=5)[topic_id]
+       top_words_etm = etm_model.return_top_words_per_topic(n=5)[topic_id]
        axes[1].text(0.1, 0.9 - topic_id * 0.15,
                     f"T{topic_id}: {', '.join(top_words_etm)}")
    axes[1].set_title('ETM Topics')
@@ -345,19 +340,11 @@ Metrics for ETM:
 .. code-block:: python
 
    # Standard metrics still apply
-   topics = etm_model.get_topics()
-   doc_topics = etm_model.get_document_topics()
+   topics, topic_probs = etm_model.return_topics()
+   doc_topics = etm_model.return_beta()
 
-   # Coherence
-   coherence = etm_model.compute_coherence()
-
-   # Perplexity (if held-out data available)
-   perplexity = etm_model.compute_perplexity(held_out_counts)
-
-   # Compare with baseline
-   pf_coherence = pf_model.compute_coherence()
-   improvement = (coherence.mean() - pf_coherence.mean()) / pf_coherence.mean()
-   print(f"ETM improves coherence by {improvement:.1%}")
+   # Note: There is no built-in compute_coherence() or compute_perplexity() method.
+   # Use external tools (e.g., gensim or octis) for coherence/perplexity evaluation.
 
 Relationship to Other Models
 =============================

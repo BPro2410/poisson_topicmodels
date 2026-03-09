@@ -29,7 +29,7 @@ See the `JAX installation guide <https://jax.readthedocs.io/en/latest/installati
 Docker
 ---------------
 We also provide a Dockerfile that sets up an environment with all dependencies installed.
-You can find the Dockerfile in our GitHub repository `here <https://github.com/BPro2410/topicmodels_package/blob/main/Dockerfile>`_.
+You can find the Dockerfile in our GitHub repository `here <https://github.com/BPro2410/poisson_topicmodels/blob/main/Dockerfile>`_.
 
 
 Troubleshooting
@@ -40,4 +40,4 @@ In case you are running into troubles installing topicmodels, or have limited GP
 If you need further assistance with GPU support, please visit the `JAX GPU installation instructions <https://github.com/jax-ml/jax#pip-installation-gpu-cuda>`_.
 
 
-You can also install topicmodels from `source <https://github.com/BPro2410/topicmodels_package>`_.
+You can also install topicmodels from `source <https://github.com/BPro2410/poisson_topicmodels>`_.

@@ -63,11 +63,10 @@ Run inference to learn topic and document-topic distributions.
 
 .. code-block:: python
 
-   # Train for 200 iterations with moderate learning rate
-   params = model.train(
-       num_iterations=200,
-       learning_rate=0.01,
-       verbose=True  # Print progress
+   # Train for 200 steps with moderate learning rate
+   params = model.train_step(
+       num_steps=200,
+       lr=0.01,
    )
 
    print("Training complete!")
@@ -85,16 +84,16 @@ Get the learned topics and document-topic distributions.
 
 .. code-block:: python
 
-   # 1. Get topic-word distributions
-   topics = model.get_topics()  # Shape: (vocab_size, num_topics)
+   # 1. Get topic-word distributions (returns a tuple)
+   topics, topic_probs = model.return_topics()  # Shape: (vocab_size, num_topics)
    print(f"Topics shape: {topics.shape}")
 
    # 2. Get document-topic distributions
-   doc_topics = model.get_document_topics()  # Shape: (num_docs, num_topics)
+   doc_topics = model.return_beta()  # Shape: (num_docs, num_topics)
    print(f"Document-topic shape: {doc_topics.shape}")
 
    # 3. Get top words per topic
-   top_words = model.get_top_words(n=15)
+   top_words = model.return_top_words_per_topic(n=15)
    print(f"Top words shape: {top_words.shape}")
 
 Step 5: Interpret Topics
@@ -190,18 +189,10 @@ Evaluate model quality programmatically.
 
 .. code-block:: python
 
-   # Coherence: do top words of a topic correlate?
-   coherence = model.compute_coherence()
-   print(f"Topic coherence (per topic):")
-   print(f"  Mean: {coherence.mean():.3f}")
-   print(f"  Std: {coherence.std():.3f}")
-   print(f"  Range: [{coherence.min():.3f}, {coherence.max():.3f}]")
-
-   # Which topics are most coherent?
-   best_topics = np.argsort(coherence)[-5:]
-   worst_topics = np.argsort(coherence)[:5]
-   print(f"\nMost coherent topics: {best_topics}")
-   print(f"Least coherent topics: {worst_topics}")
+   # NOTE: There is no built-in compute_coherence() method in poisson_topicmodels.
+   # Use an external coherence measure (e.g., from gensim or octis) to evaluate
+   # topic quality. For example, you can compute coherence using the top words
+   # returned by model.return_top_words_per_topic(n=10).
 
 Next: Validation and Optimization
 ==================================
@@ -221,7 +212,7 @@ Quick Checklist
 ✓ Training completed and loss decreased
 ✓ Topics extracted and interpreted
 ✓ Document-topic distributions explored
-✓ Quality metrics computed
+✓ Quality metrics computed (using external tools if needed)
 
 What's Next?
 
@@ -234,10 +225,10 @@ Common Issues
 =============
 
 **Q: Loss isn't decreasing**
-A: Try higher learning rate (0.05-0.1) or reduce batch size
+A: Try higher ``lr`` (0.05-0.1) or reduce batch size
 
 **Q: Topics look random**
-A: You may need more topics or more training iterations
+A: You may need more topics or more training steps (``num_steps``)
 
 **Q: Training is really slow**
 A: Use GPU (see :doc:`tutorial_gpu`) or reduce vocabulary size

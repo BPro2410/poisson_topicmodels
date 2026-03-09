@@ -74,21 +74,22 @@ All models follow the same interface:
 
 .. code-block:: python
 
-   params = model.train(num_iterations=100, learning_rate=0.01)
+   params = model.train_step(num_steps=100, lr=0.01)
 
 **3. Extract**
 
 .. code-block:: python
 
-   topics = model.get_topics()
-   doc_topics = model.get_document_topics()
-   top_words = model.get_top_words(n=10)
+   topics, topic_probs = model.return_topics()
+   beta = model.return_beta()
+   top_words = model.return_top_words_per_topic(n=10)
 
-**4. Evaluate**
+**4. Inspect**
 
 .. code-block:: python
 
-   coherence = model.compute_coherence()
+   # For covariate models (CPF, CSPF)
+   effects = model.return_covariate_effects()
 
 Common Parameters
 =================
@@ -106,8 +107,8 @@ Common Parameters
 
 **Training**
 
-- ``num_iterations`` (int): Training steps
-- ``learning_rate`` (float): Optimization step size
+- ``num_steps`` (int): Training steps
+- ``lr`` (float): Optimization learning rate
 - ``batch_size`` (int): Documents per iteration
 
 **Other**
@@ -117,28 +118,26 @@ Common Parameters
 Common Methods
 ==============
 
-**get_topics()**
+**return_topics()**
    Returns topic-word distributions
 
-   Returns: (vocab_size, num_topics) array
+   Returns: tuple of (vocab_size, num_topics) array and topic probabilities
 
-**get_document_topics()**
-   Returns document-topic distributions
+**return_beta()**
+   Returns topic-word probability matrix as a DataFrame
 
-   Returns: (num_documents, num_topics) array
+   Returns: DataFrame of shape (vocab_size, num_topics)
 
-**get_top_words(n=10)**
+**return_top_words_per_topic(n=10)**
    Returns top n words per topic
 
-   Returns: (num_topics, n) string array
+   Returns: list of lists of top words per topic
 
-**compute_coherence()**
-   Computes coherence metric per topic
+**return_covariate_effects()** *(CPF, CSPF only)*
+   Returns covariate effect estimates
 
-   Returns: (num_topics,) array of coherence scores
-
-**train(num_iterations, learning_rate, ...)**
-   Trains the model
+**train_step(num_steps, lr, ...)**
+   Trains the model using SVI
 
    Returns: dictionary with training parameters
 
@@ -159,11 +158,11 @@ All functions include type hints for IDE support:
 
 .. code-block:: python
 
-   def get_topics(self) -> np.ndarray:
+   def return_topics(self) -> Tuple[np.ndarray, np.ndarray]:
        """Get topic-word distributions.
 
        Returns:
-           Array of shape (vocab_size, num_topics) with topic distributions
+           Tuple of (topics array, topic probabilities)
        """
        ...
 
@@ -181,7 +180,7 @@ Models validate inputs and provide clear error messages:
    except ValueError as e:
        print(f"Invalid input: {e}")
 
-Common errors and solutions documented in :doc:`../how_to_guides/troubleshoot`.
+Common errors and solutions documented in :doc:`../how_to_guides/index`.
 
 Performance Notes
 =================
@@ -214,11 +213,8 @@ For version history, see :doc:`../release_notes/index`.
 Links
 =====
 
-- **Models**: :doc:`models` – Detailed model API
-- **Utils**: :doc:`utils` – Utility functions
-- **Metrics**: :doc:`metrics` – Evaluation metrics
 - **Full docs**: :ref:`genindex` – Index of all classes/functions
-- **GitHub**: https://github.com/BPro2410/topicmodels_package
+- **GitHub**: https://github.com/BPro2410/poisson_topicmodels
 
 Next Steps
 ==========

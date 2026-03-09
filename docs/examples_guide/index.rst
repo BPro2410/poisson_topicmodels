@@ -138,7 +138,7 @@ Want to create your own example?
    model = [Model](...)
 
    # 3. Training
-   model.train(...)
+   model.train_step(num_steps=1000, lr=0.01)
 
    # 4. Analysis
    # ... extract and analyze results
@@ -226,10 +226,10 @@ Each example uses a standard pattern you can adapt:
    model = PF(counts=counts, vocab=vocab, num_topics=20)
 
    # 3. Train (tune hyperparameters)
-   params = model.train(num_iterations=100, learning_rate=0.01)
+   params = model.train_step(num_steps=100, lr=0.01)
 
    # 4. Analyze (customize based on task)
-   top_words = model.get_top_words(n=10)
+   top_words = model.return_top_words_per_topic(n=10)
    # ... more analysis
 
 Next Steps

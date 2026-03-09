@@ -55,9 +55,9 @@ Step 3: Initialize and Train the Model
    )
 
    # Train for 100 iterations with learning rate 0.01
-   params = model.train(
-       num_iterations=100,
-       learning_rate=0.01
+   params = model.train_step(
+       num_steps=100,
+       lr=0.01
    )
 
 Step 4: Extract and Interpret Results
@@ -66,37 +66,32 @@ Step 4: Extract and Interpret Results
 .. code-block:: python
 
    # Get topic-word distributions
-   topics = model.get_topics()  # Shape: (vocab_size, num_topics)
+   topics, topic_probs = model.return_topics()  # Shape: (vocab_size, num_topics)
    print(f"Topics shape: {topics.shape}")
 
    # Get top words for each topic
-   top_words = model.get_top_words(n=10)
+   top_words = model.return_top_words_per_topic(n=10)
    print("\nTop 10 words per topic:")
    for topic_id, words in enumerate(top_words):
        print(f"Topic {topic_id}: {', '.join(words)}")
 
-   # Get document-topic distributions
-   doc_topics = model.get_document_topics()  # Shape: (num_docs, num_topics)
-   print(f"\nDocument-topic matrix shape: {doc_topics.shape}")
-
-   # Get topics for a specific document
-   first_doc_topics = doc_topics[0]
-   print(f"First document topic distribution: {first_doc_topics}")
+   # Get topic-word probability matrix
+   beta = model.return_beta()  # DataFrame: (vocab_size, num_topics)
+   print(f"\nBeta matrix shape: {beta.shape}")
 
 Understanding the Output
 =========================
 
-**Topics** (``get_topics()``)
-   Shape: (vocabulary_size, num_topics)
+**Topics** (``return_topics()``)
+   Returns a tuple: (topics array, topic probabilities).
+   The topics array has shape (vocabulary_size, num_topics).
+   Each column is a topic: weights for each word appearing in that topic.
 
-   Each column is a topic: probabilities of each word appearing in that topic.
+**Beta** (``return_beta()``)
+   Returns a DataFrame of shape (vocabulary_size, num_topics) with
+   the topic-word probability matrix.
 
-**Document Topics** (``get_document_topics()``)
-   Shape: (num_documents, num_topics)
-
-   Each row is a document: probabilities of each topic in that document.
-
-**Top Words** (``get_top_words(n)``):
+**Top Words** (``return_top_words_per_topic(n)``)
    The n most likely words for each topic, useful for interpretation.
 
 Next Steps
@@ -161,11 +156,11 @@ Here's a more realistic example with synthetic documents that have meaningful st
 
    # Train model with matching number of topics
    model = PF(counts, vocab, num_topics=3, batch_size=32, random_seed=42)
-   params = model.train(num_iterations=100, learning_rate=0.01)
+   params = model.train_step(num_steps=100, lr=0.01)
 
    # The model should discover the 3 underlying topics
    print("Discovered topics:")
-   top_words = model.get_top_words(n=20)
+   top_words = model.return_top_words_per_topic(n=20)
    for topic_id, words in enumerate(top_words):
        print(f"\nTopic {topic_id}:")
        print(f"  {', '.join(words[:10])}")
@@ -196,9 +191,9 @@ Common Parameters
 
 **batch_size**: Documents processed per training step
 
-**num_iterations**: Training iterations
+**num_steps**: Training iterations
 
-**learning_rate**: Step size for optimization
+**lr**: Learning rate for optimization
 
 **random_seed**: For reproducibility
 

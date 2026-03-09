@@ -9,8 +9,8 @@ Development Setup
 
 .. code-block:: bash
 
-   git clone https://github.com/BPro2410/topicmodels_package.git
-   cd topicmodels_package
+   git clone https://github.com/BPro2410/poisson_topicmodels.git
+   cd poisson_topicmodels
    pip install -e .[dev]
 
 Testing

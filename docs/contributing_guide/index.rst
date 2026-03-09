@@ -52,8 +52,8 @@ Development Setup
 
 .. code-block:: bash
 
-   git clone https://github.com/YOUR_USERNAME/topicmodels_package.git
-   cd topicmodels_package
+   git clone https://github.com/YOUR_USERNAME/poisson_topicmodels.git
+   cd poisson_topicmodels
 
 3. Create a development environment:
 
@@ -296,7 +296,7 @@ Reporting Bugs
 
 **File a bug report**:
 
-1. Go to `GitHub Issues <https://github.com/BPro2410/topicmodels_package/issues>`_
+1. Go to `GitHub Issues <https://github.com/BPro2410/poisson_topicmodels/issues>`_
 2. Click "New Issue"
 3. Select "Bug Report" template
 4. Fill in:
@@ -319,7 +319,7 @@ Example bug report:
 
    Steps to Reproduce:
    1. Create COO matrix
-   2. call model.train()
+   2. call model.train_step()
    3. Error occurs
 
    Error Message:
@@ -331,14 +331,14 @@ Example bug report:
    Environment:
    - Python: 3.11
    - OS: macOS
-   - JAX: 0.8.0
+   - JAX: 0.4.35
 
 Requesting Features
 ===================
 
 **Feature request**:
 
-1. Go to `GitHub Discussions <https://github.com/BPro2410/topicmodels_package/discussions>`_
+1. Go to `GitHub Discussions <https://github.com/BPro2410/poisson_topicmodels/discussions>`_
 2. Create "Ideas" discussion
 3. Or open issue with "Feature Request" template
 
@@ -431,7 +431,7 @@ Be respectful and inclusive:
 - No harassment or discrimination
 - Welcoming to all backgrounds
 
-See `CODE_OF_CONDUCT.md <https://github.com/BPro2410/topicmodels_package/blob/main/CODE_OF_CONDUCT.md>`_.
+See `CODE_OF_CONDUCT.md <https://github.com/BPro2410/poisson_topicmodels/blob/main/CODE_OF_CONDUCT.md>`_.
 
 Recognition
 ===========

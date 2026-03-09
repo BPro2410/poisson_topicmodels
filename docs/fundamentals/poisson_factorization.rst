@@ -74,22 +74,22 @@ Example: Basic Usage
    )
 
    # Train
-   params = model.train(
-       num_iterations=100,
-       learning_rate=0.01
+   params = model.train_step(
+       num_steps=100,
+       lr=0.01
    )
 
    # Extract results
-   topics = model.get_topics()              # (vocab_size, num_topics)
-   doc_topics = model.get_document_topics()  # (num_docs, num_topics)
-   top_words = model.get_top_words(n=10)    # Top words per topic
+   topics, topic_probs = model.return_topics()              # topics: (vocab_size, num_topics)
+   doc_topics = model.return_beta()                         # (num_docs, num_topics)
+   top_words = model.return_top_words_per_topic(n=10)       # Top words per topic
 
 Interpreting Results
 ====================
 
 **Topics (β)**:
 
-Access via ``model.get_topics()`` - shape (vocab_size, num_topics)
+Access via ``model.return_topics()`` which returns ``(topics, topic_probs)`` - topics shape (vocab_size, num_topics)
 
 Each column k represents topic k:
 
@@ -103,7 +103,7 @@ Interpretation:
 
 **Document Topics (θ)**:
 
-Access via ``model.get_document_topics()`` - shape (num_docs, num_topics)
+Access via ``model.return_beta()`` - shape (num_docs, num_topics)
 
 Each row d represents document d:
 
@@ -118,11 +118,11 @@ Interpretation:
 
 **Top Words**:
 
-Access via ``model.get_top_words(n=10)`` - Top n words per topic
+Access via ``model.return_top_words_per_topic(n=10)`` - Top n words per topic
 
 .. code-block:: python
 
-   top_words = model.get_top_words(n=10)
+   top_words = model.return_top_words_per_topic(n=10)
    # Shape: (num_topics, n)
 
    # Topic 2 top words
@@ -140,10 +140,10 @@ Example Interpretation Workflow
 .. code-block:: python
 
    model = PF(counts, vocab, num_topics=5, batch_size=32)
-   model.train(num_iterations=100, learning_rate=0.01)
+   model.train_step(num_steps=100, lr=0.01)
 
    # Examine each topic
-   top_words = model.get_top_words(n=15)
+   top_words = model.return_top_words_per_topic(n=15)
 
    for topic_id in range(5):
        print(f"\n=== Topic {topic_id} ===")
@@ -151,7 +151,7 @@ Example Interpretation Workflow
        print(f"Top words: {', '.join(words)}")
 
        # Find documents dominated by this topic
-       doc_topics = model.get_document_topics()
+       doc_topics = model.return_beta()
        top_docs = np.argsort(doc_topics[:, topic_id])[-3:]
        print(f"Top documents: {top_docs}")
 
@@ -171,7 +171,7 @@ Start with 10-20 topics. Adjust based on:
    # Try different numbers of topics
    for k in [5, 10, 20, 50]:
        model = PF(counts, vocab, num_topics=k, batch_size=32)
-       model.train(num_iterations=100, learning_rate=0.01)
+       model.train_step(num_steps=100, lr=0.01)
 
        # Evaluate quality (e.g., via coherence, downstream task)
        # or inspect top words manually
@@ -205,10 +205,9 @@ Monitor loss:
 
 .. code-block:: python
 
-   params = model.train(
-       num_iterations=200,
-       learning_rate=0.01,
-       verbose=True  # Print loss every iteration
+   params = model.train_step(
+       num_steps=200,
+       lr=0.01
    )
 
 Suggested: Train until loss plateaus (visual inspection)
@@ -235,10 +234,9 @@ Training Tips
 
 .. code-block:: python
 
-   params = model.train(
-       num_iterations=100,
-       learning_rate=0.01,
-       verbose=True
+   params = model.train_step(
+       num_steps=100,
+       lr=0.01
    )
 
 **Early stopping**: Stop if loss plateaus
@@ -247,7 +245,7 @@ Training Tips
 
    # Manual: train in chunks, monitor loss
    for iteration in range(10):
-       params = model.train(num_iterations=10, learning_rate=0.01)
+       params = model.train_step(num_steps=10, lr=0.01)
        print(f"Loss: {params['loss']}")
        if loss_not_improving:
            break
@@ -296,8 +294,8 @@ Example:
 
 .. code-block:: python
 
-   coherence = model.compute_coherence()
-   print(f"Average coherence: {coherence.mean()}")
+   # Note: Use external coherence metrics (e.g., gensim or octis)
+   # to evaluate topic quality. There is no built-in compute_coherence() method.
 
 Next Steps
 ==========

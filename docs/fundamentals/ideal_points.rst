@@ -76,7 +76,7 @@ Basic Usage
        random_seed=42
    )
 
-   params = model.train(num_iterations=100, learning_rate=0.01)
+   params = model.train_step(num_steps=100, lr=0.01)
 
    # Extract results
    ideal_points = model.get_ideal_points()  # (num_authors, num_dimensions)
@@ -117,13 +117,13 @@ TBIP discovers how words vary across author positions:
 .. code-block:: python
 
    # Get topic-word distributions
-   topics = model.get_topics()  # Standard topic-word matrix
+   topics, topic_probs = model.return_topics()  # Topic-word matrix
 
    # Get author-topic distributions (averaged across documents)
    author_topics = model.get_author_topics()  # (num_authors, num_topics)
 
    # Top words globally
-   top_words = model.get_top_words(n=10)
+   top_words = model.return_top_words_per_topic(n=10)
 
    # Word probabilities may differ by author
    # This is implicitly captured in ideal points
@@ -155,7 +155,7 @@ Practical Example: Political Speeches
        random_seed=42
    )
 
-   model.train(num_iterations=200, learning_rate=0.01)
+   model.train_step(num_steps=200, lr=0.01)
 
    # Get positions
    ideal_points = model.get_ideal_points()

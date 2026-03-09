@@ -13,4 +13,4 @@ In case you are running into troubles installing topicmodels, or have limited GP
 If you need further assistance with GPU support, please visit the `JAX GPU installation instructions <https://github.com/jax-ml/jax#pip-installation-gpu-cuda>`_.
 
 
-You can also install topicmodels from `source <https://github.com/BPro2410/topicmodels_package>`_.
+You can also install topicmodels from `source <https://github.com/BPro2410/poisson_topicmodels>`_.
