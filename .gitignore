@@ -64,6 +64,3 @@ JAX_pack*
 
 # Figs
 data/figures/architecture*
-
-# latex
-*.tex
