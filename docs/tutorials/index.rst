@@ -79,7 +79,7 @@ Troubleshooting Tutorials
 
 Running into issues? Check relevant tutorials:
 
-- **Installation problems?** See :doc:`../installation/index#troubleshooting`
+- **Installation problems?** See :doc:`../installation/index`
 - **Results don't look good?** See :doc:`tutorial_validation`
 - **Training is slow?** See :doc:`tutorial_gpu`
 - **Not sure about settings?** See :doc:`tutorial_hyperparameters`

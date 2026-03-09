@@ -214,13 +214,7 @@ Found a bug? Please report it:
    - Minimal reproducible example
    - Full error traceback
 
-See :doc:`../contributing_guide/index#reporting-bugs` for detailed instructions.
-
-Acknowledgments
-===============
-
-**Core Team**:
-
+See :doc:`../contributing_guide/index` for detailed instructions.
 - Bernd Prostmaier
 - Bettina Grün
 - Paul Hofmarcher

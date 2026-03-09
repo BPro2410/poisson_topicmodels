@@ -377,7 +377,7 @@ Next Steps
 
 - :doc:`tutorial_training` - Refresh on model training
 - :doc:`tutorial_hyperparameters` - Optimize settings for GPU
-- :doc:`../how_to_guides/train_models` - Advanced training techniques
+- :doc:`../how_to_guides/index` - Practical how-to guides
 
 Key Takeaway
 ============
