@@ -13,6 +13,7 @@ from .numpyro_model import NumpyroModel
 from .PF import PF
 from .SPF import SPF
 from .TBIP import TBIP
+from .STBS import STBS
 from .topicmodels import topicmodels
 
 __all__ = [
@@ -23,6 +24,7 @@ __all__ = [
     "PF",
     "SPF",
     "TBIP",
+    "STBS",
     "NumpyroModel",
     "topicmodels",
 ]
