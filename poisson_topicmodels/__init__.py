@@ -7,6 +7,7 @@ This package provides implementations of various Poisson-based topic models incl
 - CPF: Covariates-augmented Poisson Factorization
 - CSPF: Covariates and Supervised Poisson Factorization
 - TBIP: Topic-Based Ideological Point Estimation
+- STBS: Structural Text-Based Scaling Model
 - ETM: Embedded Topic Model
 
 Example:
@@ -15,8 +16,8 @@ Example:
     >>> model.fit(num_epochs=100)
 """
 
-from .models import CPF, CSPF, ETM, PF, SPF, TBIP, Metrics, NumpyroModel, topicmodels
+from .models import CPF, CSPF, ETM, PF, SPF, TBIP, STBS, Metrics, NumpyroModel, topicmodels
 
-__all__ = ["CPF", "CSPF", "ETM", "PF", "SPF", "TBIP", "Metrics", "NumpyroModel", "topicmodels"]
+__all__ = ["CPF", "CSPF", "ETM", "PF", "SPF", "TBIP", "STBS", "Metrics", "NumpyroModel", "topicmodels"]
 
 __version__ = "0.1.3"

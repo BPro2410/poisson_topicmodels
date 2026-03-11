@@ -6,6 +6,7 @@ from .ETM import ETM
 from .PF import PF
 from .SPF import SPF
 from .TBIP import TBIP
+from .STBS import STBS
 
 os.getcwd()
 
@@ -24,7 +25,7 @@ def get_base_class(model):
     class
         Corresponding model class.
     """
-    supported_models = ["SPF", "CSPF", "TBIP", "TVTBIP", "PF", "CPF", "ETM"]
+    supported_models = ["SPF", "CSPF", "TBIP", "TVTBIP", "STBS", "PF", "CPF", "ETM"]
     if model not in supported_models:
         raise ValueError(
             "Please select a model that is supported in topicmodels package. Supported models are: {supported_models}"
@@ -38,6 +39,8 @@ def get_base_class(model):
         return TBIP
     if model == "TVTBIP":
         return TBIP
+    if model == "STBS":
+        return STBS
     if model == "PF":
         return PF
     if model == "CPF":
