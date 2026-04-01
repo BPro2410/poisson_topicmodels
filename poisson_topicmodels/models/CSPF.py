@@ -61,10 +61,13 @@ class CSPF(NumpyroModel):
                 x_np = np.asarray(X_design_matrix.values)
             else:
                 x_np = np.asarray(X_design_matrix)
-                covariate_names = [f"cov_{i}" for i in range(x_np.shape[1])]
 
             if x_np.ndim != 2:
                 raise ValueError(f"covariates must be 2D, got shape {x_np.shape}")
+
+            if not isinstance(X_design_matrix, pd.DataFrame):
+                covariate_names = [f"cov_{i}" for i in range(x_np.shape[1])]
+
             if x_np.shape[0] != D:
                 raise ValueError(f"covariates has {x_np.shape[0]} rows, expected {D}")
             if x_np.shape[1] == 0:
