@@ -28,8 +28,8 @@ For development work or to use the latest features, you can install from source:
 
 .. code-block:: bash
 
-   git clone https://github.com/BPro2410/topicmodels_package.git
-   cd topicmodels_package
+   git clone https://github.com/BPro2410/poisson_topicmodels.git
+   cd poisson_topicmodels
    pip install -e .
 
 The ``-e`` flag installs the package in editable mode, allowing you to modify the
@@ -42,8 +42,8 @@ For contributing to the project or running tests, install with development depen
 
 .. code-block:: bash
 
-   git clone https://github.com/BPro2410/topicmodels_package.git
-   cd topicmodels_package
+   git clone https://github.com/BPro2410/poisson_topicmodels.git
+   cd poisson_topicmodels
    pip install -e ".[dev,docs]"
 
 This includes:
@@ -159,8 +159,8 @@ Need Help?
 ==========
 
 - 📖 Read the :doc:`../getting_started/index`
-- 🐛 Report issues on `GitHub <https://github.com/BPro2410/topicmodels_package/issues>`_
-- 💬 Join discussions on `GitHub Discussions <https://github.com/BPro2410/topicmodels_package/discussions>`_
+- 🐛 Report issues on `GitHub <https://github.com/BPro2410/poisson_topicmodels/issues>`_
+- 💬 Join discussions on `GitHub Discussions <https://github.com/BPro2410/poisson_topicmodels/discussions>`_
 
 System Requirements
 ====================

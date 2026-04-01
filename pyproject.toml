@@ -1,9 +1,10 @@
 [project]
 name = "poisson-topicmodels"
-version = "0.1.2"
+version = "0.1.3"
 description = "Poisson topic modeling with Bayesian inference using JAX and NumPyro"
 authors = [
     {name = "Bernd Prostmaier", email = "b.prostmaier@icloud.com"},
+    {name = "Karina Pekarek-Kostka"},
     {name = "Bettina Grün"},
     {name = "Paul Hofmarcher"}
 ]
@@ -62,7 +63,7 @@ docs = [
 ]
 
 [project.urls]
-repository = "https://github.com/BPro2410/topicmodels_package"
+repository = "https://github.com/BPro2410/poisson_topicmodels"
 documentation = "https://poisson-topicmodels.readthedocs.io"
 issues = "https://github.com/BPro2410/poisson_topicmodels/issues"
 

@@ -115,15 +115,15 @@ For other cases we refer to manual Jax installation. See the [guide](https://doc
 
 ### From Source
 ```bash
-git clone https://github.com/BPro2410/topicmodels_package.git
-cd topicmodels_package
+git clone https://github.com/BPro2410/poisson_topicmodels.git
+cd poisson_topicmodels
 pip install -e .
 ```
 
 ### Development Setup
 ```bash
-git clone https://github.com/BPro2410/topicmodels_package.git
-cd topicmodels_package
+git clone https://github.com/BPro2410/poisson_topicmodels.git
+cd poisson_topicmodels
 pip install -e ".[dev]"
 pytest tests/  # Verify installation
 ```
@@ -139,7 +139,7 @@ See `pyproject.toml` for complete dependency list.
 
 ## Documentation
 
-- **[API Reference](https://topicmodels.readthedocs.io)** – Complete model and method documentation
+- **[API Reference](https://poisson-topicmodels.readthedocs.io)** – Complete model and method documentation
 - **[User Guide](docs/intro/user_guide.rst)** – Detailed tutorials and workflows
 - **[Examples](examples/)** – Jupyter notebooks demonstrating all features
 - **[Contributing](CONTRIBUTING.md)** – How to contribute improvements
@@ -211,14 +211,10 @@ class MyModel(NumpyroModel):
 
 To implement a custom model, one has to only define the high-level model. The backbone of **poisson-topicmodels** handles training and inference.
 
-<div align="center">
-<img src="data/figures/architecture5.svg" width="50%">
-</div>
-
 
 ## Example Data
 
-The repository includes `data/10k_amazon.csv` with ~10,000 Amazon product reviews for quick experimentation. See `examples/01_getting_started.ipynb` for a complete walkthrough.
+The repository includes `data/10k_amazon.csv` with ~10,000 Amazon product reviews for quick experimentation. See `examples/01_getting_started.py` for a complete walkthrough.
 
 ## Docker Setup (Optional)
 
@@ -243,7 +239,7 @@ If you use **poisson_topicmodels** in your research, please cite:
   title = {Poisson-topicmodels: Probabilistic Topic Modeling with Bayesian Inference},
   author = {Prostmaier, Bernd and Grün, Bettina and Hofmarcher, Paul},
   year = {2026},
-  url = {https://github.com/BPro2410/topicmodels_package},
+  url = {https://github.com/BPro2410/poisson_topicmodels},
 }
 ```
 
@@ -263,9 +259,9 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 
 ## Support
 
-- **Issues & Bug Reports**: [GitHub Issues](https://github.com/BPro2410/topicmodels_package/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/BPro2410/topicmodels_package/discussions)
-- **Documentation**: [ReadTheDocs](https://topicmodels.readthedocs.io)
+- **Issues & Bug Reports**: [GitHub Issues](https://github.com/BPro2410/poisson_topicmodels/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/BPro2410/poisson_topicmodels/discussions)
+- **Documentation**: [ReadTheDocs](https://poisson-topicmodels.readthedocs.io)
 
 ---
 

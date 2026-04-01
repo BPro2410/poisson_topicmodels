@@ -1,9 +1,11 @@
 cff-version: 1.2.0
-title: "topicmodels: Probabilistic Topic Modeling with JAX"
+title: "poisson-topicmodels: Probabilistic Topic Modeling with JAX"
 authors:
   - family-names: Prostmaier
     given-names: Bernd
     email: b.prostmaier@icloud.com
+  - family-names: Pekarek-Kostka
+    given-names: Karina
   - family-names: Grün
     given-names: Bettina
   - family-names: Hofmarcher
@@ -14,9 +16,9 @@ keywords:
   - "jax"
   - "numpyro"
   - "probabilistic-modeling"
-version: 0.1.0
+version: 0.1.3
 date-released: 2026-02-05
-repository-code: "https://github.com/BPro2410/topicmodels_package"
+repository-code: "https://github.com/BPro2410/poisson_topicmodels"
 license: MIT
 abstract: >
   A Python package for probabilistic topic modeling using Bayesian
