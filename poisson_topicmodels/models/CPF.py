@@ -1,11 +1,13 @@
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 
 import jax.nn as jnn
 import jax.numpy as jnp
+import matplotlib.pyplot as plt
 import numpy as np
 import numpyro.distributions as dist
 import pandas as pd
 import scipy.sparse as sparse
+from scipy import stats as sp_stats
 from numpyro import param, plate, sample
 from numpyro.distributions import constraints
 
@@ -115,7 +117,10 @@ class CPF(NumpyroModel):
             raise ValueError(f"batch_size must satisfy 0 < batch_size <= {D}, got {batch_size}")
 
         if X_design_matrix is not None:
+            _have_names = False
             if isinstance(X_design_matrix, pd.DataFrame):
+                covariate_names = [str(col) for col in X_design_matrix.columns]
+                _have_names = True
                 X_design_matrix = X_design_matrix.values
 
             X_design_matrix = np.asarray(X_design_matrix)
@@ -126,6 +131,11 @@ class CPF(NumpyroModel):
             if X_design_matrix.shape[1] == 0:
                 raise ValueError("covariates matrix is empty (0 columns)")
 
+            if not _have_names:
+                covariate_names = [f"cov_{i}" for i in range(X_design_matrix.shape[1])]
+        else:
+            covariate_names = ["intercept"]
+
         # Store validated inputs
         self.counts = counts
         self.D = D
@@ -133,6 +143,7 @@ class CPF(NumpyroModel):
         self.vocab = vocab
         self.K = num_topics
         self.batch_size = batch_size
+        self.covariates: List[str] = covariate_names
         self.X_design_matrix = (
             jnp.array(X_design_matrix) if X_design_matrix is not None else jnp.ones((D, 1))
         )
@@ -233,15 +244,162 @@ class CPF(NumpyroModel):
             with plate("d_k", size=self.K, dim=-1):
                 sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))
 
-    def return_covariate_effects(self):
-        """
-        Return the covariate effects for the model.
+    def return_covariate_effects(self) -> pd.DataFrame:
+        """Return point estimates of covariate effects (lambda).
 
         Returns
         -------
-        pandas.DataFrame
-            DataFrame containing the covariate effects with covariates as rows and topics as columns.
+        pd.DataFrame
+            DataFrame with covariates as rows and topics as columns.
+
+        Raises
+        ------
+        ValueError
+            If model has not been trained yet.
         """
-        rs_names = [f"residual_topic_{i+1}" for i in range(self.K)]
-        index = self.covariates
-        return pd.DataFrame(self.estimated_params["lambda_location"], index=index, columns=rs_names)
+        if not self.estimated_params:
+            raise ValueError("Model must be trained before calling return_covariate_effects()")
+
+        topic_names = [f"topic_{i + 1}" for i in range(self.K)]
+        return pd.DataFrame(
+            np.asarray(self.estimated_params["lambda_location"]),
+            index=self.covariates,
+            columns=topic_names,
+        )
+
+    def return_covariate_effects_ci(self, ci: float = 0.95) -> pd.DataFrame:
+        """Return covariate effects with credible intervals.
+
+        Uses the Normal variational posterior for lambda:
+        ``mean = lambda_location``, ``CI = mean +/- z * lambda_scale``.
+
+        Parameters
+        ----------
+        ci : float, optional
+            Credible-interval level (default 0.95).
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with columns ``['covariate', 'topic', 'mean',
+            'lower', 'upper']``.
+
+        Raises
+        ------
+        ValueError
+            If model has not been trained yet.
+        """
+        if not self.estimated_params:
+            raise ValueError("Model must be trained before calling return_covariate_effects_ci()")
+
+        loc = np.asarray(self.estimated_params["lambda_location"])  # (C, K)
+        scale = np.asarray(self.estimated_params["lambda_scale"])   # (C, K)
+        z = sp_stats.norm.ppf(1.0 - (1.0 - ci) / 2.0)
+
+        topic_names = [f"topic_{i + 1}" for i in range(self.K)]
+        rows = []
+        for c_idx, cov_name in enumerate(self.covariates):
+            for k_idx, topic_name in enumerate(topic_names):
+                rows.append({
+                    "covariate": cov_name,
+                    "topic": topic_name,
+                    "mean": float(loc[c_idx, k_idx]),
+                    "lower": float(loc[c_idx, k_idx] - z * scale[c_idx, k_idx]),
+                    "upper": float(loc[c_idx, k_idx] + z * scale[c_idx, k_idx]),
+                })
+        return pd.DataFrame(rows)
+
+    def plot_cov_effects(
+        self,
+        ci: float = 0.95,
+        topics: Optional[List[str]] = None,
+        figsize_per_topic: Tuple[float, float] = (5.0, 0.28),
+        save_path: Optional[str] = None,
+    ) -> Tuple[plt.Figure, np.ndarray]:
+        r"""Forest plot of covariate effects (lambda) with credible intervals.
+
+        Parameters
+        ----------
+        ci : float, optional
+            Credible-interval level (default 0.95).
+        topics : list of str, optional
+            Subset of topic names to plot.  If ``None``, all topics are
+            plotted.
+        figsize_per_topic : tuple of float, optional
+            ``(width, height_per_covariate)`` for panel sizing.
+        save_path : str, optional
+            Path to save the figure.
+
+        Returns
+        -------
+        tuple of (plt.Figure, np.ndarray of Axes)
+        """
+        if not self.estimated_params:
+            raise ValueError("Model must be trained before calling plot_cov_effects()")
+
+        topic_names = [f"topic_{i + 1}" for i in range(self.K)]
+
+        if topics is not None:
+            topic_idx = [i for i, t in enumerate(topic_names) if t in topics]
+            if not topic_idx:
+                raise ValueError(f"None of {topics} found in {topic_names}")
+            plot_topics = [topic_names[i] for i in topic_idx]
+        else:
+            plot_topics = topic_names
+            topic_idx = list(range(self.K))
+
+        loc = np.asarray(self.estimated_params["lambda_location"])  # (C, K)
+        scale = np.asarray(self.estimated_params["lambda_scale"])   # (C, K)
+        z = sp_stats.norm.ppf(1.0 - (1.0 - ci) / 2.0)
+
+        n_topics = len(plot_topics)
+        n_cov = loc.shape[0]
+
+        with plt.rc_context(self._setup_academic_style()):
+            fig_w = figsize_per_topic[0]
+            fig_h = max(3.0, n_cov * figsize_per_topic[1])
+
+            ncols = min(n_topics, 4)
+            nrows = int(np.ceil(n_topics / ncols))
+            fig, axes = plt.subplots(
+                nrows, ncols,
+                figsize=(fig_w * ncols, fig_h * nrows),
+                sharey=True, squeeze=False,
+            )
+            axes_flat = axes.flatten()
+
+            for panel_i, (ki, tname) in enumerate(zip(topic_idx, plot_topics)):
+                ax = axes_flat[panel_i]
+                means = loc[:, ki]
+                lo = means - z * scale[:, ki]
+                hi = means + z * scale[:, ki]
+                y_pos = np.arange(n_cov)[::-1]
+
+                ax.axvline(0, color="#999999", linewidth=0.5, zorder=0)
+                for j in range(n_cov):
+                    ax.plot([lo[j], hi[j]], [y_pos[j], y_pos[j]],
+                            color="#4E79A7", linewidth=1.2, zorder=1)
+                    ax.scatter(means[j], y_pos[j], color="#4E79A7",
+                               s=18, zorder=2, edgecolors="white", linewidths=0.3)
+
+                ax.set_yticks(y_pos)
+                ax.set_yticklabels(list(self.covariates))
+                ax.set_title(tname)
+                ax.set_xlabel(r"$\lambda$")
+
+            for idx in range(n_topics, len(axes_flat)):
+                axes_flat[idx].set_visible(False)
+
+            fig.tight_layout()
+            if save_path:
+                fig.savefig(save_path, dpi=300, bbox_inches="tight")
+
+        return fig, axes
+
+    def _summary_extra(self) -> str:
+        """CPF-specific summary information."""
+        lines = [
+            f"  Covariates (C):           {self.C}",
+            f"  Covariate names:          {', '.join(self.covariates)}",
+        ]
+        return "\n".join(lines)

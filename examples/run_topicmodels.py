@@ -14,7 +14,7 @@ from poisson_topicmodels.utils.utils import load_embeds
 # from poisson_topicmodels import topicmodels
 
 # ---- Load data ----
-df1 = pd.read_csv("data/10k_amazon.csv")
+df1 = pd.read_csv("../data/10k_amazon.csv")
 
 # --- Create corpus ---
 cv = CountVectorizer(stop_words="english", min_df=2)
@@ -62,7 +62,9 @@ tm1 = SPF(counts, vocab, keywords, residual_topics=0, batch_size=1024)
 print(tm1)
 
 # ---- Run inference -----
-estimated_params = tm1.train_step(num_steps=50, lr=0.1)
+epochs = 150
+num_steps = epochs * (counts.shape[0] // tm1.batch_size)
+estimated_params = tm1.train_step(num_steps=num_steps, lr=0.1)
 
 # ---- Inspect results ----
 print(estimated_params)
@@ -76,6 +78,21 @@ tm1.Metrics.loss
 
 # ---- Plot model loss ----
 plot, _ = tm1.plot_model_loss(window=10, save_path=None)
+plot.show()
+
+plot, _ = tm1.plot_topic_wordclouds(save_path="wc2.png")
+plot.show()
+
+tm1.summary()
+tm1.compute_topic_coherence(metric = "c_npmi", top_n = 10)
+tm1.compute_topic_diversity(top_n = 10)
+plot, _ = tm1.plot_topic_prevalence(save_path="tp.png")
+plot.show()
+plot, _ = tm1.plot_topic_correlation(save_path="tc.png")
+plot.show()
+plot, _ = tm1.plot_document_topic_heatmap(sort_by_topic=False, save_path="dth.png")
+plot.show()
+plot, _ = tm1.plot_seed_effectiveness(save_path="se.png")
 plot.show()
 
 
@@ -127,7 +144,10 @@ df1["speaker"] = np.random.choice(
 tm4 = TBIP(counts, vocab, num_topics=10, authors=df1.speaker, batch_size=1024)
 estimated_params = tm4.train_step(num_steps=10, lr=0.01)
 tm4.plot_model_loss()
-tm4.plot_ideal_points()
+tm4.plot_ideal_points(save_path="ideal_points.png")
+tm4.summary()
+tm4.return_ideal_points()
+tm4.return_ideological_words(topic=0)
 
 
 # ##############

@@ -1,6 +1,7 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 import jax.numpy as jnp
+import matplotlib.pyplot as plt
 import numpy as np
 import numpyro.distributions as dist
 import pandas as pd
@@ -329,3 +330,72 @@ class SPF(NumpyroModel):
             keyword_keys[indices_clipped],
             [f"No_keyword_topic_{i - num_keywords}" for i in indices],
         )
+
+    def plot_seed_effectiveness(
+        self,
+        save_path: Optional[str] = None,
+    ) -> Tuple[plt.Figure, np.ndarray]:
+        """Grouped bar chart comparing seed vs. non-seed word weights per topic.
+
+        For every seeded topic, shows the mean beta weight of seed words
+        alongside the mean beta weight of all other words.  Helps assess
+        whether seed words actually dominate their intended topics.
+
+        Parameters
+        ----------
+        save_path : str, optional
+            Path to save the figure.
+
+        Returns
+        -------
+        tuple of (plt.Figure, np.ndarray of Axes)
+        """
+        if not self.estimated_params:
+            raise ValueError("Model must be trained first.")
+
+        beta_df = self.return_beta()
+        keyword_keys = list(self.keywords.keys())
+        vocab_list = list(self.vocab)
+
+        topic_labels: List[str] = []
+        seed_means: List[float] = []
+        other_means: List[float] = []
+
+        for idx, topic_id in enumerate(keyword_keys):
+            col = beta_df[topic_id]
+            seed_words = set(self.keywords[topic_id])
+            is_seed = np.array([w in seed_words for w in vocab_list])
+            seed_means.append(float(col.values[is_seed].mean()))
+            other_means.append(float(col.values[~is_seed].mean()))
+            topic_labels.append(str(topic_id))
+
+        x = np.arange(len(topic_labels))
+        width = 0.35
+
+        with plt.rc_context(self._setup_academic_style()):
+            fig, ax = plt.subplots(figsize=(max(6, len(topic_labels) * 1.2), 4))
+            ax.bar(x - width / 2, seed_means, width, label="Seed words", color="#4E79A7")
+            ax.bar(x + width / 2, other_means, width, label="Other words", color="#E15759")
+            ax.set_xticks(x)
+            ax.set_xticklabels(topic_labels, rotation=30, ha="right")
+            ax.set_ylabel(r"Mean $\beta$ weight")
+            ax.set_title("Seed word effectiveness")
+            ax.legend()
+            fig.tight_layout()
+
+            if save_path:
+                fig.savefig(save_path, dpi=300, bbox_inches="tight")
+
+        return fig, np.array([ax])
+
+    def _summary_extra(self) -> str:
+        """SPF-specific summary information."""
+        kw_info = ", ".join(
+            f"{k} ({len(v)} words)" for k, v in self.keywords.items()
+        )
+        lines = [
+            f"  Seeded topics:            {len(self.keywords)}",
+            f"  Residual topics:          {self.residual_topics}",
+            f"  Keyword groups:           {kw_info}",
+        ]
+        return "\n".join(lines)

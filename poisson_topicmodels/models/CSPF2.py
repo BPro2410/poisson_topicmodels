@@ -340,11 +340,70 @@ class CSPF2(NumpyroModel):
 
         return pd.DataFrame(jnp.transpose(E_beta), index=self.vocab, columns=self._topic_names())
 
-    def return_covariate_effects(self):
+    def return_covariate_effects(self) -> pd.DataFrame:
+        """Return point estimates of covariate effects (lambda).
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with covariates as rows and topics as columns.
+        """
         index = self.covariates
         return pd.DataFrame(
             self.estimated_params["lambda_location"], index=index, columns=self._topic_names()
         )
+
+    def return_covariate_effects_ci(self, ci: float = 0.95) -> pd.DataFrame:
+        """Return covariate effects with credible intervals.
+
+        Uses the Normal variational posterior for lambda:
+        ``mean = lambda_location``, ``CI = mean +/- z * lambda_scale``.
+
+        Parameters
+        ----------
+        ci : float, optional
+            Credible-interval level (default 0.95).
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with columns ``['covariate', 'topic', 'mean',
+            'lower', 'upper']``.
+
+        Raises
+        ------
+        ValueError
+            If model has not been trained yet.
+        """
+        if not self.estimated_params:
+            raise ValueError("Model must be trained before calling return_covariate_effects_ci()")
+
+        loc = np.asarray(self.estimated_params["lambda_location"])  # (C, K)
+        scale = np.asarray(self.estimated_params["lambda_scale"])   # (C, K)
+        z = sp_stats.norm.ppf(1.0 - (1.0 - ci) / 2.0)
+
+        topic_names = self._topic_names()
+        rows = []
+        for c_idx, cov_name in enumerate(self.covariates):
+            for k_idx, topic_name in enumerate(topic_names):
+                rows.append({
+                    "covariate": cov_name,
+                    "topic": topic_name,
+                    "mean": float(loc[c_idx, k_idx]),
+                    "lower": float(loc[c_idx, k_idx] - z * scale[c_idx, k_idx]),
+                    "upper": float(loc[c_idx, k_idx] + z * scale[c_idx, k_idx]),
+                })
+        return pd.DataFrame(rows)
+
+    def _summary_extra(self) -> str:
+        """CSPF2-specific summary information."""
+        lines = [
+            f"  Keywords:                 {len(self.keywords)} seeded topics",
+            f"  Residual topics:          {self.residual_topics}",
+            f"  Covariates (C):           {self.C}",
+            f"  Covariate names:          {', '.join(self.covariates)}",
+        ]
+        return "\n".join(lines)
 
     # ------------------------------------------------------------------
     # Forest-plot visualisation
@@ -376,31 +435,6 @@ class CSPF2(NumpyroModel):
         lo = sp_stats.gamma.ppf(alpha_lo, a=shape, scale=1.0 / rate)
         hi = sp_stats.gamma.ppf(alpha_hi, a=shape, scale=1.0 / rate)
         return mean, lo, hi
-
-    @staticmethod
-    def _setup_academic_style() -> Dict[str, Any]:
-        """Return matplotlib rcParams overrides for a clean academic look."""
-        return {
-            "font.family": "serif",
-            "font.size": 9,
-            "axes.titlesize": 11,
-            "axes.labelsize": 10,
-            "xtick.labelsize": 8,
-            "ytick.labelsize": 8,
-            "legend.fontsize": 8,
-            "figure.dpi": 150,
-            "axes.spines.top": False,
-            "axes.spines.right": False,
-            "axes.linewidth": 0.6,
-            "xtick.major.width": 0.6,
-            "ytick.major.width": 0.6,
-            "lines.linewidth": 1.0,
-            "axes.grid": True,
-            "axes.grid.axis": "x",
-            "grid.alpha": 0.15,
-            "grid.linewidth": 0.4,
-            "grid.color": "#999999",
-        }
 
     # ---- public API ---------------------------------------------------
 

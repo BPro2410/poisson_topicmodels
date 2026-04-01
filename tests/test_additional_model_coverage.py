@@ -85,9 +85,9 @@ def test_etm_init_model_guide_and_notimplemented_methods():
     )
     assert "theta" in guide_trace
 
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(ValueError, match="Model must be trained"):
         model.return_topics()
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(ValueError, match="Model must be trained"):
         model.return_beta()
 
     with pytest.raises(ValueError, match="embeddings_mapping cannot be empty"):
@@ -101,7 +101,7 @@ def test_etm_init_model_guide_and_notimplemented_methods():
         )
 
 
-def test_tbip_time_varying_get_batch_model_guide_and_plot(monkeypatch):
+def test_tbip_time_varying_get_batch_model_guide_and_plot():
     """Exercise TBIP time-varying branches, traceable latent variables, and plotting."""
     counts, vocab = _small_counts_and_vocab()
     authors = np.array(["alice", "bob", "alice", "carol"])
@@ -143,11 +143,13 @@ def test_tbip_time_varying_get_batch_model_guide_and_plot(monkeypatch):
     with pytest.raises(ValueError):
         model.train_step(num_steps=2, lr=0)
 
-    model.estimated_params = {"mu_x": np.array([0.1, -0.2, 0.3], dtype=np.float32)}
+    model.estimated_params = {
+        "mu_x": np.array([0.1, -0.2, 0.3], dtype=np.float32),
+        "sigma_x": np.array([0.05, 0.05, 0.05], dtype=np.float32),
+    }
     author_map = model._TBIP__create_author_ideal_map()
     assert set(author_map.keys()) == {"alice", "bob", "carol"}
 
-    monkeypatch.setattr("matplotlib.pyplot.show", lambda: None)
     model.plot_ideal_points(selected_authors=["alice", "carol"])
 
     with pytest.raises(ValueError, match="must have shape"):
