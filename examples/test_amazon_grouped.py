@@ -188,7 +188,7 @@ print(f"  Covariate groups (G): {model.G}")
 print()
 
 print("Training ...")
-params = model.train_step(num_steps=3000, lr=0.01, random_seed=7)
+params = model.train_step(num_steps=1000, lr=0.1, random_seed=7)
 
 # ============================================================================
 # Evaluate

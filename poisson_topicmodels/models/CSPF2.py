@@ -1,13 +1,15 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import jax
 import jax.numpy as jnp
+import matplotlib.pyplot as plt
 import numpy as np
 import numpyro.distributions as dist
 import pandas as pd
 import scipy.sparse as sparse
 from numpyro import param, plate, sample
 from numpyro.distributions import constraints
+from scipy import stats as sp_stats
 
 from .numpyro_model import NumpyroModel
 
@@ -71,11 +73,11 @@ class CSPF2(NumpyroModel):
             x_np = np.ones((D, 1), dtype=np.float32)
             covariate_names = ["intercept_cov"]
 
-        vocab_set = set(vocab)
-        for topic_id, words in keywords.items():
-            for word in words:
-                if word not in vocab_set:
-                    raise ValueError(f"Keyword '{word}' (topic {topic_id}) not in vocabulary")
+        # vocab_set = set(vocab)
+        # for topic_id, words in keywords.items():
+        #     for word in words:
+        #         if word not in vocab_set:
+        #             raise ValueError(f"Keyword '{word}' (topic {topic_id}) not in vocabulary")
 
         self.counts = counts
         self.D = D
@@ -336,15 +338,459 @@ class CSPF2(NumpyroModel):
         )
         E_beta = E_beta.at[self.kw_indices].add(E_beta_tilde)
 
-        rs_names = [f"residual_topic_{i+1}" for i in range(self.residual_topics)]
-
-        return pd.DataFrame(
-            jnp.transpose(E_beta), index=self.vocab, columns=list(self.keywords.keys()) + rs_names
-        )
+        return pd.DataFrame(jnp.transpose(E_beta), index=self.vocab, columns=self._topic_names())
 
     def return_covariate_effects(self):
-        topic_names = list(self.keywords.keys())
-        rs_names = [f"residual_topic_{i+1}" for i in range(self.residual_topics)]
-        cols = topic_names + rs_names
         index = self.covariates
-        return pd.DataFrame(self.estimated_params["lambda_location"], index=index, columns=cols)
+        return pd.DataFrame(
+            self.estimated_params["lambda_location"], index=index, columns=self._topic_names()
+        )
+
+    # ------------------------------------------------------------------
+    # Forest-plot visualisation
+    # ------------------------------------------------------------------
+
+    def _topic_names(self) -> List[str]:
+        """Return ordered list of all topic names (keyword + residual)."""
+        return list(self.keywords.keys()) + [
+            f"residual_topic_{i + 1}" for i in range(self.residual_topics)
+        ]
+
+    def _group_names(self) -> List[str]:
+        """Return ordered list of covariate-group names."""
+        seen: Dict[str, None] = {}
+        for name in self.covariates:
+            key = name.split("::", 1)[0] if "::" in name else name
+            if key not in seen:
+                seen[key] = None
+        return list(seen.keys())
+
+    @staticmethod
+    def _gamma_ci(
+        shape: np.ndarray, rate: np.ndarray, ci: float
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Point estimate and CI for a Gamma variational posterior."""
+        mean = shape / rate
+        alpha_lo = (1.0 - ci) / 2.0
+        alpha_hi = 1.0 - alpha_lo
+        lo = sp_stats.gamma.ppf(alpha_lo, a=shape, scale=1.0 / rate)
+        hi = sp_stats.gamma.ppf(alpha_hi, a=shape, scale=1.0 / rate)
+        return mean, lo, hi
+
+    @staticmethod
+    def _setup_academic_style() -> Dict[str, Any]:
+        """Return matplotlib rcParams overrides for a clean academic look."""
+        return {
+            "font.family": "serif",
+            "font.size": 9,
+            "axes.titlesize": 11,
+            "axes.labelsize": 10,
+            "xtick.labelsize": 8,
+            "ytick.labelsize": 8,
+            "legend.fontsize": 8,
+            "figure.dpi": 150,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.linewidth": 0.6,
+            "xtick.major.width": 0.6,
+            "ytick.major.width": 0.6,
+            "lines.linewidth": 1.0,
+            "axes.grid": True,
+            "axes.grid.axis": "x",
+            "grid.alpha": 0.15,
+            "grid.linewidth": 0.4,
+            "grid.color": "#999999",
+        }
+
+    # ---- public API ---------------------------------------------------
+
+    def plot_cov_effects(
+        self,
+        ci: float = 0.95,
+        include_shrinkage: bool = False,
+        topics: Optional[List[str]] = None,
+        group_colors: Optional[Dict[str, str]] = None,
+        figsize_per_topic: Tuple[float, float] = (5.0, 0.28),
+        save_path: Optional[str] = None,
+    ) -> Dict[str, Tuple[plt.Figure, np.ndarray]]:
+        r"""Plot covariate effects as forest plots.
+
+        Parameters
+        ----------
+        ci : float, optional
+            Credible-interval level (default ``0.95`` for 95 % CI).
+        include_shrinkage : bool, optional
+            If ``True``, additionally produce forest plots for
+            :math:`\lambda_0` (intercept), :math:`\tau^2_k` (global
+            shrinkage), and :math:`\delta^2_{gk}` (group shrinkage).
+        topics : list of str, optional
+            Subset of topic names to plot.  If ``None`` (default), all
+            topics are plotted.
+        group_colors : dict, optional
+            Mapping ``{group_name: colour}`` used to colour the
+            covariate labels on the y-axis.  Groups are inferred from
+            the ``::`` separator in covariate names.  If ``None`` a
+            default qualitative palette is used.
+        figsize_per_topic : tuple of float, optional
+            ``(width, height_per_covariate)`` used to auto-size the
+            lambda panels.  Default ``(5.0, 0.28)``.
+        save_path : str, optional
+            Directory (or file path) where figures are saved.  When a
+            directory is given, individual PNGs are written; when a file
+            path is given, only the lambda figure is saved there.
+            If ``None``, figures are not saved.
+
+        Returns
+        -------
+        dict
+            ``{"lambda": (fig, axes), ...}`` and, when
+            *include_shrinkage* is ``True``, additional entries
+            ``"lambda_intercept"``, ``"tau2"``, ``"delta2"``.
+        """
+        import os
+
+        if not self.estimated_params:
+            raise RuntimeError("No estimated parameters found. Train the model first.")
+
+        all_topic_names = self._topic_names()
+        if topics is not None:
+            sel = [i for i, t in enumerate(all_topic_names) if t in topics]
+            if not sel:
+                raise ValueError(f"None of {topics} found in model topics {all_topic_names}")
+            plot_topics = [all_topic_names[i] for i in sel]
+            topic_idx = sel
+        else:
+            plot_topics = all_topic_names
+            topic_idx = list(range(len(all_topic_names)))
+
+        # -- colours per covariate group ----------------------------------
+        grp_names = self._group_names()
+        if group_colors is None:
+            _qualitative = [
+                "#4E79A7",
+                "#F28E2B",
+                "#E15759",
+                "#76B7B2",
+                "#59A14F",
+                "#EDC948",
+                "#B07AA1",
+                "#FF9DA7",
+                "#9C755F",
+                "#BAB0AC",
+            ]
+            group_colors = {g: _qualitative[i % len(_qualitative)] for i, g in enumerate(grp_names)}
+
+        def _cov_color(name: str) -> str:
+            key = name.split("::", 1)[0] if "::" in name else name
+            return group_colors.get(key, "#333333")
+
+        results: Dict[str, Tuple[plt.Figure, np.ndarray]] = {}
+
+        # ================================================================
+        # Lambda forest plot
+        # ================================================================
+        loc = np.asarray(self.estimated_params["lambda_location"])  # (C, K)
+        scale = np.asarray(self.estimated_params["lambda_scale"])  # (C, K)
+        z = sp_stats.norm.ppf(1.0 - (1.0 - ci) / 2.0)
+
+        n_topics = len(plot_topics)
+        n_cov = loc.shape[0]
+
+        with plt.rc_context(self._setup_academic_style()):
+            fig_w = figsize_per_topic[0]
+            fig_h = max(3.0, n_cov * figsize_per_topic[1])
+
+            ncols = min(n_topics, 4)
+            nrows = int(np.ceil(n_topics / ncols))
+            fig, axes = plt.subplots(
+                nrows,
+                ncols,
+                figsize=(fig_w * ncols, fig_h * nrows),
+                sharey=True,
+                squeeze=False,
+            )
+            axes_flat = axes.flatten()
+
+            # Pre-compute global x-range across all panels for shared scale
+            all_lo = loc[:, topic_idx] - z * scale[:, topic_idx]
+            all_hi = loc[:, topic_idx] + z * scale[:, topic_idx]
+            global_xmin = float(np.min(all_lo))
+            global_xmax = float(np.max(all_hi))
+            x_pad = (global_xmax - global_xmin) * 0.08
+            global_xmin -= x_pad
+            global_xmax += x_pad
+
+            for panel_i, (ki, tname) in enumerate(zip(topic_idx, plot_topics)):
+                ax = axes_flat[panel_i]
+                means = loc[:, ki]
+                lo = means - z * scale[:, ki]
+                hi = means + z * scale[:, ki]
+
+                y_pos = np.arange(n_cov)[::-1]
+                colors = [_cov_color(c) for c in self.covariates]
+
+                # CI lines
+                for j in range(n_cov):
+                    ax.plot(
+                        [lo[j], hi[j]],
+                        [y_pos[j], y_pos[j]],
+                        color=colors[j],
+                        linewidth=1.2,
+                        solid_capstyle="round",
+                    )
+                # point estimates
+                ax.scatter(
+                    means,
+                    y_pos,
+                    s=18,
+                    zorder=5,
+                    color=[colors[j] for j in range(n_cov)],
+                    edgecolors="white",
+                    linewidths=0.3,
+                )
+
+                # Zero reference line — thick solid, semi-transparent
+                ax.axvline(0, color="#333333", linewidth=1.4, linestyle="-", alpha=0.45, zorder=1)
+                ax.set_xlim(global_xmin, global_xmax)
+                ax.set_yticks(y_pos)
+                ax.set_yticklabels(
+                    list(self.covariates),
+                    fontsize=7,
+                    color="#222222",
+                )
+                # Colour y-tick labels by group
+                for tick_label, cov_name in zip(ax.get_yticklabels(), self.covariates):
+                    tick_label.set_color(_cov_color(cov_name))
+
+                ax.set_title(tname, fontweight="bold", pad=6)
+                ax.set_xlabel(r"$\lambda$")
+                ax.margins(y=0.02)
+
+            # hide unused panels
+            for j in range(n_topics, len(axes_flat)):
+                axes_flat[j].set_visible(False)
+
+            # Build legend from group colours
+            from matplotlib.lines import Line2D
+
+            legend_handles = [
+                Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    color=group_colors[g],
+                    linestyle="None",
+                    markersize=5,
+                    label=g,
+                )
+                for g in grp_names
+                if g in group_colors
+            ]
+            fig.legend(
+                handles=legend_handles,
+                title="Covariate group",
+                loc="lower center",
+                ncol=min(len(legend_handles), 6),
+                frameon=False,
+                bbox_to_anchor=(0.5, -0.01),
+            )
+
+            fig.suptitle(
+                f"Covariate Effects on Topic Intensity ({int(ci * 100)}% CI)",
+                fontsize=12,
+                fontweight="bold",
+                y=1.02,
+            )
+            fig.tight_layout()
+            results["lambda"] = (fig, axes)
+
+            if save_path is not None:
+                _save = (
+                    os.path.join(save_path, "forest_lambda.png")
+                    if os.path.isdir(save_path)
+                    else save_path
+                )
+                fig.savefig(_save, dpi=200, bbox_inches="tight")
+
+        # ================================================================
+        # Optional shrinkage panels
+        # ================================================================
+        if include_shrinkage:
+            with plt.rc_context(self._setup_academic_style()):
+                # --- lambda_intercept ---
+                loc0 = np.asarray(self.estimated_params["lambda_intercept_location"])
+                scale0 = np.asarray(self.estimated_params["lambda_intercept_scale"])
+                means0 = loc0[topic_idx]
+                lo0 = means0 - z * scale0[topic_idx]
+                hi0 = means0 + z * scale0[topic_idx]
+
+                fig_int, ax_int = plt.subplots(figsize=(4.5, max(2.5, 0.35 * n_topics)))
+                y_pos = np.arange(n_topics)[::-1]
+                for j in range(n_topics):
+                    ax_int.plot(
+                        [lo0[j], hi0[j]],
+                        [y_pos[j], y_pos[j]],
+                        color="#4E79A7",
+                        linewidth=1.3,
+                        solid_capstyle="round",
+                    )
+                ax_int.scatter(
+                    means0,
+                    y_pos,
+                    s=22,
+                    zorder=5,
+                    color="#4E79A7",
+                    edgecolors="white",
+                    linewidths=0.4,
+                )
+                ax_int.axvline(
+                    0, color="#333333", linewidth=1.4, linestyle="-", alpha=0.45, zorder=0
+                )
+                ax_int.set_yticks(y_pos)
+                ax_int.set_yticklabels(plot_topics, fontsize=8)
+                ax_int.set_xlabel(r"$\lambda_0$")
+                ax_int.set_title(
+                    f"Intercept $\\lambda_0$ ({int(ci * 100)}% CI)",
+                    fontweight="bold",
+                    pad=6,
+                )
+                ax_int.margins(y=0.04)
+                fig_int.tight_layout()
+                results["lambda_intercept"] = (fig_int, np.array([ax_int]))
+
+                if save_path is not None and os.path.isdir(save_path):
+                    fig_int.savefig(
+                        os.path.join(save_path, "forest_lambda_intercept.png"),
+                        dpi=200,
+                        bbox_inches="tight",
+                    )
+
+                # --- tau2 (global shrinkage per topic) ---
+                tau2_s = np.asarray(self.estimated_params["tau2_shape"])
+                tau2_r = np.asarray(self.estimated_params["tau2_rate"])
+                tau_mean, tau_lo, tau_hi = self._gamma_ci(tau2_s[topic_idx], tau2_r[topic_idx], ci)
+
+                fig_tau, ax_tau = plt.subplots(figsize=(4.5, max(2.5, 0.35 * n_topics)))
+                for j in range(n_topics):
+                    ax_tau.plot(
+                        [tau_lo[j], tau_hi[j]],
+                        [y_pos[j], y_pos[j]],
+                        color="#E15759",
+                        linewidth=1.3,
+                        solid_capstyle="round",
+                    )
+                ax_tau.scatter(
+                    tau_mean,
+                    y_pos,
+                    s=22,
+                    zorder=5,
+                    color="#E15759",
+                    edgecolors="white",
+                    linewidths=0.4,
+                )
+                ax_tau.axvline(
+                    0, color="#333333", linewidth=1.4, linestyle="-", alpha=0.45, zorder=0
+                )
+                ax_tau.set_yticks(y_pos)
+                ax_tau.set_yticklabels(plot_topics, fontsize=8)
+                ax_tau.set_xlabel(r"$\tau^2$")
+                ax_tau.set_title(
+                    f"Global Shrinkage $\\tau^2_k$ ({int(ci * 100)}% CI)",
+                    fontweight="bold",
+                    pad=6,
+                )
+                ax_tau.margins(y=0.04)
+                fig_tau.tight_layout()
+                results["tau2"] = (fig_tau, np.array([ax_tau]))
+
+                if save_path is not None and os.path.isdir(save_path):
+                    fig_tau.savefig(
+                        os.path.join(save_path, "forest_tau2.png"),
+                        dpi=200,
+                        bbox_inches="tight",
+                    )
+
+                # --- delta2 (group shrinkage, per group × topic) ---
+                d2_s = np.asarray(self.estimated_params["delta2_shape"])  # (G, K)
+                d2_r = np.asarray(self.estimated_params["delta2_rate"])
+
+                n_groups = d2_s.shape[0]
+                grp_labels = self._group_names()
+
+                ncols_d = min(n_topics, 4)
+                nrows_d = int(np.ceil(n_topics / ncols_d))
+                fig_d, axes_d = plt.subplots(
+                    nrows_d,
+                    ncols_d,
+                    figsize=(4.5 * ncols_d, max(2.5, 0.35 * n_groups) * nrows_d),
+                    sharey=True,
+                    squeeze=False,
+                )
+                axes_d_flat = axes_d.flatten()
+
+                # Pre-compute global x-range for delta2 panels
+                all_d_means = []
+                all_d_los = []
+                all_d_his = []
+                for ki in topic_idx:
+                    dm, dl, dh = self._gamma_ci(d2_s[:, ki], d2_r[:, ki], ci)
+                    all_d_means.append(dm)
+                    all_d_los.append(dl)
+                    all_d_his.append(dh)
+                d_global_xmin = float(np.min(np.concatenate(all_d_los)))
+                d_global_xmax = float(np.max(np.concatenate(all_d_his)))
+                d_x_pad = (d_global_xmax - d_global_xmin) * 0.08
+                d_global_xmin = max(0.0, d_global_xmin - d_x_pad)
+                d_global_xmax += d_x_pad
+
+                for panel_i, (ki, tname) in enumerate(zip(topic_idx, plot_topics)):
+                    ax = axes_d_flat[panel_i]
+                    d_mean, d_lo, d_hi = self._gamma_ci(d2_s[:, ki], d2_r[:, ki], ci)
+                    yp = np.arange(n_groups)[::-1]
+                    for j in range(n_groups):
+                        ax.plot(
+                            [d_lo[j], d_hi[j]],
+                            [yp[j], yp[j]],
+                            color="#59A14F",
+                            linewidth=1.3,
+                            solid_capstyle="round",
+                        )
+                    ax.scatter(
+                        d_mean,
+                        yp,
+                        s=22,
+                        zorder=5,
+                        color="#59A14F",
+                        edgecolors="white",
+                        linewidths=0.4,
+                    )
+                    ax.axvline(
+                        0, color="#333333", linewidth=1.4, linestyle="-", alpha=0.45, zorder=0
+                    )
+                    ax.set_xlim(d_global_xmin, d_global_xmax)
+                    ax.set_yticks(yp)
+                    ax.set_yticklabels(grp_labels, fontsize=8)
+                    ax.set_xlabel(r"$\delta^2$")
+                    ax.set_title(tname, fontweight="bold", pad=6)
+                    ax.margins(y=0.04)
+
+                for j in range(n_topics, len(axes_d_flat)):
+                    axes_d_flat[j].set_visible(False)
+
+                fig_d.suptitle(
+                    f"Group Shrinkage $\\delta^2_{{gk}}$ ({int(ci * 100)}% CI)",
+                    fontsize=12,
+                    fontweight="bold",
+                    y=1.02,
+                )
+                fig_d.tight_layout()
+                results["delta2"] = (fig_d, axes_d)
+
+                if save_path is not None and os.path.isdir(save_path):
+                    fig_d.savefig(
+                        os.path.join(save_path, "forest_delta2.png"),
+                        dpi=200,
+                        bbox_inches="tight",
+                    )
+
+        return results
