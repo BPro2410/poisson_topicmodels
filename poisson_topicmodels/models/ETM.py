@@ -1,10 +1,11 @@
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 import flax.linen as nn
 import jax
 import jax.numpy as jnp
 import numpy as np
 import numpyro.distributions as dist
+import pandas as pd
 import scipy.sparse as sparse
 from jax import random
 from numpyro import param, plate, sample
@@ -245,32 +246,82 @@ class ETM(NumpyroModel):
 
     #     return Y_batch, D_batch
 
-    def return_topics(self) -> Tuple[jnp.ndarray, jnp.ndarray]:
-        """Extract learned topics from model parameters.
+    def return_topics(self) -> Tuple[np.ndarray, np.ndarray]:
+        """Extract dominant topic per document and topic proportions.
+
+        The topic proportions ``theta`` are obtained by passing the
+        normalised bag-of-words through the trained neural encoder and
+        applying softmax.
 
         Returns
         -------
-        Tuple[jnp.ndarray, jnp.ndarray]
-            Topics and document-topic proportions.
+        categories : np.ndarray
+            Dominant topic index per document (shape: D,).
+        E_theta : np.ndarray
+            Document-topic proportions (shape: D, K).
 
         Raises
         ------
-        NotImplementedError
-            This method requires using fitted neural network parameters.
+        ValueError
+            If model has not been trained yet.
         """
-        raise NotImplementedError("Use the fitted parameter of the NN to extract topics.")
+        if not self.estimated_params:
+            raise ValueError("Model must be trained before calling return_topics()")
 
-    def return_beta(self) -> jnp.ndarray:
-        """Extract topic-word distribution matrix.
+        # Reconstruct encoder from fitted params
+        encoder_params = {
+            k.replace("encoder$params$", ""): v
+            for k, v in self.estimated_params.items()
+            if k.startswith("encoder$")
+        }
+        # Re-key into the nested structure expected by Flax
+        params_tree = {}
+        for flat_key, val in self.estimated_params.items():
+            if not flat_key.startswith("encoder$params$"):
+                continue
+            parts = flat_key.split("$")[2:]  # strip 'encoder', 'params'
+            d = params_tree
+            for p in parts[:-1]:
+                d = d.setdefault(p, {})
+            d[parts[-1]] = val
+
+        # Process all documents in batches to avoid memory issues
+        bow = np.asarray(self.counts.toarray(), dtype=np.float32)
+        row_sums = bow.sum(axis=1, keepdims=True)
+        row_sums = np.where(row_sums == 0, 1.0, row_sums)
+        bow_norm = bow / row_sums
+
+        z_loc, _ = self.encoder.apply({"params": params_tree}, jnp.asarray(bow_norm))
+        E_theta = np.asarray(jax.nn.softmax(z_loc, axis=1))
+        categories = np.argmax(E_theta, axis=1)
+        return categories, E_theta
+
+    def return_beta(self) -> pd.DataFrame:
+        """Extract the topic-word distribution matrix.
+
+        Computes ``beta = softmax(rho @ alpha)`` where ``rho`` are the
+        word embeddings and ``alpha`` is the learned embedding-to-topic
+        projection matrix.
 
         Returns
         -------
-        jnp.ndarray
-            Topic-word distribution of shape (K, V).
+        pd.DataFrame
+            DataFrame of shape (V, K) with words as index and topics as
+            columns.  Each column sums to 1.
 
         Raises
         ------
-        NotImplementedError
-            This method is to be implemented.
+        ValueError
+            If model has not been trained yet.
         """
-        raise NotImplementedError("To be implemented.")
+        if not self.estimated_params:
+            raise ValueError("Model must be trained before calling return_beta()")
+
+        alpha = self.estimated_params["alpha"]  # (embed_size, K)
+        logits = jnp.matmul(jnp.asarray(self.rho), alpha)  # (V, K)
+        beta = np.asarray(jax.nn.softmax(logits, axis=0))
+        return pd.DataFrame(beta, index=self.vocab)
+
+    def _summary_extra(self) -> str:
+        """ETM-specific summary information."""
+        return f"  Embedding dimension:      {self.embed_size}"

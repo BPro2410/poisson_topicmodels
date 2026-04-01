@@ -19,8 +19,6 @@ import scipy.sparse as sparse
 # Try to import CSPF, fall back gracefully if not available
 from poisson_topicmodels import CPF, CSPF, PF, SPF
 
-HAS_CSPF = True
-
 
 # ============================================================================
 # STEP 1: Create Data
@@ -152,30 +150,26 @@ print(f"  ✓ Final loss: {cpf_model.Metrics.loss[-1]:.4f}")
 print()
 
 # --- Model 4: Combined CSPF ---
-if HAS_CSPF:
-    print("Training Model 4: Combined CSPF (guided + covariate)")
-    print("  Guided topics AND covariate effects")
+print("Training Model 4: Combined CSPF (guided + covariate)")
+print("  Guided topics AND covariate effects")
 
-    cspf_model = CSPF(
-        counts=counts,
-        vocab=vocab,
-        keywords=keywords,
-        residual_topics=3,
-        batch_size=10,
-        X_design_matrix=covariate_df,
-    )
+cspf_model = CSPF(
+    counts=counts,
+    vocab=vocab,
+    keywords=keywords,
+    residual_topics=3,
+    batch_size=10,
+    X_design_matrix=covariate_df,
+)
 
-    cspf_params = cspf_model.train_step(
-        num_steps=num_steps,
-        lr=learning_rate,
-        random_seed=random_seed,
-    )
+cspf_params = cspf_model.train_step(
+    num_steps=num_steps,
+    lr=learning_rate,
+    random_seed=random_seed,
+)
 
-    print(f"  ✓ Final loss: {cspf_model.Metrics.loss[-1]:.4f}")
-    print()
-else:
-    print("⚠ CSPF model not available in this installation")
-    print()
+print(f"  ✓ Final loss: {cspf_model.Metrics.loss[-1]:.4f}")
+print()
 
 # ============================================================================
 # STEP 4: Loss Comparison
@@ -190,9 +184,7 @@ print("Final Loss Values:")
 print(f"  PF (baseline):        {pf_model.Metrics.loss[-1]:.4f}")
 print(f"  SPF (with keywords):  {spf_model.Metrics.loss[-1]:.4f}")
 print(f"  CPF (with covariates): {cpf_model.Metrics.loss[-1]:.4f}")
-
-if HAS_CSPF:
-    print(f"  CSPF (combined):      {cspf_model.Metrics.loss[-1]:.4f}")
+print(f"  CSPF (combined):      {cspf_model.Metrics.loss[-1]:.4f}")
 
 print()
 print("Interpretation:")
@@ -238,14 +230,67 @@ cpf_covariate_effects = cpf_model.return_covariate_effects()
 print(cpf_covariate_effects)
 print()
 
+# CPF covariate effects with credible intervals
+print("CPF Covariate Effects with 90% Credible Intervals:")
+cpf_effects_ci = cpf_model.return_covariate_effects_ci(ci=0.90)
+print(cpf_effects_ci.head(10))  # Show first 10 rows
+print()
+
+# Forest plot of CPF covariate effects
+cpf_fig, cpf_axes = cpf_model.plot_cov_effects(ci=0.90)
+print("  ✓ Generated CPF covariate effects forest plot")
+print()
+
+# CSPF covariate effects (guided + covariate model)
+print("CSPF Covariate Effects on Topics:")
+cspf_covariate_effects = cspf_model.return_covariate_effects()
+print(cspf_covariate_effects)
+print()
+
+print("CSPF Covariate Effects with 90% Credible Intervals:")
+cspf_effects_ci = cspf_model.return_covariate_effects_ci(ci=0.90)
+print(cspf_effects_ci.head(10))
+print()
+
+# Forest plot of CSPF covariate effects
+cspf_fig, cspf_axes = cspf_model.plot_cov_effects(ci=0.90)
+print("  ✓ Generated CSPF covariate effects forest plot")
+print()
+
 print("Interpretation:")
 print("  - Rows: covariates (author_expertise, document_recency)")
 print("  - Columns: topics")
 print("  - Positive/negative values indicate effect direction")
+print("  - Credible intervals that exclude zero suggest significant effects")
 print()
 
 # ============================================================================
-# STEP 7: Best Practices
+# STEP 7: Model Summaries
+# ============================================================================
+
+print("=" * 50)
+print("Step 7: Model Summaries")
+print("-" * 50)
+print()
+
+print("--- PF Summary ---")
+pf_model.summary()
+print()
+
+print("--- SPF Summary ---")
+spf_model.summary()
+print()
+
+print("--- CPF Summary ---")
+cpf_model.summary()
+print()
+
+print("--- CSPF Summary ---")
+cspf_model.summary()
+print()
+
+# ============================================================================
+# STEP 8: Best Practices
 # ============================================================================
 
 print("=" * 50)
@@ -278,11 +323,11 @@ print("  ✓ You have sufficient computational resources")
 print()
 
 # ============================================================================
-# STEP 8: Reproducibility and Workflows
+# STEP 9: Reproducibility and Workflows
 # ============================================================================
 
 print("=" * 50)
-print("Step 8: Reproducibility Best Practices")
+print("Step 9: Reproducibility Best Practices")
 print("-" * 50)
 print()
 

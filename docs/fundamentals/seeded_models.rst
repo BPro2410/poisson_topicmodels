@@ -66,13 +66,12 @@ Basic Usage
    model = SPF(
        counts=counts,
        vocab=vocab,
-       num_topics=3,
-       seeds=seeds,
+       keywords=seeds,
+       residual_topics=0,
        batch_size=32,
-       random_seed=42
    )
 
-   params = model.train_step(num_steps=100, lr=0.01)
+   params = model.train_step(num_steps=200, lr=0.01, random_seed=42)
 
    # Results similar to PF
    top_words = model.return_top_words_per_topic(n=10)
@@ -211,10 +210,12 @@ You can seed only some topics:
    model = SPF(
        counts=counts,
        vocab=vocab,
-       num_topics=3,
-       seeds=seeds,
-       random_seed=42
+       keywords=seeds,
+       residual_topics=1,
+       batch_size=32,
    )
+
+   params = model.train_step(num_steps=200, lr=0.01)
 
 **Use case**: When you have ideas about some topics but want other topics discovered.
 
@@ -230,24 +231,24 @@ Iterative Seeding
 .. code-block:: python
 
    # Step 1: Unsupervised discovery
-   pf_model = PF(counts, vocab, num_topics=5)
-   pf_model.train_step(num_steps=100, lr=0.01)
+   pf_model = PF(counts, vocab, num_topics=5, batch_size=32)
+   pf_model.train_step(num_steps=200, lr=0.01)
 
    # Step 2: Inspect and design seeds
    top_words_pf = pf_model.return_top_words_per_topic(n=10)
    print("Top words from unsupervised model:")
-   for topic_id, words in enumerate(top_words_pf):
+   for topic_id, words in top_words_pf.items():
        print(f"Topic {topic_id}: {', '.join(words)}")
 
    # Step 3: Define seeds based on patterns
    seeds = {
-       0: list(top_words_pf[0][:5]),  # Use top 5 from topic 0
+       0: list(top_words_pf[0][:5]),
        1: list(top_words_pf[1][:5]),
    }
 
    # Step 4: Train seeded model
-   spf_model = SPF(counts, vocab, num_topics=5, seeds=seeds)
-   spf_model.train_step(num_steps=100, lr=0.01)
+   spf_model = SPF(counts, vocab, keywords=seeds, residual_topics=3, batch_size=32)
+   spf_model.train_step(num_steps=200, lr=0.01)
 
    # Step 5: Compare and evaluate
    top_words_spf = spf_model.return_top_words_per_topic(n=10)
@@ -272,20 +273,22 @@ Seeding a corpus of news articles:
    model = SPF(
        counts=counts,
        vocab=vocab,
-       num_topics=4,
-       seeds=news_seeds,
-       seed_strength=10.0,
+       keywords=news_seeds,
+       residual_topics=0,
        batch_size=64,
-       random_seed=42
    )
 
-   params = model.train_step(num_steps=150, lr=0.01)
+   params = model.train_step(num_steps=200, lr=0.01, random_seed=42)
 
    # Expected: Topics strongly align with seed themes
    # but include additional related words from data
+   model.summary()
    top_words = model.return_top_words_per_topic(n=15)
-   for topic_id, words in enumerate(top_words):
+   for topic_id, words in top_words.items():
        print(f"Topic {topic_id}: {', '.join(words)}")
+
+   # Visualize how well seeds influenced their topics
+   model.plot_seed_effectiveness()
 
 Troubleshooting Seeds
 =====================
@@ -321,19 +324,25 @@ How to validate seeded models:
 
    # 1. Check top words include seeds
    top_words = model.return_top_words_per_topic(n=20)
-   for topic_id, words in enumerate(top_words):
-       topic_seeds = [s for s in news_seeds[topic_id] if s in words]
-       coverage = len(topic_seeds) / len(news_seeds[topic_id])
-       print(f"Topic {topic_id} seed coverage: {coverage:.1%}")
+   for topic_id, words in top_words.items():
+       if topic_id in news_seeds:
+           topic_seeds = [s for s in news_seeds[topic_id] if s in words]
+           coverage = len(topic_seeds) / len(news_seeds[topic_id])
+           print(f"Topic {topic_id} seed coverage: {coverage:.1%}")
 
-   # 2. Evaluate using external coherence metrics
-   # Note: There is no built-in compute_coherence() method.
-   # Use external tools (e.g., gensim or octis) for coherence evaluation.
+   # 2. Measure coherence
+   coherence_df = model.compute_topic_coherence()
+   print(f"Average coherence: {coherence_df['coherence'].mean():.3f}")
 
-   # 3. Compare with unsupervised
-   pf_model = PF(counts, vocab, num_topics=4, random_seed=42)
-   pf_model.train_step(num_steps=150, lr=0.01)
-   # Use external coherence metrics to compare PF vs SPF
+   # 3. Visualize seed effectiveness
+   model.plot_seed_effectiveness()
+
+   # 4. Compare with unsupervised
+   pf_model = PF(counts, vocab, num_topics=4, batch_size=32)
+   pf_model.train_step(num_steps=200, lr=0.01, random_seed=42)
+   pf_coherence = pf_model.compute_topic_coherence()
+   print(f"PF coherence: {pf_coherence['coherence'].mean():.3f} vs "
+         f"SPF: {coherence_df['coherence'].mean():.3f}")
 
 Comparison with Unsupervised
 =============================

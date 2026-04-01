@@ -84,17 +84,17 @@ Get the learned topics and document-topic distributions.
 
 .. code-block:: python
 
-   # 1. Get topic-word distributions (returns a tuple)
-   topics, topic_probs = model.return_topics()  # Shape: (vocab_size, num_topics)
-   print(f"Topics shape: {topics.shape}")
+   # 1. Get word-topic associations
+   beta = model.return_beta()  # DataFrame: vocab_size × num_topics
+   print(f"Beta shape: {beta.shape}")
 
    # 2. Get document-topic distributions
-   doc_topics = model.return_beta()  # Shape: (num_docs, num_topics)
-   print(f"Document-topic shape: {doc_topics.shape}")
+   categories, e_theta = model.return_topics()
+   print(f"Document-topic shape: {e_theta.shape}")
 
    # 3. Get top words per topic
    top_words = model.return_top_words_per_topic(n=15)
-   print(f"Top words shape: {top_words.shape}")
+   print(f"Number of topics: {len(top_words)}"))
 
 Step 5: Interpret Topics
 =========================
@@ -103,13 +103,16 @@ Human interpretation is crucial for evaluating topic quality.
 
 .. code-block:: python
 
+   # Print the model summary first
+   model.summary()
+
    # Display top words for each topic
    print("=" * 60)
    print("DISCOVERED TOPICS")
    print("=" * 60)
 
-   for topic_id in range(num_topics):
-       words = top_words[topic_id]
+   top_words = model.return_top_words_per_topic(n=15)
+   for topic_id, words in top_words.items():
        print(f"\nTopic {topic_id}:")
        print(f"  Top words: {', '.join(words[:10])}")
 
@@ -129,25 +132,19 @@ Understand how topics are distributed across documents.
    import matplotlib.pyplot as plt
 
    # 1. Topic distribution in specific documents
-   doc_0_topics = doc_topics[0]
+   categories, e_theta = model.return_topics()
+   doc_0_topics = e_theta[0]
    print(f"\nDocument 0 topic distribution:")
    sorted_topics = np.argsort(doc_0_topics)[::-1]
    for i, topic_id in enumerate(sorted_topics[:5]):
        intensity = doc_0_topics[topic_id]
        print(f"  Topic {topic_id}: {intensity:.3f}")
 
-   # 2. Overall topic prevalence in corpus
-   avg_topics = doc_topics.mean(axis=0)
-   plt.figure(figsize=(12, 4))
-   plt.bar(range(num_topics), avg_topics)
-   plt.xlabel('Topic ID')
-   plt.ylabel('Average Intensity')
-   plt.title('Topic Prevalence in Corpus')
-   plt.show()
+   # 2. Overall topic prevalence in corpus (built-in plot)
+   model.plot_topic_prevalence()
 
    # 3. Find most interesting documents
-   # (documents with strong topic concentration)
-   doc_entropy = -np.sum(doc_topics * np.log(doc_topics + 1e-10), axis=1)
+   doc_entropy = -np.sum(e_theta * np.log(e_theta + 1e-10), axis=1)
    focused_docs = np.argsort(doc_entropy)[:5]
    scattered_docs = np.argsort(doc_entropy)[-5:]
 
@@ -161,11 +158,13 @@ Deeper exploration of results:
 
 .. code-block:: python
 
-   # 1. Topic similarity
-   # Are any topics too similar? Compute pairwise similarity
-   from sklearn.metrics.pairwise import cosine_similarity
+   # 1. Topic similarity (built-in heatmap)
+   model.plot_topic_correlation()
 
-   topic_similarity = cosine_similarity(topics.T)
+   # Or compute manually:
+   from sklearn.metrics.pairwise import cosine_similarity
+   beta = model.return_beta()
+   topic_similarity = cosine_similarity(beta.values.T)
    np.fill_diagonal(topic_similarity, 0)  # Remove self-similarity
 
    # Find most similar topic pairs
@@ -177,7 +176,8 @@ Deeper exploration of results:
 
    # 2. Topic specialization
    # How many topics does each document use mainly?
-   doc_dominance = (doc_topics.max(axis=1) / doc_topics.sum(axis=1))
+   _, e_theta = model.return_topics()
+   doc_dominance = (e_theta.max(axis=1) / e_theta.sum(axis=1))
    print(f"\nAverage document topic dominance: {doc_dominance.mean():.3f}")
    print(f"  → Values close to 1: documents focus on few topics")
    print(f"  → Values close to {1/num_topics:.3f}: documents spread across topics")
@@ -189,10 +189,23 @@ Evaluate model quality programmatically.
 
 .. code-block:: python
 
-   # NOTE: There is no built-in compute_coherence() method in poisson_topicmodels.
-   # Use an external coherence measure (e.g., from gensim or octis) to evaluate
-   # topic quality. For example, you can compute coherence using the top words
-   # returned by model.return_top_words_per_topic(n=10).
+   # Coherence: do top words of a topic correlate?
+   coherence_df = model.compute_topic_coherence()
+   coherence = coherence_df['coherence'].values
+   print(f"Topic coherence (per topic):")
+   print(f"  Mean: {coherence.mean():.3f}")
+   print(f"  Std: {coherence.std():.3f}")
+   print(f"  Range: [{coherence.min():.3f}, {coherence.max():.3f}]")
+
+   # Topic diversity
+   diversity = model.compute_topic_diversity()
+   print(f"\nTopic diversity: {diversity:.3f}")
+
+   # Which topics are most coherent?
+   best_topics = np.argsort(coherence)[-5:]
+   worst_topics = np.argsort(coherence)[:5]
+   print(f"\nMost coherent topics: {best_topics}")
+   print(f"Least coherent topics: {worst_topics}")
 
 Next: Validation and Optimization
 ==================================
@@ -212,7 +225,7 @@ Quick Checklist
 ✓ Training completed and loss decreased
 ✓ Topics extracted and interpreted
 ✓ Document-topic distributions explored
-✓ Quality metrics computed (using external tools if needed)
+✓ Quality metrics computed
 
 What's Next?
 
@@ -225,10 +238,10 @@ Common Issues
 =============
 
 **Q: Loss isn't decreasing**
-A: Try higher ``lr`` (0.05-0.1) or reduce batch size
+A: Try higher learning rate (0.05-0.1) or reduce batch size
 
 **Q: Topics look random**
-A: You may need more topics or more training steps (``num_steps``)
+A: You may need more topics or more training iterations
 
 **Q: Training is really slow**
 A: Use GPU (see :doc:`tutorial_gpu`) or reduce vocabulary size

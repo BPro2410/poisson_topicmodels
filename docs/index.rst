@@ -27,6 +27,7 @@ and reproducible results.
    tutorials/index
    how_to_guides/index
    api/index
+   models
    examples_guide/index
    testing/index
    contributing_guide/index
@@ -118,13 +119,18 @@ Quick Start Example
 
    # Initialize and train model
    model = PF(counts, vocab, num_topics=10, batch_size=32)
-   params = model.train_step(num_steps=100, lr=0.01, random_seed=42)
+   params = model.train_step(num_steps=200, lr=0.01, random_seed=42)
 
-   # Extract results
-   topics, _ = model.return_topics()
+   # Summarize and inspect
+   model.summary()
    top_words = model.return_top_words_per_topic(n=10)
-   print(f"Discovered {topics.shape} topics")
-   print(f"Top words: {top_words[:3]}")
+   for topic_id, words in top_words.items():
+       print(f"Topic {topic_id}: {', '.join(words)}")
+
+   # Evaluate and visualize
+   print(f"Topic diversity: {model.compute_topic_diversity():.3f}")
+   model.plot_model_loss()
+   model.plot_topic_prevalence()
 
 See :doc:`getting_started/index` for a detailed walkthrough.
 
@@ -133,14 +139,14 @@ Community & Contributing
 
 We welcome contributions! For guidelines, see the :doc:`contributing_guide/index`.
 
-- 🐛 **Found a bug?** `Open an issue <https://github.com/BPro2410/poisson_topicmodels/issues>`_
-- 💡 **Have a feature request?** `Start a discussion <https://github.com/BPro2410/poisson_topicmodels/discussions>`_
-- 📚 **Want to contribute?** Check out our `contribution guidelines <https://github.com/BPro2410/poisson_topicmodels/blob/main/CONTRIBUTING.md>`_
+- 🐛 **Found a bug?** `Open an issue <https://github.com/BPro2410/topicmodels_package/issues>`_
+- 💡 **Have a feature request?** `Start a discussion <https://github.com/BPro2410/topicmodels_package/discussions>`_
+- 📚 **Want to contribute?** Check out our `contribution guidelines <https://github.com/BPro2410/topicmodels_package/blob/main/CONTRIBUTING.md>`_
 
 License
 =======
 
-This project is licensed under the MIT License. See the `LICENSE <https://github.com/BPro2410/poisson_topicmodels/blob/main/LICENSE>`_
+This project is licensed under the MIT License. See the `LICENSE <https://github.com/BPro2410/topicmodels_package/blob/main/LICENSE>`_
 file for details.
 
 Citation
@@ -154,5 +160,5 @@ If you use poisson-topicmodels in your research, please cite:
      title={poisson-topicmodels: Probabilistic Topic Modeling with Bayesian Inference},
      author={Prostmaier, Bernd and Grün, Bettina and Hofmarcher, Paul},
      year={2026},
-     url={https://github.com/BPro2410/poisson_topicmodels}
+     url={https://github.com/BPro2410/topicmodels_package}
    }

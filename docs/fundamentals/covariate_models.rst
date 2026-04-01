@@ -57,49 +57,52 @@ Usage Example
    from poisson_topicmodels import CPF
    import numpy as np
 
+   import pandas as pd
+
    # Document covariates (e.g., author type scores)
    # Shape: (num_documents, num_covariates)
    covariates = np.random.randn(100, 2)  # 2 covariates
+   X = pd.DataFrame(covariates, columns=['covariate_0', 'covariate_1'])
 
    model = CPF(
        counts=counts,
        vocab=vocab,
        num_topics=10,
-       covariates=covariates,
+       X_design_matrix=X,
        batch_size=32,
-       random_seed=42
    )
 
-   params = model.train_step(num_steps=100, lr=0.01)
+   params = model.train_step(num_steps=200, lr=0.01, random_seed=42)
 
    # Extract covariate effects
-   effects = model.return_covariate_effects()  # Shape: (num_topics, num_covariates)
-   # effects[k, j] = effect of covariate j on topic k
+   effects = model.return_covariate_effects()  # DataFrame (covariates × topics)
 
 Interpreting Covariate Effects
 -------------------------------
 
 .. code-block:: python
 
-   effects = model.return_covariate_effects()
-   # Shape: (num_topics, num_covariates)
+   effects = model.return_covariate_effects()  # DataFrame
+   print(effects)
 
-   # Topic 0: how does each covariate affect it?
-   topic_0_effects = effects[0, :]
-   # e.g., [2.5, -0.8]
-   #   → Covariate 0: +2.5 effect (strong positive)
-   #   → Covariate 1: -0.8 effect (moderate negative)
+   # Get credible intervals
+   effects_ci = model.return_covariate_effects_ci(ci=0.90)
+   print(effects_ci.head(10))
+   # Columns: covariate, topic, mean, lower, upper
+   # Intervals excluding zero suggest significant effects
 
-**Visualization**:
+**Visualization** (built-in forest plot):
 
 .. code-block:: python
 
-   import matplotlib.pyplot as plt
+   # Forest plot of covariate effects with credible intervals
+   fig, axes = model.plot_cov_effects(ci=0.90)
 
-   # Heatmap of effects
-   plt.imshow(effects, cmap='RdBu_r', vmin=-3, vmax=3)
-   plt.xlabel('Covariates')
-   plt.ylabel('Topics')
+   # Or manually:
+   import matplotlib.pyplot as plt
+   plt.imshow(effects.values, cmap='RdBu_r', vmin=-3, vmax=3)
+   plt.xlabel('Topics')
+   plt.ylabel('Covariates')
    plt.colorbar(label='Effect size')
    plt.title('Covariate Effects on Topics')
    plt.show()
@@ -115,8 +118,8 @@ Analyze how topics change across time periods:
    time_covariate = np.repeat(np.arange(10), 10)  # 10 decades, 10 docs each
    covariates = time_covariate.reshape(-1, 1) / 10  # Normalize
 
-   model = CPF(counts, vocab, num_topics=5, covariates=covariates)
-   model.train_step(num_steps=100, lr=0.01)
+   model = CPF(counts, vocab, num_topics=5, X_design_matrix=covariates, batch_size=32)
+   model.train_step(num_steps=200, lr=0.01)
 
    # Topic 0's time effect
    effects = model.return_covariate_effects()
@@ -154,15 +157,13 @@ Usage
    model = CSPF(
        counts=counts,
        vocab=vocab,
-       num_topics=2,
-       seeds=seeds,
-       covariates=covariates,
-       seed_strength=10.0,
+       keywords=seeds,
+       residual_topics=0,
+       X_design_matrix=covariates,
        batch_size=32,
-       random_seed=42
    )
 
-   params = model.train_step(num_steps=100, lr=0.01)
+   params = model.train_step(num_steps=200, lr=0.01, random_seed=42)
 
 Practical Example: Geographic Topic Analysis
 ---------------------------------------------
@@ -183,17 +184,18 @@ Practical Example: Geographic Topic Analysis
    model = CSPF(
        counts=counts,
        vocab=vocab,
-       num_topics=5,
-       covariates=covariates,
-       random_seed=42
+       keywords={},
+       residual_topics=5,
+       X_design_matrix=covariates,
+       batch_size=32,
    )
 
-   model.train_step(num_steps=100, lr=0.01)
+   model.train_step(num_steps=200, lr=0.01)
 
    # Analyze regional topic differences
    effects = model.return_covariate_effects()
-   # Row i = effect on topic i
-   # Column j = region j
+   effects_ci = model.return_covariate_effects_ci(ci=0.90)
+   model.plot_cov_effects(ci=0.90)
 
 Tips for Covariate Modeling
 ============================
@@ -237,7 +239,7 @@ Common Patterns
    author_ids = np.array([0, 1, 0, 2, 1, ...])
    author_dummies = np.eye(num_authors)[author_ids]
 
-   model = CPF(counts, vocab, num_topics=10, covariates=author_dummies)
+   model = CPF(counts, vocab, num_topics=10, X_design_matrix=author_dummies, batch_size=32)
 
 **Category Effects**: How topics differ by category
 
@@ -247,7 +249,7 @@ Common Patterns
    category_ids = [1 if c == 'opinion' else 0 for c in categories]
    covariates = np.array(category_ids).reshape(-1, 1)
 
-   model = CPF(counts, vocab, num_topics=10, covariates=covariates)
+   model = CPF(counts, vocab, num_topics=10, X_design_matrix=covariates, batch_size=32)
 
 **Temporal Effects**: How topics evolve over time
 
@@ -256,7 +258,7 @@ Common Patterns
    timestamps = np.array([2010, 2011, 2015, ...])
    covariates = ((timestamps - timestamps.min()) / (timestamps.max() - timestamps.min())).reshape(-1, 1)
 
-   model = CPF(counts, vocab, num_topics=10, covariates=covariates)
+   model = CPF(counts, vocab, num_topics=10, X_design_matrix=covariates, batch_size=32)
 
 Visualization Examples
 ======================
@@ -269,25 +271,21 @@ Visualization Examples
    import seaborn as sns
    sns.heatmap(effects, cmap='RdBu_r', center=0, annot=True)
    plt.title('Covariate Effects by Topic')
-   plt.ylabel('Topic')
-   plt.xlabel('Covariate')
+   plt.ylabel('Covariate')
+   plt.xlabel('Topic')
 
-**Effect by Category**:
+**Built-in Forest Plot** (recommended):
 
 .. code-block:: python
 
-   # Plot effect of category on each topic
-   for topic_id in range(num_topics):
-       effect = effects[topic_id, 0]
-       plt.bar(topic_id, effect, color='red' if effect < 0 else 'blue')
-   plt.xlabel('Topic')
-   plt.ylabel('Category Effect')
+   # Forest plot with credible intervals — publication-ready
+   fig, axes = model.plot_cov_effects(ci=0.90)
 
 **Document-Topic by Category**:
 
 .. code-block:: python
 
-   doc_topics = model.return_beta()
+   categories_arr, e_theta = model.return_topics()
 
    # Average topics by category
    for category_id in range(num_categories):

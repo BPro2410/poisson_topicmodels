@@ -114,17 +114,75 @@ for topic_id, words in top_words_per_topic.items():
     print(f"Topic {topic_id}: {', '.join(words)}")
 
 print()
-print("=" * 50)
 print(f"Document-topic matrix (E_theta) shape: {E_theta.shape}")
 print("First document topic proportions:")
 print(f"  {E_theta[0]}")
 print()
 
 # ============================================================================
-# STEP 6: Reproducibility
+# STEP 6: Model Summary
 # ============================================================================
 
-print("Step 6: Demonstrating reproducibility")
+print("Step 6: Printing model summary")
+print("-" * 50)
+
+# summary() prints a formatted overview and returns the text
+model.summary(n_top_words=5)
+
+print()
+
+# ============================================================================
+# STEP 7: Diagnostics & Quality Metrics
+# ============================================================================
+
+print("Step 7: Model diagnostics and quality metrics")
+print("-" * 50)
+
+# Plot training loss (raw + smoothed)
+fig_loss, _ = model.plot_model_loss(window=10, save_path=None)
+print("✓ Training loss plotted")
+
+# Topic coherence (NPMI) — higher is better
+coherence = model.compute_topic_coherence(metric="c_npmi", top_n=10)
+print("✓ Topic coherence (NPMI):")
+print(coherence.to_string(index=False))
+
+# Topic diversity — fraction of unique words across topics (0–1)
+diversity = model.compute_topic_diversity(top_n=25)
+print(f"✓ Topic diversity: {diversity:.3f}")
+
+print()
+
+# ============================================================================
+# STEP 8: Visualisations
+# ============================================================================
+
+print("Step 8: Visualisations")
+print("-" * 50)
+
+# Bar chart of topic prevalence across the corpus
+fig_prev, _ = model.plot_topic_prevalence(save_path=None)
+print("✓ Topic prevalence plotted")
+
+# Cosine-similarity heatmap between topics
+fig_corr, _ = model.plot_topic_correlation(save_path=None)
+print("✓ Topic correlation heatmap plotted")
+
+# Document–topic heatmap (subset of documents)
+fig_heat, _ = model.plot_document_topic_heatmap(n_docs=30, save_path=None)
+print("✓ Document-topic heatmap plotted")
+
+# Wordclouds for each topic
+fig_wc, _ = model.plot_topic_wordclouds(n_words=30, save_path=None)
+print("✓ Topic wordclouds plotted")
+
+print()
+
+# ============================================================================
+# STEP 9: Reproducibility
+# ============================================================================
+
+print("Step 9: Demonstrating reproducibility")
 print("-" * 50)
 
 # Train another model with the same seed

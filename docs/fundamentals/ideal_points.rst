@@ -69,18 +69,16 @@ Basic Usage
    model = TBIP(
        counts=counts,
        vocab=vocab,
-       author_ids=author_ids,
+       authors=author_ids,
        num_topics=10,
-       num_dimensions=1,  # 1D position (left-right)
        batch_size=32,
-       random_seed=42
    )
 
-   params = model.train_step(num_steps=100, lr=0.01)
+   params = model.train_step(num_steps=200, lr=0.01)
 
    # Extract results
-   ideal_points = model.get_ideal_points()  # (num_authors, num_dimensions)
-   # e.g., shape (3, 1) with values like [[-1.2], [0.5], [0.8]]
+   ideal_points_df = model.return_ideal_points()  # DataFrame: author, ideal_point, std
+   print(ideal_points_df)
 
 Interpreting Ideal Points
 =========================
@@ -89,22 +87,26 @@ Interpreting Ideal Points
 
 .. code-block:: python
 
-   ideal_points = model.get_ideal_points()  # Shape: (num_authors, 1)
+   ideal_points_df = model.return_ideal_points()
+   print(ideal_points_df)
+   #        author  ideal_point       std
+   # 0    author_A        -2.30      0.15
+   # 1    author_B         0.00      0.12
+   # 2    author_C         1.50      0.18
 
-   # Author 0: position -2.3 → far left
-   # Author 1: position 0.0 → center
-   # Author 2: position 1.5 → somewhat right
-
-**Visualization**:
+**Visualization** (built-in):
 
 .. code-block:: python
 
+   # Publication-ready 1-D scatter with optional credible intervals
+   fig, ax = model.plot_ideal_points(show_ci=True, ci=0.95)
+
+   # Or manually:
    import matplotlib.pyplot as plt
-   positions = ideal_points[:, 0]
-   author_names = ['author_0', 'author_1', 'author_2']
-   plt.scatter(positions, range(len(positions)))
-   for i, name in enumerate(author_names):
-       plt.annotate(name, (positions[i], i))
+   df = model.return_ideal_points()
+   plt.scatter(df['ideal_point'], range(len(df)))
+   for i, row in df.iterrows():
+       plt.annotate(row['author'], (row['ideal_point'], i))
    plt.xlabel('Ideal Point (left ← → right)')
    plt.show()
 
@@ -116,17 +118,18 @@ TBIP discovers how words vary across author positions:
 
 .. code-block:: python
 
-   # Get topic-word distributions
-   topics, topic_probs = model.return_topics()  # Topic-word matrix
-
-   # Get author-topic distributions (averaged across documents)
-   author_topics = model.get_author_topics()  # (num_authors, num_topics)
+   # Get word-topic associations
+   beta = model.return_beta()  # DataFrame
 
    # Top words globally
    top_words = model.return_top_words_per_topic(n=10)
 
-   # Word probabilities may differ by author
-   # This is implicitly captured in ideal points
+   # Ideological words per topic — shows which words load most on
+   # the ideological dimension
+   ideo_words = model.return_ideological_words(topic=0, n=10)
+   print(ideo_words)
+   # Columns: word, eta, direction
+   # direction: 'positive' or 'negative' end of the axis
 
 Practical Example: Political Speeches
 =====================================
@@ -148,17 +151,22 @@ Practical Example: Political Speeches
    model = TBIP(
        counts=counts,
        vocab=vocab,
-       author_ids=legislator_ids,
+       authors=legislator_ids,
        num_topics=20,
-       num_dimensions=1,
        batch_size=64,
-       random_seed=42
    )
 
    model.train_step(num_steps=200, lr=0.01)
 
    # Get positions
-   ideal_points = model.get_ideal_points()
+   ideal_points_df = model.return_ideal_points()
+   model.summary()
+
+   # Built-in visualization with credible intervals
+   model.plot_ideal_points(show_ci=True)
+
+   # Ideological words for the most political topic
+   print(model.return_ideological_words(topic=0, n=15))
 
    # Compare with known party affiliation
    parties = legislator_ids_to_parties(legislator_ids)
@@ -181,7 +189,7 @@ Validating Ideal Points
 
    # If ground truth available
    true_positions = get_known_positions()
-   estimated = ideal_points[:, 0]
+   estimated = model.return_ideal_points()['ideal_point'].values
 
    # Correlation should be high
    correlation = np.corrcoef(true_positions, estimated)[0, 1]
@@ -197,8 +205,9 @@ Validating Ideal Points
 .. code-block:: python
 
    # Read documents from extreme authors
-   leftmost_author = np.argmin(ideal_points[:, 0])
-   rightmost_author = np.argmax(ideal_points[:, 0])
+   df = model.return_ideal_points()
+   leftmost_author = df.iloc[0]['author']   # sorted by ideal_point
+   rightmost_author = df.iloc[-1]['author']
 
    print(f"Leftmost author (ID {leftmost_author}):")
    print(f"Top documents: {get_top_docs(leftmost_author, n=3)}")
@@ -209,16 +218,11 @@ Validating Ideal Points
 
 .. code-block:: python
 
-   # Do extreme authors differ in topic usage?
-   author_topics = model.get_author_topics()
-
-   leftmost_topics = author_topics[leftmost_author]
-   rightmost_topics = author_topics[rightmost_author]
-
-   # Find distinctive topics
-   topic_diff = leftmost_topics - rightmost_topics
-   distinctive_topics = np.argsort(np.abs(topic_diff))[-5:]
-   print(f"Most distinctive topics: {distinctive_topics}")
+   # Which words distinguish the extremes the most?
+   for topic_id in range(min(3, model.num_topics)):
+       ideo = model.return_ideological_words(topic=topic_id, n=5)
+       print(f"\nTopic {topic_id} ideological words:")
+       print(ideo)
 
 Relationship to Other Models
 =============================

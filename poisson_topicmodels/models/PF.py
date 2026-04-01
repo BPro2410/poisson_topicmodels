@@ -186,7 +186,3 @@ class PF(NumpyroModel):
         with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
             with plate("d_k", size=self.K, dim=-1):
                 sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))
-
-    def return_top_words_per_topic(self, n=10):
-        beta = self.return_beta()
-        return {topic: beta[topic].nlargest(n).index.tolist() for topic in beta}

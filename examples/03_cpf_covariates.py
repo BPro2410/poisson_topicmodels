@@ -147,11 +147,10 @@ print("Step 6: Topic Interpretations")
 print("=" * 50)
 print()
 
-# Note: CPF model does not have return_top_words_per_topic method
-# Use return_covariate_effects() to inspect covariate-topic interactions
-covariate_effects = model.return_covariate_effects()
-print("✓ Covariate effects retrieved")
-print("Covariate effects shape:", covariate_effects.shape)
+# CPF inherits return_top_words_per_topic() from the base class
+top_words = model.return_top_words_per_topic(n=10)
+for topic_id, words in top_words.items():
+    print(f"Topic {topic_id}: {', '.join(words)}")
 
 print()
 
@@ -165,29 +164,54 @@ print("-" * 50)
 print()
 
 print("Covariate effects on topics (lambda matrix):")
+covariate_effects = model.return_covariate_effects()
 print(covariate_effects)
 print()
 
-# Interpret covariate effects
-print("Covariate Interpretation:")
-print("  - Positive value: covariate increases topic prevalence")
-print("  - Negative value: covariate decreases topic prevalence")
+# Get covariate effects with 95% credible intervals
+print("Covariate effects with 95% credible intervals:")
+ci_table = model.return_covariate_effects_ci(ci=0.95)
+print(ci_table.to_string(index=False))
 print()
 
-for cov_idx, cov_name in enumerate(["author_expertise", "document_recency", "topic_specificity"]):
-    print(f"{cov_name}:")
-    for topic_id in range(num_topics):
-        effect = covariate_effects.iloc[cov_idx, topic_id]
-        direction = "↑" if effect > 0 else "↓"
-        print(f"  Topic {topic_id}: {direction} {abs(effect):.4f}")
-    print()
+print("Interpretation:")
+print("  - Positive mean: covariate increases topic prevalence")
+print("  - Negative mean: covariate decreases topic prevalence")
+print("  - CI not crossing 0 suggests a credible effect")
+print()
 
 # ============================================================================
-# STEP 8: Analyze Document-Topic Distributions
+# STEP 8: Covariate Effect Forest Plot
 # ============================================================================
 
 print("=" * 50)
-print("Step 8: Document-Topic Analysis")
+print("Step 8: Covariate Effect Forest Plot")
+print("-" * 50)
+print()
+
+# Forest plot shows point estimates with credible intervals per topic
+fig_cov, _ = model.plot_cov_effects(ci=0.95, save_path=None)
+print("✓ Covariate effects forest plot generated")
+print()
+
+# ============================================================================
+# STEP 9: Model Summary
+# ============================================================================
+
+print("=" * 50)
+print("Step 9: Model Summary")
+print("-" * 50)
+print()
+
+model.summary(n_top_words=5)
+print()
+
+# ============================================================================
+# STEP 10: Analyze Document-Topic Distributions
+# ============================================================================
+
+print("=" * 50)
+print("Step 10: Document-Topic Analysis")
 print("-" * 50)
 print()
 
@@ -201,11 +225,11 @@ print(f"  Topic proportions: {E_theta[0]}")
 print()
 
 # ============================================================================
-# STEP 9: Compare Different Covariate Scenarios
+# STEP 11: Compare Different Covariate Scenarios
 # ============================================================================
 
 print("=" * 50)
-print("Step 9: Simulating Different Covariate Scenarios")
+print("Step 11: Simulating Different Covariate Scenarios")
 print("-" * 50)
 print()
 

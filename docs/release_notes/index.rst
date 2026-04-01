@@ -9,11 +9,66 @@ Version history and changelog for poisson-topicmodels.
 Current Version
 ===============
 
-**Latest**: 0.1.2 (February 2026)
+**Latest**: 0.2.0 (April 2026)
 
 For full changelog, see below.
 
-Version 0.1.2 - Current Release
+Version 0.2.0 - Inspection & Diagnostics
+==========================================
+
+*April 1, 2026*
+
+**New Methods (all models)**:
+
+- ✨ ``summary(n_top_words=5)`` — Formatted text summary of any fitted model
+- ✨ ``compute_topic_coherence(metric='c_npmi', top_n=10)`` — Per-topic NPMI/UMass coherence
+- ✨ ``compute_topic_diversity(top_n=25)`` — Unique-word fraction across topics (0–1)
+- ✨ ``plot_topic_prevalence()`` — Horizontal bar chart of mean topic prevalence
+- ✨ ``plot_topic_correlation()`` — Cosine-similarity heatmap between topics
+- ✨ ``plot_document_topic_heatmap()`` — Document × topic heatmap
+- ✨ Academic-style plotting (``_setup_academic_style``) applied to all built-in figures
+
+**New Methods (SPF)**:
+
+- ✨ ``plot_seed_effectiveness()`` — Grouped bar chart of seed vs. non-seed word weights
+
+**New Methods (CPF & CSPF)**:
+
+- ✨ ``return_covariate_effects_ci(ci=0.95)`` — Covariate effects with Bayesian credible intervals
+- ✨ ``plot_cov_effects(ci=0.95)`` — Forest plot of covariate effects
+
+**New Methods (TBIP)**:
+
+- ✨ ``return_ideal_points()`` — DataFrame of author positions with uncertainty
+- ✨ ``return_ideological_words(topic, n)`` — Top ideological words per topic
+- ✨ ``plot_ideal_points(show_ci=True)`` — Publication-ready 1-D scatter with CIs
+- ✨ ``return_topics()`` / ``return_beta()`` overrides using LogNormal posterior
+
+**New Methods (ETM)**:
+
+- ✨ ``return_topics()`` — Neural encoder inference (was NotImplementedError)
+- ✨ ``return_beta()`` — Embedding-based topic–word computation (was NotImplementedError)
+
+**Bug Fixes**:
+
+- 🐛 TBIP: Fixed ``sigma_y`` → ``sigma_x`` typo in variational guide
+- 🐛 CPF: Fixed ``self.covariates`` not set in ``__init__``; fixed ndim validation order
+- 🐛 PF: Removed duplicate ``return_top_words_per_topic`` override
+
+**Breaking Changes**:
+
+- ``CSPF2`` renamed to ``CSPF`` (old ``CSPF`` class removed)
+- ``from poisson_topicmodels import CSPF2`` → ``from poisson_topicmodels import CSPF``
+
+**Documentation**:
+
+- All code examples updated to use correct method names (``return_topics``, ``return_beta``,
+  ``return_top_words_per_topic``, ``train_step`` instead of fictional ``get_*``/``train`` names)
+- API reference rewritten with complete method documentation
+- Autodoc directives enabled for auto-generated class reference
+- New methods documented across fundamentals, tutorials, and examples
+
+Version 0.1.0 - Initial Release
 ===============================
 
 *February 5, 2026*
@@ -79,7 +134,7 @@ Version 0.1.2 - Current Release
 - Performance optimizations
 - Additional embedding support
 
-Coming Soon (0.2.0)
+Coming Soon (0.3.0)
 ===================
 
 Planned features:
@@ -87,7 +142,7 @@ Planned features:
 - **Dynamic Topic Models**: Topics that evolve over time
 - **Streaming Mode**: Learn from new documents continuously
 - **Better Visualization**: Interactive topic visualization
-- **More Metrics**: Additional evaluation metrics
+- **Save/Load**: Persist trained models to disk
 - **Documentation Enhancements**: More examples and tutorials
 
 Not Planned for 0.2.0:
@@ -117,7 +172,7 @@ Install specific version:
 
 .. code-block:: bash
 
-   pip install poisson-topicmodels==0.1.2
+   pip install poisson-topicmodels==0.1.0
 
 List available versions:
 
@@ -142,7 +197,7 @@ Compatibility Matrix
      - Python 3.11
      - Python 3.12
      - Python 3.13
-   * - 0.1.2
+   * - 0.1.0
      - ✓
      - ✓
      - ✓
@@ -150,17 +205,16 @@ Compatibility Matrix
 Dependency Versions
 ===================
 
-Core dependencies for 0.1.2:
+Core dependencies for 0.1.0:
 
-- jax==0.4.35
-- numpyro==0.15.3
-- numpy==2.2.4
+- jax==0.8.0
+- jaxlib==0.8.0
+- numpyro==0.19.0
+- numpy>=2.2.0,<3.0.0
 - scipy>=1.15.0,<2.0.0
 - pandas>=2.2.0,<3.0.0
 - scikit-learn>=1.6.0,<2.0.0
 - matplotlib>=3.10.0,<4.0.0
-- optax==0.2.4
-- flax==0.8.4
 
 Optional dependencies:
 
@@ -180,14 +234,14 @@ If you use poisson-topicmodels in research, please cite:
      title={poisson-topicmodels: Probabilistic Topic Modeling with Bayesian Inference},
      author={Prostmaier, Bernd and Grün, Bettina and Hofmarcher, Paul},
      year={2026},
-     url={https://github.com/BPro2410/poisson_topicmodels}
+     url={https://github.com/BPro2410/topicmodels_package}
    }
 
 Or in plain text:
 
 Prostmaier, B., Grün, B., & Hofmarcher, P. (2026).
 poisson-topicmodels: Probabilistic Topic Modeling with Bayesian Inference.
-Retrieved from https://github.com/BPro2410/poisson_topicmodels
+Retrieved from https://github.com/BPro2410/topicmodels_package
 
 Community Feedback
 ==================
@@ -215,6 +269,12 @@ Found a bug? Please report it:
    - Full error traceback
 
 See :doc:`../contributing_guide/index` for detailed instructions.
+
+Acknowledgments
+===============
+
+**Core Team**:
+
 - Bernd Prostmaier
 - Bettina Grün
 - Paul Hofmarcher
@@ -238,7 +298,7 @@ License
 
 poisson-topicmodels is licensed under the MIT License.
 
-See `LICENSE <https://github.com/BPro2410/poisson_topicmodels/blob/main/LICENSE>`_
+See `LICENSE <https://github.com/BPro2410/topicmodels_package/blob/main/LICENSE>`_
 for details.
 
 Next Steps
@@ -246,7 +306,7 @@ Next Steps
 
 - **Update to latest**: ``pip install --upgrade poisson-topicmodels``
 - **Get started**: See :doc:`../getting_started/index`
-- **Report issues**: `GitHub Issues <https://github.com/BPro2410/poisson_topicmodels/issues>`_
+- **Report issues**: `GitHub Issues <https://github.com/BPro2410/topicmodels_package/issues>`_
 - **Contribute**: :doc:`../contributing_guide/index`
 
 **Questions?** Open a discussion or create an issue on GitHub!
@@ -264,7 +324,7 @@ A: Open an issue or discussion to propose it, or submit a PR!
 
 **Q: Can I use development version?**
 
-A: Yes: ``pip install git+https://github.com/BPro2410/poisson_topicmodels.git``
+A: Yes: ``pip install git+https://github.com/BPro2410/topicmodels_package.git``
 
 **Q: What about backwards compatibility?**
 

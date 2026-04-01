@@ -1,5 +1,5 @@
 import warnings
-from typing import Tuple
+from typing import Dict, Optional, Tuple
 
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
@@ -7,7 +7,6 @@ import numpy as np
 import numpyro.distributions as dist
 import pandas as pd
 import scipy.sparse as sparse
-import seaborn as sns
 from jax import jit, random
 from numpyro import param, plate, sample
 from numpyro.distributions import constraints
@@ -197,7 +196,7 @@ class TBIP(NumpyroModel):
             Indices of authors for the documents in the batch (batch_size,).
         """
         mu_x = param("mu_x", init_value=-1 + 2 * random.uniform(random.PRNGKey(1), (self.N,)))
-        sigma_x = param("sigma_y", init_value=jnp.ones([self.N]), constraint=constraints.positive)
+        sigma_x = param("sigma_x", init_value=jnp.ones([self.N]), constraint=constraints.positive)
 
         mu_eta = param("mu_eta", init_value=random.normal(random.PRNGKey(2), (self.K, self.V)))
         sigma_eta = param(
@@ -347,6 +346,133 @@ class TBIP(NumpyroModel):
 
         return self.estimated_params
 
+    def return_topics(self) -> Tuple[np.ndarray, np.ndarray]:
+        """Return the dominant topic for each document.
+
+        Uses the LogNormal variational posterior for theta:
+        ``E[theta] = exp(mu + sigma^2 / 2)``.
+
+        Returns
+        -------
+        categories : np.ndarray
+            Array of topic indices for each document (shape: D,).
+        E_theta : np.ndarray
+            Estimated topic proportions for each document (shape: D, K).
+
+        Raises
+        ------
+        ValueError
+            If model has not been trained yet.
+        """
+        if not self.estimated_params:
+            raise ValueError("Model must be trained before calling return_topics()")
+
+        mu = np.asarray(self.estimated_params["mu_theta"])
+        sigma = np.asarray(self.estimated_params["sigma_theta"])
+        E_theta = np.exp(mu + sigma ** 2 / 2.0)
+        return np.argmax(E_theta, axis=1), E_theta
+
+    def return_beta(self) -> pd.DataFrame:
+        """Return the topic-word association matrix.
+
+        Uses the LogNormal variational posterior for beta:
+        ``E[beta] = exp(mu + sigma^2 / 2)``.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with words as index and topics as columns.
+
+        Raises
+        ------
+        ValueError
+            If model has not been trained yet.
+        """
+        if not self.estimated_params:
+            raise ValueError("Model must be trained before calling return_beta()")
+
+        mu = np.asarray(self.estimated_params["mu_beta"])
+        sigma = np.asarray(self.estimated_params["sigma_beta"])
+        E_beta = np.exp(mu + sigma ** 2 / 2.0)
+        return pd.DataFrame(np.transpose(E_beta), index=self.vocab)
+
+    def return_ideal_points(self) -> pd.DataFrame:
+        """Return ideal point estimates for all authors.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with columns ``['author', 'ideal_point', 'std']``
+            sorted by ideal point.
+
+        Raises
+        ------
+        ValueError
+            If model has not been trained yet.
+        """
+        if not self.estimated_params:
+            raise ValueError("Model must be trained before calling return_ideal_points()")
+
+        mu_x = np.asarray(self.estimated_params["mu_x"])
+        sigma_x = np.asarray(self.estimated_params["sigma_x"])
+
+        df = pd.DataFrame({
+            "author": list(self.author_map.keys()),
+            "ideal_point": [float(mu_x[idx]) for idx in self.author_map.values()],
+            "std": [float(sigma_x[idx]) for idx in self.author_map.values()],
+        })
+        return df.sort_values("ideal_point").reset_index(drop=True)
+
+    def return_ideological_words(self, topic: int, n: int = 10) -> pd.DataFrame:
+        """Return words with the strongest ideological loading for a topic.
+
+        For a given topic *k*, ranks words by the magnitude of their
+        ideological coefficient ``eta[k, :]``. Words with large positive
+        ``eta`` are associated with higher ideal-point values, and vice
+        versa.
+
+        Parameters
+        ----------
+        topic : int
+            Topic index (0-based).
+        n : int, optional
+            Number of top words per direction (default 10).
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with columns ``['word', 'eta', 'direction']`` where
+            direction is ``'positive'`` or ``'negative'``.
+
+        Raises
+        ------
+        ValueError
+            If model has not been trained or topic index is invalid.
+        """
+        if not self.estimated_params:
+            raise ValueError("Model must be trained before calling return_ideological_words()")
+        if topic < 0 or topic >= self.K:
+            raise ValueError(f"topic must be in [0, {self.K - 1}], got {topic}")
+
+        mu_eta = np.asarray(self.estimated_params["mu_eta"])
+        eta_k = mu_eta[topic, :]
+
+        # Top positive
+        pos_idx = np.argsort(eta_k)[::-1][:n]
+        pos_df = pd.DataFrame({
+            "word": self.vocab[pos_idx],
+            "eta": eta_k[pos_idx],
+            "direction": "positive",
+        })
+        # Top negative
+        neg_idx = np.argsort(eta_k)[:n]
+        neg_df = pd.DataFrame({
+            "word": self.vocab[neg_idx],
+            "eta": eta_k[neg_idx],
+            "direction": "negative",
+        })
+        return pd.concat([pos_df, neg_df], ignore_index=True)
+
     def __create_author_ideal_map(self) -> dict:
         """Create a mapping of authors to their estimated ideal points.
 
@@ -359,35 +485,82 @@ class TBIP(NumpyroModel):
         author_ideal_map = {author: x_est[idx] for author, idx in self.author_map.items()}
         return author_ideal_map
 
-    def plot_ideal_points(self, selected_authors=None):
-        """Plot the ideal points of selected authors.
+    def plot_ideal_points(
+        self,
+        selected_authors: Optional[list] = None,
+        show_ci: bool = False,
+        ci: float = 0.95,
+        figsize: Tuple[float, float] = (12, 2),
+        save_path: Optional[str] = None,
+    ) -> Tuple[plt.Figure, plt.Axes]:
+        """Plot the ideal points of authors on a 1-D axis.
 
         Parameters
         ----------
-        selected_authors : list
-            A list of authors whose ideal points are to be plotted.
+        selected_authors : list, optional
+            Authors to label (default: all authors).
+        show_ci : bool, optional
+            If True, display horizontal error bars showing the credible
+            interval derived from ``sigma_x``.
+        ci : float, optional
+            Credible-interval level when *show_ci* is True (default 0.95).
+        figsize : tuple, optional
+            Figure size (default ``(12, 2)``).
+        save_path : str, optional
+            Path to save the figure.
+
+        Returns
+        -------
+        tuple of (plt.Figure, plt.Axes)
         """
+        from scipy import stats as sp_stats
 
-        sns.set(style="whitegrid")
-        _ = plt.figure(figsize=(12, 1))
-        ax = plt.axes([0, 0, 1, 1], frameon=False)
+        with plt.rc_context(self._setup_academic_style()):
+            fig, ax = plt.subplots(figsize=figsize)
 
-        if selected_authors is None:
-            selected_authors = self.authors_unique
+            if selected_authors is None:
+                selected_authors = list(self.authors_unique)
 
-        authors = pd.Series(self.__create_author_ideal_map())
-        # authors.columns = ["author", "ideal_point"]
+            mu_x = np.asarray(self.estimated_params["mu_x"])
+            sigma_x = np.asarray(self.estimated_params["sigma_x"])
 
-        for idx in range(authors.shape[0]):
-            ax.scatter(authors[idx], 0, c="black", s=20)
-            if authors.index[idx] in selected_authors:
-                ax.annotate(
-                    authors.index[idx],
-                    xy=(authors[idx], 0.0),
-                    xytext=(authors[idx], 0),
-                    rotation=30,
-                    size=14,
-                )
+            z = sp_stats.norm.ppf(1.0 - (1.0 - ci) / 2.0)
 
-        ax.set_yticks([])
-        plt.show()
+            for author, idx in self.author_map.items():
+                x_val = float(mu_x[idx])
+                if show_ci:
+                    err = z * float(sigma_x[idx])
+                    ax.errorbar(x_val, 0, xerr=err, fmt="o", color="black",
+                                markersize=4, capsize=2, linewidth=0.6)
+                else:
+                    ax.scatter(x_val, 0, c="black", s=20, zorder=3)
+
+                if author in selected_authors:
+                    ax.annotate(
+                        str(author),
+                        xy=(x_val, 0.0),
+                        xytext=(0, 8),
+                        textcoords="offset points",
+                        rotation=30,
+                        fontsize=9,
+                        ha="center",
+                    )
+
+            ax.set_yticks([])
+            ax.set_xlabel("Ideal point")
+            ax.set_title("Estimated ideal points")
+            fig.tight_layout()
+
+            if save_path:
+                fig.savefig(save_path, dpi=300, bbox_inches="tight")
+
+        return fig, ax
+
+    def _summary_extra(self) -> str:
+        """TBIP-specific summary information."""
+        lines = [f"  Authors (N):              {self.N}"]
+        if self.estimated_params:
+            mu_x = np.asarray(self.estimated_params["mu_x"])
+            lines.append(f"  Ideal-point range:        [{mu_x.min():.3f}, {mu_x.max():.3f}]")
+            lines.append(f"  Ideal-point std:          {mu_x.std():.3f}")
+        return "\n".join(lines)
