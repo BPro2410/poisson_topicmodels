@@ -1,5 +1,5 @@
 """
-Focused CSPF2 test with a single binary dummy covariate from Cat1.
+Focused CSPF test with a single binary dummy covariate from Cat1.
 
 Dummy rule:
     cat1::is_toys_games = 1 if Cat1 == "toys games", else 0
@@ -13,7 +13,7 @@ import pandas as pd
 import scipy.sparse as sparse
 from sklearn.feature_extraction.text import CountVectorizer
 
-from poisson_topicmodels.models.CSPF2 import CSPF2
+from poisson_topicmodels import CSPF
 
 
 def _build_keywords(vocab_set: set[str]) -> dict[str, list[str]]:
@@ -66,7 +66,7 @@ x_design = pd.DataFrame(
 print(f"Documents: {counts.shape[0]}, Vocabulary: {counts.shape[1]}")
 print(f"Dummy covariate mean (share of toys games): {x_design.iloc[:, 0].mean():.4f}")
 
-model = CSPF2(
+model = CSPF(
     counts=counts,
     vocab=vocab,
     keywords=keywords,

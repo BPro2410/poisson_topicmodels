@@ -1,5 +1,5 @@
 """
-Integration test script for the new CSPF2 implementation.
+Integration test script for the CSPF implementation.
 
 Runs two scenarios on ./data/10k_amazon.csv:
 1. Grouped one-hot covariates only.
@@ -14,7 +14,7 @@ import pandas as pd
 import scipy.sparse as sparse
 from sklearn.feature_extraction.text import CountVectorizer
 
-from poisson_topicmodels.models.CSPF2 import CSPF2
+from poisson_topicmodels import CSPF
 
 
 def _build_keywords(vocab_set: set[str]) -> dict[str, list[str]]:
@@ -66,7 +66,7 @@ def _prepare_data():
 
 
 def _grouped_onehot_covariates(df: pd.DataFrame) -> pd.DataFrame:
-    # Use explicit group separators ("::") so CSPF2 can infer group membership.
+    # Use explicit group separators ("::") so CSPF can infer group membership.
     cat1 = pd.get_dummies(df["Cat1"].fillna("unknown"), prefix="cat1", prefix_sep="::")
     cat2 = pd.get_dummies(df["Cat2"].fillna("unknown"), prefix="cat2", prefix_sep="::")
     x = pd.concat([cat1, cat2], axis=1).astype(np.float32)
@@ -101,7 +101,7 @@ def _train_and_check(
     print(f"\n=== {run_name} ===")
     print(f"Design matrix shape: {x_design.shape}")
 
-    model = CSPF2(
+    model = CSPF(
         counts=counts,
         vocab=vocab,
         keywords=keywords,
@@ -173,7 +173,7 @@ def main() -> None:
         lr=0.005,
     )
 
-    print("\nAll CSPF2 checks passed.")
+    print("\nAll CSPF checks passed.")
 
 
 # if __name__ == "__main__":
@@ -222,4 +222,4 @@ _train_and_check(
     lr=0.005,
 )
 
-print("\nAll CSPF2 checks passed.")
+print("\nAll CSPF checks passed.")

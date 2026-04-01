@@ -1,5 +1,5 @@
 """
-CSPF2 test with two grouped categorical covariates on 10k Amazon data.
+CSPF test with two grouped categorical covariates on 10k Amazon data.
 
 Covariate construction:
     animal::dog / animal::cat
@@ -19,7 +19,7 @@ import pandas as pd
 import scipy.sparse as sparse
 from sklearn.feature_extraction.text import CountVectorizer
 
-from poisson_topicmodels.models.CSPF2 import CSPF2
+from poisson_topicmodels import CSPF
 
 
 def _build_keywords(vocab_set: set[str]) -> dict[str, list[str]]:
@@ -167,13 +167,13 @@ print(f"  eating::banana    mean: {eating_banana.mean():.4f}")
 print()
 
 # ============================================================================
-# Train CSPF2
+# Train CSPF
 # ============================================================================
 
-print("Initializing CSPF2 model")
+print("Initializing CSPF model")
 print("-" * 50)
 
-model = CSPF2(
+model = CSPF(
     counts=counts,
     vocab=vocab,
     keywords=keywords,
