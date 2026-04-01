@@ -148,11 +148,58 @@ for topic_id in range(model.K):
     print()
 
 # ============================================================================
-# STEP 7: Analyze Document-Topic Distributions
+# STEP 7: Model Summary & Diagnostics
 # ============================================================================
 
 print("=" * 50)
-print("Step 7: Document-Topic Analysis")
+print("Step 7: Model Summary & Diagnostics")
+print("-" * 50)
+print()
+
+# Print a formatted overview of the model
+model.summary(n_top_words=5)
+
+# Plot training loss
+fig_loss, _ = model.plot_model_loss(window=10, save_path=None)
+print("✓ Training loss plotted")
+print()
+
+# ============================================================================
+# STEP 8: Seed Word Effectiveness
+# ============================================================================
+
+print("=" * 50)
+print("Step 8: Seed Word Effectiveness")
+print("-" * 50)
+print()
+
+# How well did the seed words dominate their topics?
+fig_seed, _ = model.plot_seed_effectiveness(save_path=None)
+print("✓ Seed effectiveness plot generated")
+print("  This compares the mean beta weight of seed words vs. other words")
+print("  per guided topic. Higher seed-word weight means stronger guidance.")
+print()
+
+# ============================================================================
+# STEP 9: Topic Prevalence
+# ============================================================================
+
+print("=" * 50)
+print("Step 9: Topic Prevalence")
+print("-" * 50)
+print()
+
+fig_prev, _ = model.plot_topic_prevalence(save_path=None)
+print("✓ Topic prevalence chart plotted")
+print("  Shows which topics are most/least prevalent across documents.")
+print()
+
+# ============================================================================
+# STEP 10: Analyze Document-Topic Distributions
+# ============================================================================
+
+print("=" * 50)
+print("Step 10: Document-Topic Analysis")
 print("-" * 50)
 print()
 
@@ -169,11 +216,11 @@ for doc_id in range(min(5, D)):
 print()
 
 # ============================================================================
-# STEP 8: Compare with Unsupervised PF
+# STEP 11: Compare with Unsupervised PF
 # ============================================================================
 
 print("=" * 50)
-print("Step 8: Comparison with Unsupervised Poisson Factorization")
+print("Step 11: Comparison with Unsupervised Poisson Factorization")
 print("-" * 50)
 print()
 
