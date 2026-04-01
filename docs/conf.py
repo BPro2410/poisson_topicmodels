@@ -15,8 +15,8 @@ sys.path.insert(0, os.path.abspath(".."))
 project = "poisson-topicmodels"
 copyright = "2026, Bernd Prostmaier, Bettina Grün, Paul Hofmarcher"
 author = "Bernd Prostmaier, Bettina Grün, Paul Hofmarcher"
-release = "0.1.0"
-version = "0.1"
+release = "0.2.0"
+version = "0.2"
 
 # -- General configuration --------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -56,7 +56,6 @@ exclude_patterns = [
     "index_alt.rst",
     "intro/*",
     "introduction/*",
-    "models.rst",
     "modules.rst",
 ]
 
@@ -78,7 +77,6 @@ html_css_files = [
 # HTML theme options
 html_theme_options = {
     "logo_only": False,
-    "display_version": True,
     "prev_next_buttons_location": "both",
     "style_external_links": False,
     "vcs_pageview_mode": "view",

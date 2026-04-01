@@ -120,7 +120,7 @@ Once GPU is enabled, training automatically uses it:
    model = PF(counts, vocab, num_topics=20, batch_size=256)
 
    # This automatically uses GPU if available
-   params = model.train(num_iterations=100, learning_rate=0.01)
+   params = model.train_step(num_steps=200, lr=0.01)
 
    # That's it! No code changes needed.
 
@@ -189,7 +189,7 @@ If you get "out of memory" errors:
    from jax import monitoring
 
    model = PF(counts, vocab, num_topics=20, batch_size=128)
-   params = model.train(num_iterations=100, learning_rate=0.01)
+   params = model.train_step(num_steps=200, lr=0.01)
 
    # If memory issues: reduce batch_size → 64 or 32
 
@@ -213,7 +213,7 @@ Compare CPU vs GPU timing:
 
    model_cpu = PF(counts_small, vocab_small, num_topics=10, batch_size=32)
    t0 = time.time()
-   model_cpu.train(num_iterations=50)
+   model_cpu.train_step(num_steps=50, lr=0.01)
    cpu_time = time.time() - t0
 
    # Time GPU
@@ -222,7 +222,7 @@ Compare CPU vs GPU timing:
 
    model_gpu = PF(counts_small, vocab_small, num_topics=10, batch_size=32)
    t0 = time.time()
-   model_gpu.train(num_iterations=50)
+   model_gpu.train_step(num_steps=50, lr=0.01)
    gpu_time = time.time() - t0
 
    print(f"CPU time: {cpu_time:.2f}s")
@@ -262,7 +262,6 @@ Optimizing for Speed
 
    .. code-block:: python
 
-      # JAX supports this via jax.experimental.key_reuse
       # Not currently exposed in poisson-topicmodels
       # Future enhancement
 
@@ -276,7 +275,7 @@ Optimizing for Speed
       jax.profiling.pluck_counts()
 
       # Train and profile
-      model.train(num_iterations=10)
+      model.train_step(num_steps=10, lr=0.01)
 
       # Analyze results
       # Check if data transfer or computation is bottleneck
@@ -365,9 +364,9 @@ Example:
    )
 
    # Train efficiently
-   params = model.train(
-       num_iterations=200,
-       learning_rate=0.01
+   params = model.train_step(
+       num_steps=200,
+       lr=0.01,
    )
 
    # Takes ~1 hour instead of whole day
@@ -377,7 +376,7 @@ Next Steps
 
 - :doc:`tutorial_training` - Refresh on model training
 - :doc:`tutorial_hyperparameters` - Optimize settings for GPU
-- :doc:`../how_to_guides/train_models` - Advanced training techniques
+- :doc:`../how_to_guides/index` - Advanced training techniques
 
 Key Takeaway
 ============

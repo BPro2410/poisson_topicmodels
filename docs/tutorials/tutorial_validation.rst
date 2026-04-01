@@ -25,12 +25,15 @@ Coherence measures if top words of a topic are semantically related.
 
 .. code-block:: python
 
-   coherence = model.compute_coherence()
+   coherence_df = model.compute_topic_coherence()
+   coherence = coherence_df['coherence'].values
    print(f"Coherence per topic: {coherence}")
    print(f"Average: {coherence.mean():.3f}")
 
-   # High coherence: top words are related (good!)
-   # Low coherence: top words are scattered (bad)
+   # Topic diversity: are topics distinct?
+   diversity = model.compute_topic_diversity()
+   print(f"Topic diversity: {diversity:.3f}")
+   # 1.0 = all unique words, 0.0 = identical top words
 
 Interpreting values:
 
@@ -44,11 +47,11 @@ Finding low-coherence topics:
 .. code-block:: python
 
    worst_topics = np.argsort(coherence)[:5]
+   top_words = model.return_top_words_per_topic(n=10)
    for topic_id in worst_topics:
-       words = model.get_top_words(n=10)[topic_id]
+       words = top_words[topic_id]
        print(f"Topic {topic_id} (coherence={coherence[topic_id]:.3f}):")
        print(f"  {', '.join(words)}")
-       print("  → Consider improving or merging with other topics")
 
 Qualitative Inspection
 ======================
@@ -59,14 +62,13 @@ Manual topic interpretation:
 
    def evaluate_topics_manually(model, num_to_show=10):
        """Inspect top words for each topic."""
-       top_words = model.get_top_words(n=20)
+       top_words = model.return_top_words_per_topic(n=20)
 
        ratings = {}
 
-       for topic_id in range(len(top_words)):
+       for topic_id, words in top_words.items():
            print(f"\n=== Topic {topic_id} ===")
-           words = top_words[topic_id][:10]
-           print(f"Top words: {', '.join(words)}")
+           print(f"Top words: {', '.join(words[:10])}")
 
            # Rate quality: 1=bad, 2=poor, 3=fair, 4=good, 5=excellent
            rating = input("Rate this topic (1-5, q=quit): ")
@@ -103,13 +105,15 @@ Compare multiple model configurations:
 
    # Try different numbers of topics
    for num_topics in [5, 10, 20, 50]:
-       model = PF(counts, vocab, num_topics=num_topics)
-       model.train(num_iterations=100, learning_rate=0.01)
+       model = PF(counts, vocab, num_topics=num_topics, batch_size=32)
+       model.train_step(num_steps=200, lr=0.01)
 
-       coherence = model.compute_coherence()
+       coherence_df = model.compute_topic_coherence()
+       coherence = coherence_df['coherence'].values
        results[num_topics] = {
            'coherence_mean': coherence.mean(),
            'coherence_std': coherence.std(),
+           'diversity': model.compute_topic_diversity(),
            'model': model
        }
 
@@ -133,11 +137,12 @@ If you have a downstream task, evaluate model performance there:
    from sklearn.ensemble import RandomForestClassifier
 
    # Get document-topic representations
-   doc_topics = model.get_document_topics()
+   doc_topics_result = model.return_topics()
+   _, e_theta = doc_topics_result
 
    # Train classifier on topics
    clf = RandomForestClassifier()
-   clf.fit(doc_topics, labels)  # labels = ground truth
+   clf.fit(e_theta, labels)  # labels = ground truth
 
    # Evaluate
    accuracy = clf.score(doc_topics, labels)
@@ -155,18 +160,18 @@ Are topics overlapping? Check similarity:
 
    from sklearn.metrics.pairwise import cosine_similarity
 
-   topics = model.get_topics()
-   similarity = cosine_similarity(topics.T)
+   beta = model.return_beta()
+   similarity = cosine_similarity(beta.values.T)
    np.fill_diagonal(similarity, 0)
 
    # Find similar pairs
    similar = np.where(similarity > 0.7)
+   top_words = model.return_top_words_per_topic(n=5)
    for i, j in zip(similar[0], similar[1]):
        if i < j:
            print(f"Topic {i} and {j} are similar (sim={similarity[i, j]:.3f})")
-           print(f"  Topic {i}: {', '.join(model.get_top_words()[i][:5])}")
-           print(f"  Topic {j}: {', '.join(model.get_top_words()[j][:5])}")
-           print()
+           print(f"  Topic {i}: {', '.join(top_words[i])}")
+           print(f"  Topic {j}: {', '.join(top_words[j])}")
 
 Document Coverage
 =================
@@ -175,11 +180,11 @@ Do all documents get meaningful topic assignments?
 
 .. code-block:: python
 
-   doc_topics = model.get_document_topics()
+   _, e_theta = model.return_topics()
 
    # Topic concentration per document
-   doc_entropy = -np.sum(doc_topics * np.log(doc_topics + 1e-10), axis=1)
-   max_probability = doc_topics.max(axis=1)
+   doc_entropy = -np.sum(e_theta * np.log(e_theta + 1e-10), axis=1)
+   max_probability = e_theta.max(axis=1)
 
    print(f"Document topic concentration:")
    print(f"  Max topic probability: {max_probability.mean():.3f} ± {max_probability.std():.3f}")
@@ -203,7 +208,8 @@ Visualization for Validation
    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
 
    # 1. Coherence distribution
-   coherence = model.compute_coherence()
+   coherence_df = model.compute_topic_coherence()
+   coherence = coherence_df['coherence'].values
    axes[0, 0].hist(coherence, bins=20, edgecolor='black')
    axes[0, 0].set_xlabel('Coherence')
    axes[0, 0].set_ylabel('Number of topics')
@@ -211,16 +217,16 @@ Visualization for Validation
    axes[0, 0].axvline(coherence.mean(), color='red', linestyle='--', label='Mean')
    axes[0, 0].legend()
 
-   # 2. Topic prevalence
-   doc_topics = model.get_document_topics()
-   avg_topics = doc_topics.mean(axis=0)
+   # 2. Topic prevalence (or use built-in: model.plot_topic_prevalence())
+   _, e_theta = model.return_topics()
+   avg_topics = e_theta.mean(axis=0)
    axes[0, 1].bar(range(len(avg_topics)), avg_topics)
    axes[0, 1].set_xlabel('Topic ID')
    axes[0, 1].set_ylabel('Average intensity')
    axes[0, 1].set_title('Topic Prevalence')
 
    # 3. Document entropy
-   doc_entropy = -np.sum(doc_topics * np.log(doc_topics + 1e-10), axis=1)
+   doc_entropy = -np.sum(e_theta * np.log(e_theta + 1e-10), axis=1)
    axes[1, 0].hist(doc_entropy, bins=30, edgecolor='black')
    axes[1, 0].set_xlabel('Entropy')
    axes[1, 0].set_ylabel('Number of documents')

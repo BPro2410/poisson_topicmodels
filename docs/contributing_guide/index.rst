@@ -319,7 +319,7 @@ Example bug report:
 
    Steps to Reproduce:
    1. Create COO matrix
-   2. call model.train()
+   2. call model.train_step()
    3. Error occurs
 
    Error Message:

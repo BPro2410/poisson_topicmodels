@@ -27,6 +27,7 @@ and reproducible results.
    tutorials/index
    how_to_guides/index
    api/index
+   models
    examples_guide/index
    testing/index
    contributing_guide/index
@@ -118,13 +119,18 @@ Quick Start Example
 
    # Initialize and train model
    model = PF(counts, vocab, num_topics=10, batch_size=32)
-   params = model.train(num_epochs=100, lr=0.01, random_seed=42)
+   params = model.train_step(num_steps=200, lr=0.01, random_seed=42)
 
-   # Extract results
-   topics = model.get_topics()
-   top_words = model.get_top_words(n=10)
-   print(f"Discovered {topics.shape} topics")
-   print(f"Top words: {top_words[:3]}")
+   # Summarize and inspect
+   model.summary()
+   top_words = model.return_top_words_per_topic(n=10)
+   for topic_id, words in top_words.items():
+       print(f"Topic {topic_id}: {', '.join(words)}")
+
+   # Evaluate and visualize
+   print(f"Topic diversity: {model.compute_topic_diversity():.3f}")
+   model.plot_model_loss()
+   model.plot_topic_prevalence()
 
 See :doc:`getting_started/index` for a detailed walkthrough.
 

@@ -125,21 +125,44 @@ All models in poisson-topicmodels follow a consistent API:
 
 .. code-block:: python
 
-   model = PF(counts=counts, vocab=vocab, num_topics=10)
+   model = PF(counts=counts, vocab=vocab, num_topics=10, batch_size=32)
 
 **Train**: Fit the model to data
 
 .. code-block:: python
 
-   params = model.train(num_iterations=100, learning_rate=0.01)
+   params = model.train_step(num_steps=200, lr=0.01, random_seed=42)
+
+**Summarize**: Get a quick overview of the fitted model
+
+.. code-block:: python
+
+   model.summary()
 
 **Extract**: Get interpretable results
 
 .. code-block:: python
 
-   topics = model.get_topics()
-   doc_topics = model.get_document_topics()
-   top_words = model.get_top_words(n=10)
+   categories, e_theta = model.return_topics()
+   beta = model.return_beta()
+   top_words = model.return_top_words_per_topic(n=10)
+
+**Evaluate**: Quantitative diagnostics
+
+.. code-block:: python
+
+   coherence_df = model.compute_topic_coherence()
+   diversity = model.compute_topic_diversity()
+
+**Visualize**: Built-in publication-ready plots
+
+.. code-block:: python
+
+   model.plot_model_loss()
+   model.plot_topic_prevalence()
+   model.plot_topic_correlation()
+   model.plot_document_topic_heatmap()
+   model.plot_topic_wordclouds()
 
 Probabilistic Background
 =========================

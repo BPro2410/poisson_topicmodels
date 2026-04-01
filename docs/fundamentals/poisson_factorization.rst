@@ -74,58 +74,60 @@ Example: Basic Usage
    )
 
    # Train
-   params = model.train(
-       num_iterations=100,
-       learning_rate=0.01
+   params = model.train_step(
+       num_steps=200,
+       lr=0.01
    )
 
    # Extract results
-   topics = model.get_topics()              # (vocab_size, num_topics)
-   doc_topics = model.get_document_topics()  # (num_docs, num_topics)
-   top_words = model.get_top_words(n=10)    # Top words per topic
+   categories, e_theta = model.return_topics()       # dominant topic + proportions
+   beta = model.return_beta()                          # word-topic DataFrame
+   top_words = model.return_top_words_per_topic(n=10)  # top words per topic
 
 Interpreting Results
 ====================
 
-**Topics (β)**:
+**Word-Topic Matrix (β)**:
 
-Access via ``model.get_topics()`` - shape (vocab_size, num_topics)
+Access via ``model.return_beta()`` — a ``pd.DataFrame`` (vocab_size × num_topics)
 
 Each column k represents topic k:
 
 .. code-block:: python
 
-   topic_5 = topics[:, 5]  # Topic 5 probabilities over vocabulary
+   beta = model.return_beta()
+   topic_5 = beta.iloc[:, 5]  # Topic 5 weights over vocabulary
 
 Interpretation:
-- ``topic_5[0.15]`` means word_0 has 15% probability in topic 5
-- Top words with highest probabilities characterize the topic
+- Higher weight means the word is more associated with the topic
+- Top words with highest weights characterize the topic
 
 **Document Topics (θ)**:
 
-Access via ``model.get_document_topics()`` - shape (num_docs, num_topics)
-
-Each row d represents document d:
+Access via ``model.return_topics()`` — returns ``(categories, E_theta)``
 
 .. code-block:: python
 
-   doc_3_topics = doc_topics[3, :]  # Topic mixture for document 3
-   # e.g., [0.6, 0.2, 0.15, 0.05, ...] → mostly topic 0
+   categories, e_theta = model.return_topics()
+   # categories: dominant topic per document
+   # e_theta: full document-topic matrix (num_docs × num_topics)
+
+   doc_3_topics = e_theta[3, :]  # Topic mixture for document 3
+   dominant = categories[3]       # Dominant topic for document 3
 
 Interpretation:
-- ``doc_3_topics[0.6]`` means topic 0 has 60% intensity in document 3
-- Dominance identifies primary topic(s)
+- ``categories`` gives the argmax topic for each document
+- ``e_theta[d, k]`` is the intensity of topic k in document d
 
 **Top Words**:
 
-Access via ``model.get_top_words(n=10)`` - Top n words per topic
+Access via ``model.return_top_words_per_topic(n=10)``
 
 .. code-block:: python
 
-   top_words = model.get_top_words(n=10)
-   # Shape: (num_topics, n)
+   top_words = model.return_top_words_per_topic(n=10)
+   # dict: {topic_id: [word1, word2, ...]}
 
-   # Topic 2 top words
    print(top_words[2])
    # ['research', 'data', 'experiment', 'analysis', ...]
 
@@ -140,19 +142,18 @@ Example Interpretation Workflow
 .. code-block:: python
 
    model = PF(counts, vocab, num_topics=5, batch_size=32)
-   model.train(num_iterations=100, learning_rate=0.01)
+   model.train_step(num_steps=200, lr=0.01)
 
    # Examine each topic
-   top_words = model.get_top_words(n=15)
+   top_words = model.return_top_words_per_topic(n=15)
 
-   for topic_id in range(5):
+   for topic_id, words in top_words.items():
        print(f"\n=== Topic {topic_id} ===")
-       words = top_words[topic_id]
        print(f"Top words: {', '.join(words)}")
 
        # Find documents dominated by this topic
-       doc_topics = model.get_document_topics()
-       top_docs = np.argsort(doc_topics[:, topic_id])[-3:]
+       categories, e_theta = model.return_topics()
+       top_docs = np.argsort(e_theta[:, topic_id])[-3:]
        print(f"Top documents: {top_docs}")
 
 Hyperparameter Selection
@@ -171,10 +172,8 @@ Start with 10-20 topics. Adjust based on:
    # Try different numbers of topics
    for k in [5, 10, 20, 50]:
        model = PF(counts, vocab, num_topics=k, batch_size=32)
-       model.train(num_iterations=100, learning_rate=0.01)
-
-       # Evaluate quality (e.g., via coherence, downstream task)
-       # or inspect top words manually
+       model.train_step(num_steps=200, lr=0.01)
+       # Evaluate quality (e.g., via coherence or manual inspection)
 
 **Learning Rate (lr)**
 
@@ -205,11 +204,11 @@ Monitor loss:
 
 .. code-block:: python
 
-   params = model.train(
-       num_iterations=200,
-       learning_rate=0.01,
-       verbose=True  # Print loss every iteration
+   params = model.train_step(
+       num_steps=200,
+       lr=0.01,
    )
+   # Then inspect: model.plot_model_loss()
 
 Suggested: Train until loss plateaus (visual inspection)
 
@@ -228,29 +227,24 @@ Training Tips
 
 .. code-block:: python
 
-   model = PF(counts, vocab, num_topics=10, random_seed=42)
+   params = model.train_step(num_steps=200, lr=0.01, random_seed=42)
    # Same seed → same results (good for research)
 
 **Progress Monitoring**: Check loss trajectory
 
 .. code-block:: python
 
-   params = model.train(
-       num_iterations=100,
-       learning_rate=0.01,
-       verbose=True
-   )
+   model.train_step(num_steps=200, lr=0.01)
+   model.plot_model_loss()  # visualize loss curve
 
 **Early stopping**: Stop if loss plateaus
 
 .. code-block:: python
 
-   # Manual: train in chunks, monitor loss
-   for iteration in range(10):
-       params = model.train(num_iterations=10, learning_rate=0.01)
-       print(f"Loss: {params['loss']}")
-       if loss_not_improving:
-           break
+   # Check loss after training
+   model.train_step(num_steps=200, lr=0.01)
+   model.plot_model_loss()  # visually inspect convergence
+   # If loss hasn't plateaued, train more steps
 
 Common Issues and Solutions
 ============================
@@ -289,15 +283,22 @@ Evaluation Metrics
 See :doc:`../api/index` for available metrics:
 
 - **Coherence**: Do top words of a topic correlate?
-- **Perplexity**: How well does model explain held-out data?
 - **Topic diversity**: Are topics distinct?
 
 Example:
 
 .. code-block:: python
 
-   coherence = model.compute_coherence()
-   print(f"Average coherence: {coherence.mean()}")
+   coherence_df = model.compute_topic_coherence()
+   print(f"Average coherence: {coherence_df['coherence'].mean():.3f}")
+
+   diversity = model.compute_topic_diversity()
+   print(f"Topic diversity: {diversity:.3f}")
+
+   # Built-in visualizations
+   model.plot_model_loss()          # Training loss curve
+   model.plot_topic_prevalence()    # Topic prevalence bar chart
+   model.plot_topic_correlation()   # Topic similarity heatmap
 
 Next Steps
 ==========

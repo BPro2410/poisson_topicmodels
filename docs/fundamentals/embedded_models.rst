@@ -84,16 +84,18 @@ Basic Usage
    model = ETM(
        counts=counts,
        vocab=vocab,
-       embeddings=embeddings,
+       embeddings_mapping=embeddings,
        num_topics=10,
        batch_size=32,
-       random_seed=42
    )
 
-   params = model.train(num_iterations=100, learning_rate=0.01)
+   params = model.train_step(num_steps=200, lr=0.01, random_seed=42)
 
-   # Results similar to other models
-   top_words = model.get_top_words(n=10)
+   # Results use the same API as other models
+   model.summary()
+   top_words = model.return_top_words_per_topic(n=10)
+   beta = model.return_beta()                # uses softmax(ρ @ α)
+   categories, e_theta = model.return_topics()  # neural encoder inference
 
 Loading Pre-trained Embeddings
 ==============================
@@ -179,16 +181,17 @@ Practical Example: News Classification
    model = ETM(
        counts=counts,
        vocab=vocab,
-       embeddings=embeddings,
+       embeddings_mapping=embeddings,
        num_topics=15,
-       batch_size=64
+       batch_size=64,
    )
 
-   model.train(num_iterations=150, learning_rate=0.01)
+   model.train_step(num_steps=200, lr=0.01)
 
    # Inspect topics
-   top_words = model.get_top_words(n=15)
-   for topic_id, words in enumerate(top_words):
+   model.summary()
+   top_words = model.return_top_words_per_topic(n=15)
+   for topic_id, words in top_words.items():
        print(f"Topic {topic_id}: {', '.join(words)}")
 
 Comparing ETM vs Standard Models
@@ -199,18 +202,18 @@ Comparing ETM vs Standard Models
 .. code-block:: python
 
    # Train multiple models
-   pf_model = PF(counts, vocab, num_topics=10)
-   pf_model.train(num_iterations=100)
+   pf_model = PF(counts, vocab, num_topics=10, batch_size=32)
+   pf_model.train_step(num_steps=200, lr=0.01)
 
-   etm_model = ETM(counts, vocab, embeddings, num_topics=10)
-   etm_model.train(num_iterations=100)
+   etm_model = ETM(counts, vocab, embeddings_mapping=embeddings, num_topics=10, batch_size=32)
+   etm_model.train_step(num_steps=200, lr=0.01)
 
    # Calculate coherence
-   pf_coherence = pf_model.compute_coherence()
-   etm_coherence = etm_model.compute_coherence()
+   pf_coherence = pf_model.compute_topic_coherence()
+   etm_coherence = etm_model.compute_topic_coherence()
 
-   print(f"PF Coherence: {pf_coherence.mean():.3f}")
-   print(f"ETM Coherence: {etm_coherence.mean():.3f}")
+   print(f"PF Coherence: {pf_coherence['coherence'].mean():.3f}")
+   print(f"ETM Coherence: {etm_coherence['coherence'].mean():.3f}")
    # ETM usually has higher coherence
 
 **Visual comparison**:
@@ -224,14 +227,14 @@ Comparing ETM vs Standard Models
 
    # PF topics
    for topic_id in range(5):
-       top_words_pf = pf_model.get_top_words(n=5)[topic_id]
+       top_words_pf = pf_model.return_top_words_per_topic(n=5)[topic_id]
        axes[0].text(0.1, 0.9 - topic_id * 0.15,
                     f"T{topic_id}: {', '.join(top_words_pf)}")
    axes[0].set_title('PF Topics')
 
    # ETM topics
    for topic_id in range(5):
-       top_words_etm = etm_model.get_top_words(n=5)[topic_id]
+       top_words_etm = etm_model.return_top_words_per_topic(n=5)[topic_id]
        axes[1].text(0.1, 0.9 - topic_id * 0.15,
                     f"T{topic_id}: {', '.join(top_words_etm)}")
    axes[1].set_title('ETM Topics')
@@ -345,18 +348,19 @@ Metrics for ETM:
 .. code-block:: python
 
    # Standard metrics still apply
-   topics = etm_model.get_topics()
-   doc_topics = etm_model.get_document_topics()
+   beta = etm_model.return_beta()
+   categories, e_theta = etm_model.return_topics()
 
    # Coherence
-   coherence = etm_model.compute_coherence()
+   coherence_df = etm_model.compute_topic_coherence()
 
-   # Perplexity (if held-out data available)
-   perplexity = etm_model.compute_perplexity(held_out_counts)
+   # Topic diversity
+   diversity = etm_model.compute_topic_diversity()
+   print(f"Topic diversity: {diversity:.3f}")
 
    # Compare with baseline
-   pf_coherence = pf_model.compute_coherence()
-   improvement = (coherence.mean() - pf_coherence.mean()) / pf_coherence.mean()
+   pf_coherence = pf_model.compute_topic_coherence()
+   improvement = (coherence_df['coherence'].mean() - pf_coherence['coherence'].mean()) / abs(pf_coherence['coherence'].mean())
    print(f"ETM improves coherence by {improvement:.1%}")
 
 Relationship to Other Models

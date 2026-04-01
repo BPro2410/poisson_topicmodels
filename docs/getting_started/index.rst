@@ -54,10 +54,10 @@ Step 3: Initialize and Train the Model
        random_seed=42
    )
 
-   # Train for 100 iterations with learning rate 0.01
-   params = model.train(
-       num_iterations=100,
-       learning_rate=0.01
+   # Train for 200 steps with learning rate 0.01
+   params = model.train_step(
+       num_steps=200,
+       lr=0.01
    )
 
 Step 4: Extract and Interpret Results
@@ -65,39 +65,41 @@ Step 4: Extract and Interpret Results
 
 .. code-block:: python
 
-   # Get topic-word distributions
-   topics = model.get_topics()  # Shape: (vocab_size, num_topics)
-   print(f"Topics shape: {topics.shape}")
+   # Quick summary of the fitted model
+   model.summary()
+
+   # Get word-topic associations
+   beta = model.return_beta()  # DataFrame: words × topics
+   print(f"Beta shape: {beta.shape}")
 
    # Get top words for each topic
-   top_words = model.get_top_words(n=10)
+   top_words = model.return_top_words_per_topic(n=10)
    print("\nTop 10 words per topic:")
-   for topic_id, words in enumerate(top_words):
+   for topic_id, words in top_words.items():
        print(f"Topic {topic_id}: {', '.join(words)}")
 
    # Get document-topic distributions
-   doc_topics = model.get_document_topics()  # Shape: (num_docs, num_topics)
-   print(f"\nDocument-topic matrix shape: {doc_topics.shape}")
-
-   # Get topics for a specific document
-   first_doc_topics = doc_topics[0]
-   print(f"First document topic distribution: {first_doc_topics}")
+   categories, e_theta = model.return_topics()
+   print(f"\nDocument-topic matrix shape: {e_theta.shape}")
+   print(f"Dominant topic for first doc: {categories[0]}")
 
 Understanding the Output
 =========================
 
-**Topics** (``get_topics()``)
-   Shape: (vocabulary_size, num_topics)
+**Beta** (``return_beta()``)
+   DataFrame of shape (vocabulary_size, num_topics).
 
-   Each column is a topic: probabilities of each word appearing in that topic.
+   Each column is a topic: word-level association weights.
 
-**Document Topics** (``get_document_topics()``)
-   Shape: (num_documents, num_topics)
+**Topics** (``return_topics()``)
+   Returns ``(categories, E_theta)`` — dominant topic per document and
+   the full document-topic proportions matrix.
 
-   Each row is a document: probabilities of each topic in that document.
+**Top Words** (``return_top_words_per_topic(n)``)
+   A dict mapping topic identifiers to their top-n words, useful for interpretation.
 
-**Top Words** (``get_top_words(n)``):
-   The n most likely words for each topic, useful for interpretation.
+**Summary** (``summary()``)
+   Prints a formatted overview of the model: loss, top words, and model-specific details.
 
 Next Steps
 ==========
@@ -160,13 +162,13 @@ Here's a more realistic example with synthetic documents that have meaningful st
    vocab = np.array([f'word_{i}' for i in range(num_words)])
 
    # Train model with matching number of topics
-   model = PF(counts, vocab, num_topics=3, batch_size=32, random_seed=42)
-   params = model.train(num_iterations=100, learning_rate=0.01)
+   model = PF(counts, vocab, num_topics=3, batch_size=32)
+   params = model.train_step(num_steps=200, lr=0.01, random_seed=42)
 
    # The model should discover the 3 underlying topics
-   print("Discovered topics:")
-   top_words = model.get_top_words(n=20)
-   for topic_id, words in enumerate(top_words):
+   model.summary()
+   top_words = model.return_top_words_per_topic(n=20)
+   for topic_id, words in top_words.items():
        print(f"\nTopic {topic_id}:")
        print(f"  {', '.join(words[:10])}")
 

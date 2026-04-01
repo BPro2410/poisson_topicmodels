@@ -9,9 +9,64 @@ Version history and changelog for poisson-topicmodels.
 Current Version
 ===============
 
-**Latest**: 0.1.0 (February 2026)
+**Latest**: 0.2.0 (April 2026)
 
 For full changelog, see below.
+
+Version 0.2.0 - Inspection & Diagnostics
+==========================================
+
+*April 1, 2026*
+
+**New Methods (all models)**:
+
+- ✨ ``summary(n_top_words=5)`` — Formatted text summary of any fitted model
+- ✨ ``compute_topic_coherence(metric='c_npmi', top_n=10)`` — Per-topic NPMI/UMass coherence
+- ✨ ``compute_topic_diversity(top_n=25)`` — Unique-word fraction across topics (0–1)
+- ✨ ``plot_topic_prevalence()`` — Horizontal bar chart of mean topic prevalence
+- ✨ ``plot_topic_correlation()`` — Cosine-similarity heatmap between topics
+- ✨ ``plot_document_topic_heatmap()`` — Document × topic heatmap
+- ✨ Academic-style plotting (``_setup_academic_style``) applied to all built-in figures
+
+**New Methods (SPF)**:
+
+- ✨ ``plot_seed_effectiveness()`` — Grouped bar chart of seed vs. non-seed word weights
+
+**New Methods (CPF & CSPF)**:
+
+- ✨ ``return_covariate_effects_ci(ci=0.95)`` — Covariate effects with Bayesian credible intervals
+- ✨ ``plot_cov_effects(ci=0.95)`` — Forest plot of covariate effects
+
+**New Methods (TBIP)**:
+
+- ✨ ``return_ideal_points()`` — DataFrame of author positions with uncertainty
+- ✨ ``return_ideological_words(topic, n)`` — Top ideological words per topic
+- ✨ ``plot_ideal_points(show_ci=True)`` — Publication-ready 1-D scatter with CIs
+- ✨ ``return_topics()`` / ``return_beta()`` overrides using LogNormal posterior
+
+**New Methods (ETM)**:
+
+- ✨ ``return_topics()`` — Neural encoder inference (was NotImplementedError)
+- ✨ ``return_beta()`` — Embedding-based topic–word computation (was NotImplementedError)
+
+**Bug Fixes**:
+
+- 🐛 TBIP: Fixed ``sigma_y`` → ``sigma_x`` typo in variational guide
+- 🐛 CPF: Fixed ``self.covariates`` not set in ``__init__``; fixed ndim validation order
+- 🐛 PF: Removed duplicate ``return_top_words_per_topic`` override
+
+**Breaking Changes**:
+
+- ``CSPF2`` renamed to ``CSPF`` (old ``CSPF`` class removed)
+- ``from poisson_topicmodels import CSPF2`` → ``from poisson_topicmodels import CSPF``
+
+**Documentation**:
+
+- All code examples updated to use correct method names (``return_topics``, ``return_beta``,
+  ``return_top_words_per_topic``, ``train_step`` instead of fictional ``get_*``/``train`` names)
+- API reference rewritten with complete method documentation
+- Autodoc directives enabled for auto-generated class reference
+- New methods documented across fundamentals, tutorials, and examples
 
 Version 0.1.0 - Initial Release
 ===============================
@@ -79,7 +134,7 @@ Version 0.1.0 - Initial Release
 - Performance optimizations
 - Additional embedding support
 
-Coming Soon (0.2.0)
+Coming Soon (0.3.0)
 ===================
 
 Planned features:
@@ -87,7 +142,7 @@ Planned features:
 - **Dynamic Topic Models**: Topics that evolve over time
 - **Streaming Mode**: Learn from new documents continuously
 - **Better Visualization**: Interactive topic visualization
-- **More Metrics**: Additional evaluation metrics
+- **Save/Load**: Persist trained models to disk
 - **Documentation Enhancements**: More examples and tutorials
 
 Not Planned for 0.2.0:
@@ -213,7 +268,7 @@ Found a bug? Please report it:
    - Minimal reproducible example
    - Full error traceback
 
-See :doc:`../contributing_guide/index#reporting-bugs` for detailed instructions.
+See :doc:`../contributing_guide/index` for detailed instructions.
 
 Acknowledgments
 ===============
