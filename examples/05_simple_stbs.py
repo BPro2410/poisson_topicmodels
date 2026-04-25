@@ -12,14 +12,12 @@ Requirements:
     - numpyro
 """
 
+import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 import scipy.sparse as sparse
-import jax.numpy as jnp
-import matplotlib.pyplot as plt
 
 from poisson_topicmodels import STBS
-
 
 # ============================================================================
 # STEP 1: Generate Random Data
@@ -28,9 +26,9 @@ from poisson_topicmodels import STBS
 print("Step 1: Generating random data")
 print("-" * 50)
 
-D = 300   # Documents
-V = 500   # Vocabulary size
-A = 30    # Unique authors
+D = 300  # Documents
+V = 500  # Vocabulary size
+A = 30  # Unique authors
 
 # Create document-term matrix
 counts = sparse.random(D, V, density=0.05, format="csr", dtype=np.float32)
@@ -58,29 +56,34 @@ print("Step 2: Generating author-level covariates")
 print("-" * 50)
 
 # Create political party covariates: R, D, or I (where I is rare)
-party   = np.random.choice(["R", "D", "I"], size=A, p=[0.45, 0.45, 0.10])
+party = np.random.choice(["R", "D", "I"], size=A, p=[0.45, 0.45, 0.10])
 party_r = (party == "R").astype(int)
 party_i = (party == "I").astype(int)
 
 # Create a gender covariate
-gender   = np.random.choice(["M", "F"], size=A, p=[0.5, 0.5])
+gender = np.random.choice(["M", "F"], size=A, p=[0.5, 0.5])
 gender_f = (gender == "F").astype(int)
 
 # Create an experience covariate
 experience = np.random.randint(1, 30, size=A)
 
 # Create the covariate dataFrame: one row per author, indexed by name, and alphabetically sorted
-covariate_df = pd.DataFrame({
-    "party_r":    party_r,
-    "party_i":    party_i,
-    "gender_f":   gender_f,
-    "experience": experience,}, 
-    index=author_names)
+covariate_df = pd.DataFrame(
+    {
+        "party_r": party_r,
+        "party_i": party_i,
+        "gender_f": gender_f,
+        "experience": experience,
+    },
+    index=author_names,
+)
 
 print(f"✓ Covariate matrix shape: {covariate_df.shape}")
 print(f"✓ Covariates: {covariate_df.columns.tolist()}")
-print(f"✓ Party distribution: R={party_r.sum()}, D={(party_r+party_i==0).sum()}, I={party_i.sum()}")
-print(f"✓ Gender distribution: F={gender_f.sum()}, M={(gender_f==0).sum()}")
+print(
+    f"✓ Party distribution: R={party_r.sum()}, D={(party_r + party_i == 0).sum()}, I={party_i.sum()}"
+)
+print(f"✓ Gender distribution: F={gender_f.sum()}, M={(gender_f == 0).sum()}")
 print(covariate_df.head())
 print()
 
@@ -92,13 +95,16 @@ print()
 print("Step 3: Initialising ideology prior")
 print("-" * 50)
 
-# If there exists a prior assumption of the ideology, initialize accordingly. 
+# If there exists a prior assumption of the ideology, initialize accordingly.
 i_mu_init = np.select(
-    [(covariate_df["party_i"] == 0) & (covariate_df["party_r"] == 1),   # Republican
-     (covariate_df["party_i"] == 1) & (covariate_df["party_r"] == 0),   # Independent
-     (covariate_df["party_i"] == 0) & (covariate_df["party_r"] == 0),],   # Democrat
+    [
+        (covariate_df["party_i"] == 0) & (covariate_df["party_r"] == 1),  # Republican
+        (covariate_df["party_i"] == 1) & (covariate_df["party_r"] == 0),  # Independent
+        (covariate_df["party_i"] == 0) & (covariate_df["party_r"] == 0),
+    ],  # Democrat
     [1, 0, -1],
-    default=0,)
+    default=0,
+)
 
 i_mu_init = jnp.array(i_mu_init, dtype=jnp.float32)
 
@@ -121,12 +127,12 @@ model = STBS(
     vocab=vocab,
     num_topics=num_topics,
     batch_size=batch_size,
-    authors=authors_doc,  
-    X_design_matrix=covariate_df,  
-    i_mu_init=i_mu_init,     
+    authors=authors_doc,
+    X_design_matrix=covariate_df,
+    i_mu_init=i_mu_init,
 )
 
-print(f"✓ Initialised STBS model")
+print("✓ Initialised STBS model")
 print(f"✓ Topics: {num_topics}")
 print(f"✓ Documents: {model.D}, Vocabulary: {model.V}")
 print(f"✓ Authors: {model.N}, Covariates: {len(model.covariates)}")
@@ -145,7 +151,7 @@ params = model.train_step(
     lr=0.01,
 )
 
-print(f"✓ Training completed")
+print("✓ Training completed")
 print(f"✓ Final loss: {model.Metrics.loss[-1]:.4f}")
 print()
 
@@ -216,7 +222,9 @@ fig, ax = model.plot_topic_wordclouds(ideology_values=None)
 print("✓ Topic word clouds generated")
 print()
 
-fig, ax = model.plot_topic_wordclouds(topics=[0,2,4], ideology_values=(-1, 0, 1), log_corrected=True)
+fig, ax = model.plot_topic_wordclouds(
+    topics=[0, 2, 4], ideology_values=(-1, 0, 1), log_corrected=True
+)
 print("✓ Topic (subsetted) word clouds (incl. ideology) generated")
 print()
 
@@ -228,7 +236,7 @@ print()
 print("Step 8: Author ideology dot plot")
 print("-" * 50)
 
-group_labels  = {-1: "D", 0: "I", 1: "R"}
+group_labels = {-1: "D", 0: "I", 1: "R"}
 group_palette = {"D": "dodgerblue", "I": "gray", "R": "red"}
 
 fig, ax = model.plot_ideol_points(
