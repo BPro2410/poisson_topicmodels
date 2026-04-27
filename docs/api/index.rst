@@ -24,6 +24,7 @@ Module Organization
        CSPF,     # Covariate Seeded Poisson Factorization (both)
        ETM,      # Embedded Topic Models (with embeddings)
        TBIP,     # Text-Based Ideal Points (author positions)
+       STBS,     # Structured Text-Based Scaling (topic-specific ideal points)
        # Base classes
        NumpyroModel,
        Metrics,
@@ -87,11 +88,11 @@ Common Parameters
 
 **Model configuration**
 
-- ``num_topics`` (int): Number of topics to discover (PF, CPF, TBIP, ETM)
+- ``num_topics`` (int): Number of topics to discover (PF, CPF, TBIP, STBS, ETM)
 - ``keywords`` (dict): Seed words per topic (SPF, CSPF)
 - ``residual_topics`` (int): Extra unsupervised topics (SPF, CSPF)
-- ``X_design_matrix`` (ndarray | DataFrame): Document covariates (CPF, CSPF)
-- ``authors`` (ndarray): Author labels per document (TBIP)
+- ``X_design_matrix`` (ndarray | DataFrame): Covariates (document-level for CPF/CSPF, author-level for STBS)
+- ``authors`` (ndarray): Author labels per document (TBIP, STBS)
 - ``embeddings_mapping`` (dict): Word → embedding vector (ETM)
 
 **Training**
@@ -99,7 +100,7 @@ Common Parameters
 - ``num_steps`` (int): Training iterations
 - ``lr`` (float): Learning rate (step size for optimizer)
 - ``batch_size`` (int): Documents per training step
-- ``random_seed`` (int): Reproducibility seed
+- ``random_seed`` (int): Reproducibility seed (supported by PF/SPF/CPF/CSPF/ETM)
 
 Common Methods (all models)
 ============================
@@ -108,6 +109,9 @@ Common Methods (all models)
    Train the model via Stochastic Variational Inference (SVI).
 
    Returns: ``dict`` of estimated parameters.
+
+   Note: ``TBIP`` and ``STBS`` currently expose ``train_step(num_steps, lr)``
+   without a ``random_seed`` argument.
 
 **``return_topics()``**
    Returns ``(categories, E_theta)`` — dominant topic per document and
@@ -198,6 +202,32 @@ TBIP-specific Methods
 
    Returns: ``(fig, ax)``.
 
+STBS-specific Methods
+=====================
+
+**``return_ideal_points()``**
+   Returns a ``pd.DataFrame`` with columns ``author, topic, ideal_point, std``
+   for topic-specific author positions.
+
+**``return_ideal_covariates()``**
+   Returns a ``pd.DataFrame`` with columns ``covariate, topic, iota, std``
+   for covariate effects on ideological positions.
+
+**``plot_author_topic_heatmap(...)``**
+   Heatmap of mean normalized author-topic intensities.
+
+   Returns: ``(fig, ax)``.
+
+**``plot_ideol_points(...)``**
+   Dot plot of author ideology by topic, with optional grouping overlays.
+
+   Returns: ``(fig, ax)``.
+
+**``plot_iota_credible_intervals(ci=0.95, ...)``**
+   Credible-interval plot for covariate-topic ideology coefficients.
+
+   Returns: ``(fig, ax)``.
+
 ETM-specific Methods
 ====================
 
@@ -254,4 +284,3 @@ Next Steps
 - Learn models: :doc:`../fundamentals/index`
 - Train models: :doc:`../tutorials/index`
 - Solve tasks: :doc:`../how_to_guides/index`
-

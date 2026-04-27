@@ -22,7 +22,7 @@ Consider other models if:
 
 ✗ You have prior knowledge about expected topics (→ use SPF)
 ✗ You have document-level metadata (→ use CPF/CSPF)
-✗ You need to estimate author positions (→ use TBIP)
+✗ You need to estimate author positions (→ use TBIP/STBS)
 ✗ You want to leverage pre-trained embeddings (→ use ETM)
 
 The Model

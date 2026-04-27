@@ -44,6 +44,7 @@ Whether analyzing legislative text, social media discourse, or scientific abstra
 | **Covariate PF (CPF)** | Covariate effects | Model topics influenced by document metadata |
 | **Covariate Seeded PF (CSPF)** | Guided + covariates | Combine keyword guidance with external factors |
 | **Text-Based Ideal Points (TBIP)** | Ideal point estimation | Estimate author positions from legislative/social text |
+| **Structured Text-Based Scaling (STBS)** | Topic-specific positions + author covariates | Estimate topic-specific ideal points and covariate-driven ideology shifts |
 | **Embedded Topic Models (ETM)** | Modern embeddings | Integrate pre-trained word embeddings |
 
 **Core Capabilities**:
@@ -184,7 +185,6 @@ covariates = np.random.randn(100, 3)  # 100 documents, 3 covariates
 model = CPF(counts, vocab, covariates, num_topics=10, batch_size=64)
 model.train_step(num_steps=500, lr=0.001, random_seed=42)
 ```
-
 
 ## Custom Model Extension
 

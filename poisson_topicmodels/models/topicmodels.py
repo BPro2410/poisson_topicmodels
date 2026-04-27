@@ -5,8 +5,8 @@ from .CSPF import CSPF
 from .ETM import ETM
 from .PF import PF
 from .SPF import SPF
-from .TBIP import TBIP
 from .STBS import STBS
+from .TBIP import TBIP
 
 os.getcwd()
 

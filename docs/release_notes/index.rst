@@ -49,6 +49,11 @@ Version 0.2.0 - Inspection & Diagnostics
 - ✨ ``return_topics()`` — Neural encoder inference (was NotImplementedError)
 - ✨ ``return_beta()`` — Embedding-based topic–word computation (was NotImplementedError)
 
+**New Model**:
+
+- ✨ ``STBS`` (Structured Text-Based Scaling) — topic-specific ideal points with
+  author-level covariate effects
+
 **Bug Fixes**:
 
 - 🐛 TBIP: Fixed ``sigma_y`` → ``sigma_x`` typo in variational guide

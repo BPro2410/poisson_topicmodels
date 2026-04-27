@@ -31,6 +31,11 @@ API Reference (Auto-generated)
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: poisson_topicmodels.models.STBS
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: poisson_topicmodels.models.ETM
    :members:
    :undoc-members:

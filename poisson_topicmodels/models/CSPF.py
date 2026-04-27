@@ -382,20 +382,22 @@ class CSPF(NumpyroModel):
             raise ValueError("Model must be trained before calling return_covariate_effects_ci()")
 
         loc = np.asarray(self.estimated_params["lambda_location"])  # (C, K)
-        scale = np.asarray(self.estimated_params["lambda_scale"])   # (C, K)
+        scale = np.asarray(self.estimated_params["lambda_scale"])  # (C, K)
         z = sp_stats.norm.ppf(1.0 - (1.0 - ci) / 2.0)
 
         topic_names = self._topic_names()
         rows = []
         for c_idx, cov_name in enumerate(self.covariates):
             for k_idx, topic_name in enumerate(topic_names):
-                rows.append({
-                    "covariate": cov_name,
-                    "topic": topic_name,
-                    "mean": float(loc[c_idx, k_idx]),
-                    "lower": float(loc[c_idx, k_idx] - z * scale[c_idx, k_idx]),
-                    "upper": float(loc[c_idx, k_idx] + z * scale[c_idx, k_idx]),
-                })
+                rows.append(
+                    {
+                        "covariate": cov_name,
+                        "topic": topic_name,
+                        "mean": float(loc[c_idx, k_idx]),
+                        "lower": float(loc[c_idx, k_idx] - z * scale[c_idx, k_idx]),
+                        "upper": float(loc[c_idx, k_idx] + z * scale[c_idx, k_idx]),
+                    }
+                )
         return pd.DataFrame(rows)
 
     def _summary_extra(self) -> str:

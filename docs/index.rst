@@ -91,6 +91,9 @@ The **poisson-topicmodels** library provides multiple topic modeling approaches:
 | **Text-Based Ideal Points (TBIP)** | Ideal point estimation | Estimate author positions from   |
 |                                    |                        | legislative/social text          |
 +------------------------------------+------------------------+----------------------------------+
+| **Structured Text-Based Scaling**  | Topic-specific ideal   | Topic-specific ideal points with |
+| **(STBS)**                         | points + covariates    | author-level covariates          |
++------------------------------------+------------------------+----------------------------------+
 | **Embedded Topic Models (ETM)**    | Modern embeddings      | Integrate pre-trained word       |
 |                                    |                        | embeddings                       |
 +------------------------------------+------------------------+----------------------------------+

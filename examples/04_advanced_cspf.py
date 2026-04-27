@@ -19,7 +19,6 @@ import scipy.sparse as sparse
 # Try to import CSPF, fall back gracefully if not available
 from poisson_topicmodels import CPF, CSPF, PF, SPF
 
-
 # ============================================================================
 # STEP 1: Create Data
 # ============================================================================

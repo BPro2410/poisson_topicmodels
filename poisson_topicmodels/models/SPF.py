@@ -390,9 +390,7 @@ class SPF(NumpyroModel):
 
     def _summary_extra(self) -> str:
         """SPF-specific summary information."""
-        kw_info = ", ".join(
-            f"{k} ({len(v)} words)" for k, v in self.keywords.items()
-        )
+        kw_info = ", ".join(f"{k} ({len(v)} words)" for k, v in self.keywords.items())
         lines = [
             f"  Seeded topics:            {len(self.keywords)}",
             f"  Residual topics:          {self.residual_topics}",

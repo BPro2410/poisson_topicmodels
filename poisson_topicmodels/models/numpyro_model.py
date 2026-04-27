@@ -532,8 +532,6 @@ class NumpyroModel(ABC):
 
         if texts is not None:
             # Build binary doc-word matrix from tokenised texts
-            from collections import Counter
-
             V = len(vocab_list)
             rows: List[np.ndarray] = []
             for doc_tokens in texts:
@@ -619,9 +617,7 @@ class NumpyroModel(ABC):
     # Additional post-fitting plots
     # ------------------------------------------------------------------
 
-    def plot_topic_prevalence(
-        self, save_path: Optional[str] = None
-    ) -> Tuple[plt.Figure, plt.Axes]:
+    def plot_topic_prevalence(self, save_path: Optional[str] = None) -> Tuple[plt.Figure, plt.Axes]:
         """Horizontal bar chart of mean topic prevalence across documents.
 
         Parameters
@@ -691,8 +687,9 @@ class NumpyroModel(ABC):
         topic_labels = [str(c) for c in beta_df.columns]
 
         with plt.rc_context(self._setup_academic_style()):
-            fig, ax = plt.subplots(figsize=(max(5, 0.6 * len(topic_labels)),
-                                            max(4, 0.5 * len(topic_labels))))
+            fig, ax = plt.subplots(
+                figsize=(max(5, 0.6 * len(topic_labels)), max(4, 0.5 * len(topic_labels)))
+            )
             im = ax.imshow(sim, cmap="RdBu_r", vmin=-1, vmax=1, aspect="auto")
             ax.set_xticks(range(len(topic_labels)))
             ax.set_xticklabels(topic_labels, rotation=45, ha="right")

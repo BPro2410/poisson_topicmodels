@@ -16,8 +16,30 @@ Example:
     >>> model.fit(num_epochs=100)
 """
 
-from .models import CPF, CSPF, ETM, PF, SPF, TBIP, STBS, Metrics, NumpyroModel, topicmodels
+from .models import (
+    CPF,
+    CSPF,
+    ETM,
+    PF,
+    SPF,
+    STBS,
+    TBIP,
+    Metrics,
+    NumpyroModel,
+    topicmodels,
+)
 
-__all__ = ["CPF", "CSPF", "ETM", "PF", "SPF", "TBIP", "STBS", "Metrics", "NumpyroModel", "topicmodels"]
+__all__ = [
+    "CPF",
+    "CSPF",
+    "ETM",
+    "PF",
+    "SPF",
+    "TBIP",
+    "STBS",
+    "Metrics",
+    "NumpyroModel",
+    "topicmodels",
+]
 
-__version__ = "0.1.3"
+__version__ = "0.2.0"
