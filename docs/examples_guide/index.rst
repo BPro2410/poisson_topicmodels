@@ -62,6 +62,19 @@ Topics:
 - Multiple features
 - Advanced analysis
 
+**05_simple_stbs.py**
+
+Structured Text-Based Scaling with author-level covariates.
+
+Level: Advanced
+Time: ~15 minutes
+
+Topics:
+- Author-attributed corpora
+- Topic-specific ideal points
+- Author-level covariate effects on ideology
+- STBS visual diagnostics
+
 Running Examples
 ================
 
@@ -72,6 +85,7 @@ From command line:
    cd examples
    python 01_getting_started.py
    python 02_spf_keywords.py
+   python 05_simple_stbs.py
    # etc.
 
 In Jupyter (recommended):
@@ -159,7 +173,7 @@ Ideal for legislative or political discourse analysis.
 Topics:
 - Bill text analysis
 - Speech topic discovery
-- Ideal point estimation (TBIP)
+- Ideal point estimation (TBIP/STBS)
 - Political polarization measurement
 
 **Social Media Analysis**
@@ -169,7 +183,7 @@ Understand trending topics and discourse.
 Topics:
 - Tweet topic discovery
 - Hashtag grouping
-- User position estimation (TBIP)
+- User position estimation (TBIP/STBS)
 - Discourse evolution
 
 **Academic Research**
@@ -268,6 +282,7 @@ File Organization
    ├── 02_spf_keywords.py          # Intermediate
    ├── 03_cpf_covariates.py        # Intermediate
    ├── 04_advanced_cspf.py         # Advanced
+   ├── 05_simple_stbs.py           # Advanced
    ├── run_topicmodels.ipynb       # Interactive
    └── README.md                   # This file
 
@@ -284,6 +299,8 @@ Quick Reference
 | 03_cpf_covariates   | Intermediate  | 10 min   |
 +---------------------+---------------+----------+
 | 04_advanced_cspf    | Advanced      | 15 min   |
++---------------------+---------------+----------+
+| 05_simple_stbs      | Advanced      | 15 min   |
 +---------------------+---------------+----------+
 | run_topicmodels     | Interactive   | Variable |
 +---------------------+---------------+----------+

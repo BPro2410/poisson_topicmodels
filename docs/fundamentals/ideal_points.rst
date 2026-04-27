@@ -1,12 +1,17 @@
 .. _ideal_points:
 
 ================================================================================
-Ideal Points Models (TBIP)
+Ideal Points Models (TBIP & STBS)
 ================================================================================
 
-**Text-Based Ideal Points (TBIP)** is a specialized model for estimating **latent positions**
-(ideal points) of authors based on their language use. Commonly used in political science
-and social media analysis.
+This package provides two related ideal-point models:
+
+- **Text-Based Ideal Points (TBIP)**: estimates one latent position per author
+- **Structured Text-Based Scaling (STBS)**: estimates **topic-specific** positions per
+  author and links them to author-level covariates
+
+Both are commonly used in political science, social-media analysis, and author-level
+stance estimation.
 
 What Are Ideal Points?
 =======================
@@ -39,24 +44,35 @@ Higher-dimensional spaces possible (not just 1D left-right):
 - 2D: (left-right, authoritarian-libertarian)
 - 3D+: Custom dimensions discovered from data
 
-When to Use TBIP
-================
+TBIP vs. STBS at a glance:
 
-Use TBIP when:
+- **TBIP**: one ideal-point coordinate per author (simpler and faster)
+- **STBS**: one coordinate per author-topic pair, plus regression on author covariates
+
+When to Use TBIP vs STBS
+=========================
+
+Use **TBIP** when:
 
 ✓ You have author-attributed text (speeches, tweets, reviews)
 ✓ You assume polarization or position variation
 ✓ You want to estimate latent author positions
 ✓ You're interested in discourse analysis
 
-Don't use if:
+Use **STBS** when:
+
+✓ You want positions to vary by topic (not a single global axis)
+✓ You have author-level metadata/covariates (e.g., party, tenure, demographics)
+✓ You want covariate effects on ideology to be estimated jointly with topics
+
+Don't use either model if:
 
 ✗ Text is anonymous or unattributed
 ✗ No meaningful position variation expected
 ✗ You only care about topics, not author positions
 
-Basic Usage
-===========
+Basic Usage (TBIP)
+==================
 
 .. code-block:: python
 
@@ -79,6 +95,53 @@ Basic Usage
    # Extract results
    ideal_points_df = model.return_ideal_points()  # DataFrame: author, ideal_point, std
    print(ideal_points_df)
+
+Basic Usage (STBS)
+==================
+
+.. code-block:: python
+
+   from poisson_topicmodels import STBS
+   import numpy as np
+   import pandas as pd
+
+   # Author per document (length = number of documents)
+   authors_doc = np.array(["author_a", "author_b", "author_a", ...])
+
+   # Author-level covariates with one row per unique author.
+   # Row order must match np.unique(authors_doc).
+   unique_authors = np.unique(authors_doc)
+   X_author = pd.DataFrame(
+       {
+           "party_r": [0, 1, ...],
+           "tenure_years": [4, 12, ...],
+       },
+       index=unique_authors,
+   )
+
+   model = STBS(
+       counts=counts,
+       vocab=vocab,
+       num_topics=10,
+       authors=authors_doc,
+       X_design_matrix=X_author,
+       batch_size=32,
+   )
+
+   model.train_step(num_steps=200, lr=0.01)
+
+   # Topic-specific author ideal points
+   stbs_ideal_points = model.return_ideal_points()
+   # Columns: author, topic, ideal_point, std
+
+   # Covariate effects on ideology by topic
+   stbs_covariate_effects = model.return_ideal_covariates()
+   # Columns: covariate, topic, iota, std
+
+   # STBS-specific visualization helpers
+   model.plot_author_topic_heatmap()
+   model.plot_ideol_points()
+   model.plot_iota_credible_intervals()
 
 Interpreting Ideal Points
 =========================
@@ -111,8 +174,8 @@ Interpreting Ideal Points
    plt.show()
 
 
-Topic-Word-Author Relationships
-===============================
+Topic-Word-Author Relationships (TBIP)
+======================================
 
 TBIP discovers how words vary across author positions:
 
@@ -131,8 +194,8 @@ TBIP discovers how words vary across author positions:
    # Columns: word, eta, direction
    # direction: 'positive' or 'negative' end of the axis
 
-Practical Example: Political Speeches
-=====================================
+Practical Example: Political Speeches (TBIP)
+============================================
 
 .. code-block:: python
 
@@ -227,21 +290,21 @@ Validating Ideal Points
 Relationship to Other Models
 =============================
 
-**TBIP vs. PF**: Adds author position estimation
+**TBIP/STBS vs. PF**: Adds author position estimation
 
 - PF: Discovers topics only
-- TBIP: Discovers topics AND author positions
+- TBIP/STBS: Discover topics AND author positions
 
-**TBIP vs. CPF**: Different covariate handling
+**TBIP vs. STBS**: Different structure
 
-- CPF: Document-level continuous covariates
-- TBIP: Author-level latent positions
+- TBIP: Single latent position per author
+- STBS: Topic-specific latent position per author with author-level covariates
 
 **Typical workflow**:
 
 1. Start with PF or SPF to understand topics
-2. If interested in author positions, add TBIP
-3. Optional: compare with CPF using author dummies as covariates
+2. Add TBIP for a compact ideological axis per author
+3. Upgrade to STBS when you need topic-specific ideal points and covariate effects
 
 Implementation Details
 ======================
@@ -255,6 +318,9 @@ work); only relative order is meaningful.
 
 **Multiple dimensions**: Discovered dimensions may not have clear interpretations.
 This is normal—inspect word distributions to understand.
+
+**STBS covariate alignment**: STBS expects author-level covariates where row order
+matches ``np.unique(authors)`` from the document-level ``authors`` input.
 
 Troubleshooting
 ===============
@@ -289,4 +355,4 @@ Next Steps
 
 - :doc:`embedded_models` - Exploring ETM with embeddings
 - :doc:`../tutorials/index` - Advanced techniques
-- :doc:`../api/index` - Complete TBIP API reference
+- :doc:`../api/index` - Complete TBIP/STBS API reference

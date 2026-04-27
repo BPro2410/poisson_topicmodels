@@ -105,6 +105,28 @@ python examples/01_getting_started.py
 
 ---
 
+### Example 5: Structured Text-Based Scaling (`05_simple_stbs.py`)
+
+**Level:** Advanced
+**Duration:** ~15 minutes
+**Topics Covered:**
+- Author-attributed text modeling with STBS
+- Topic-specific ideal point estimation
+- Author-level covariates and ideology priors
+- STBS visual diagnostics (`plot_ideol_points`, author-topic heatmaps, iota CIs)
+
+**Best for:**
+- Political or social discourse analysis with known authors
+- Studying how ideology varies by topic
+- Linking covariates to ideological positions
+
+**Output:**
+- Topic-specific ideal points per author
+- Covariate effects on ideology by topic
+- STBS-specific visual summaries
+
+---
+
 ## Data Format Requirements
 
 All examples create synthetic data, but here's what real data should look like:
@@ -188,6 +210,12 @@ python examples/03_cpf_covariates.py
 python examples/04_advanced_cspf.py
 ```
 
+### Workflow 5: Author-Level Ideology with Covariates
+```bash
+# Estimate topic-specific ideal points with STBS
+python examples/05_simple_stbs.py
+```
+
 ---
 
 ## Customizing Examples
@@ -241,6 +269,7 @@ model = PF(counts, vocab, num_topics=5, batch_size=10)
 | **SPF** | Yes | No | When you have domain knowledge |
 | **CPF** | No | Yes | When you have document metadata |
 | **CSPF** | Yes | Yes | Maximum flexibility |
+| **STBS** | No | Yes (author-level) | Topic-specific ideal points with author covariates |
 
 ---
 

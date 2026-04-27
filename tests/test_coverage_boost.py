@@ -28,16 +28,16 @@ import pandas as pd
 import pytest
 import scipy.sparse as sparse
 
-matplotlib.use("Agg")  # non-interactive backend for CI
-
-from poisson_topicmodels import PF, SPF, CPF, ETM, TBIP
+from poisson_topicmodels import CPF, ETM, PF, SPF, TBIP
 from poisson_topicmodels.models.CSPF import CSPF
 from poisson_topicmodels.models.Metrics import Metrics as TopicModelMetrics
 
+matplotlib.use("Agg")  # non-interactive backend for CI
 
 # ============================================================================
 # Shared helpers
 # ============================================================================
+
 
 def _counts_vocab(D=20, V=50):
     """Create a small sparse DTM and vocabulary."""
@@ -109,8 +109,12 @@ def _make_cspf_with_params(D=20, V=50):
     C = 2
     covariates = np.random.randn(D, C).astype(np.float32)
     model = CSPF(
-        counts, vocab, keywords=keywords, residual_topics=1,
-        batch_size=4, X_design_matrix=covariates,
+        counts,
+        vocab,
+        keywords=keywords,
+        residual_topics=1,
+        batch_size=4,
+        X_design_matrix=covariates,
     )
     G = model.G
     Tilde_V = model.Tilde_V
@@ -157,14 +161,19 @@ def _make_tbip_with_params(D=20, V=50, K=2):
 
 def _make_etm_with_params(D=20, V=50, K=2, embed_size=4):
     counts, vocab = _counts_vocab(D, V)
-    embeddings_mapping = {f"word_{i}": np.random.randn(embed_size).astype(np.float32) for i in range(V)}
+    embeddings_mapping = {
+        f"word_{i}": np.random.randn(embed_size).astype(np.float32) for i in range(V)
+    }
     model = ETM(
-        counts, vocab, num_topics=K, batch_size=4,
-        embeddings_mapping=embeddings_mapping, embed_size=embed_size,
+        counts,
+        vocab,
+        num_topics=K,
+        batch_size=4,
+        embeddings_mapping=embeddings_mapping,
+        embed_size=embed_size,
     )
 
     # Build real encoder params by running the encoder once
-    from flax.linen import Dense
     import jax
 
     rng = jax.random.PRNGKey(0)
@@ -193,6 +202,7 @@ def _make_etm_with_params(D=20, V=50, K=2, embed_size=4):
 # ============================================================================
 # NumpyroModel base class tests (via PF)
 # ============================================================================
+
 
 class TestSummary:
     """Tests for model.summary() and _summary_extra()."""
@@ -291,6 +301,7 @@ class TestBasePlots:
         fig, ax = model.plot_topic_prevalence()
         assert fig is not None
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_plot_topic_prevalence_save(self):
@@ -300,6 +311,7 @@ class TestBasePlots:
             assert os.path.exists(f.name)
             os.unlink(f.name)
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_plot_topic_prevalence_not_trained(self):
@@ -313,6 +325,7 @@ class TestBasePlots:
         fig, ax = model.plot_topic_correlation()
         assert fig is not None
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_plot_topic_correlation_save(self):
@@ -322,6 +335,7 @@ class TestBasePlots:
             assert os.path.exists(f.name)
             os.unlink(f.name)
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_plot_document_topic_heatmap(self):
@@ -329,6 +343,7 @@ class TestBasePlots:
         fig, ax = model.plot_document_topic_heatmap(n_docs=10)
         assert fig is not None
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_plot_document_topic_heatmap_sorted(self):
@@ -336,6 +351,7 @@ class TestBasePlots:
         fig, ax = model.plot_document_topic_heatmap(n_docs=10, sort_by_topic=True)
         assert fig is not None
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_plot_document_topic_heatmap_save(self):
@@ -345,6 +361,7 @@ class TestBasePlots:
             assert os.path.exists(f.name)
             os.unlink(f.name)
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_plot_wordclouds_save(self):
@@ -354,6 +371,7 @@ class TestBasePlots:
             assert os.path.exists(f.name)
             os.unlink(f.name)
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
 
@@ -396,6 +414,7 @@ class TestDenseCacheBranches:
 # SPF-specific tests
 # ============================================================================
 
+
 class TestSPFCoverage:
     """Cover SPF-specific methods and validation."""
 
@@ -404,6 +423,7 @@ class TestSPFCoverage:
         fig, axes = model.plot_seed_effectiveness()
         assert fig is not None
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_plot_seed_effectiveness_not_trained(self):
@@ -420,6 +440,7 @@ class TestSPFCoverage:
             assert os.path.exists(f.name)
             os.unlink(f.name)
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_recode_topics(self):
@@ -449,6 +470,7 @@ class TestSPFCoverage:
 # ============================================================================
 # CPF-specific tests
 # ============================================================================
+
 
 class TestCPFCoverage:
     """Cover CPF covariate methods and validation."""
@@ -488,6 +510,7 @@ class TestCPFCoverage:
         fig, axes = model.plot_cov_effects()
         assert fig is not None
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_plot_cov_effects_subset(self):
@@ -495,6 +518,7 @@ class TestCPFCoverage:
         fig, axes = model.plot_cov_effects(topics=["topic_1"])
         assert fig is not None
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_plot_cov_effects_invalid_topic(self):
@@ -516,6 +540,7 @@ class TestCPFCoverage:
             assert os.path.exists(f.name)
             os.unlink(f.name)
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_cpf_not_sparse_raises(self):
@@ -528,6 +553,7 @@ class TestCPFCoverage:
 # ============================================================================
 # CSPF-specific tests
 # ============================================================================
+
 
 class TestCSPFCoverage:
     """Cover CSPF return, CI, and plot methods."""
@@ -563,8 +589,9 @@ class TestCSPFCoverage:
         counts, vocab = _counts_vocab()
         keywords = _keywords()
         covs = np.random.randn(20, 2).astype(np.float32)
-        model = CSPF(counts, vocab, keywords=keywords, residual_topics=1,
-                      batch_size=4, X_design_matrix=covs)
+        model = CSPF(
+            counts, vocab, keywords=keywords, residual_topics=1, batch_size=4, X_design_matrix=covs
+        )
         with pytest.raises(ValueError, match="trained"):
             model.return_covariate_effects_ci()
 
@@ -574,6 +601,7 @@ class TestCSPFCoverage:
         assert "lambda" in results
         assert results["lambda"][0] is not None
         import matplotlib.pyplot as plt
+
         plt.close("all")
 
     def test_plot_cov_effects_with_shrinkage(self):
@@ -584,6 +612,7 @@ class TestCSPFCoverage:
         assert "tau2" in results
         assert "delta2" in results
         import matplotlib.pyplot as plt
+
         plt.close("all")
 
     def test_plot_cov_effects_subset(self):
@@ -591,6 +620,7 @@ class TestCSPFCoverage:
         results = model.plot_cov_effects(topics=["topic_a"])
         assert "lambda" in results
         import matplotlib.pyplot as plt
+
         plt.close("all")
 
     def test_plot_cov_effects_invalid_topic(self):
@@ -602,28 +632,31 @@ class TestCSPFCoverage:
         counts, vocab = _counts_vocab()
         keywords = _keywords()
         covs = np.random.randn(20, 2).astype(np.float32)
-        model = CSPF(counts, vocab, keywords=keywords, residual_topics=1,
-                      batch_size=4, X_design_matrix=covs)
+        model = CSPF(
+            counts, vocab, keywords=keywords, residual_topics=1, batch_size=4, X_design_matrix=covs
+        )
         with pytest.raises(RuntimeError, match="No estimated parameters"):
             model.plot_cov_effects()
 
     def test_plot_cov_effects_save_dir(self):
         model = _make_cspf_with_params()
         with tempfile.TemporaryDirectory() as tmpdir:
-            results = model.plot_cov_effects(save_path=tmpdir)
+            model.plot_cov_effects(save_path=tmpdir)
             assert os.path.exists(os.path.join(tmpdir, "forest_lambda.png"))
         import matplotlib.pyplot as plt
+
         plt.close("all")
 
     def test_plot_cov_effects_save_dir_with_shrinkage(self):
         model = _make_cspf_with_params()
         with tempfile.TemporaryDirectory() as tmpdir:
-            results = model.plot_cov_effects(include_shrinkage=True, save_path=tmpdir)
+            model.plot_cov_effects(include_shrinkage=True, save_path=tmpdir)
             assert os.path.exists(os.path.join(tmpdir, "forest_lambda.png"))
             assert os.path.exists(os.path.join(tmpdir, "forest_lambda_intercept.png"))
             assert os.path.exists(os.path.join(tmpdir, "forest_tau2.png"))
             assert os.path.exists(os.path.join(tmpdir, "forest_delta2.png"))
         import matplotlib.pyplot as plt
+
         plt.close("all")
 
     def test_gamma_ci_static(self):
@@ -688,26 +721,36 @@ class TestCSPFValidation:
         kw = _keywords()
         covs_1d = np.random.randn(20).astype(np.float32)
         with pytest.raises(ValueError, match="2D"):
-            CSPF(counts, vocab, keywords=kw, residual_topics=1,
-                 batch_size=4, X_design_matrix=covs_1d)
+            CSPF(
+                counts, vocab, keywords=kw, residual_topics=1, batch_size=4, X_design_matrix=covs_1d
+            )
 
     def test_zero_column_covariates_raises(self):
         counts, vocab = _counts_vocab()
         kw = _keywords()
         covs_0col = np.random.randn(20, 0).astype(np.float32)
         with pytest.raises(ValueError, match="empty.*0 columns"):
-            CSPF(counts, vocab, keywords=kw, residual_topics=1,
-                 batch_size=4, X_design_matrix=covs_0col)
+            CSPF(
+                counts,
+                vocab,
+                keywords=kw,
+                residual_topics=1,
+                batch_size=4,
+                X_design_matrix=covs_0col,
+            )
 
     def test_dataframe_covariates(self):
         counts, vocab = _counts_vocab()
         kw = _keywords()
-        df_cov = pd.DataFrame({
-            "cov_alpha": np.random.randn(20),
-            "cov_beta": np.random.randn(20),
-        })
-        model = CSPF(counts, vocab, keywords=kw, residual_topics=1,
-                      batch_size=4, X_design_matrix=df_cov)
+        df_cov = pd.DataFrame(
+            {
+                "cov_alpha": np.random.randn(20),
+                "cov_beta": np.random.randn(20),
+            }
+        )
+        model = CSPF(
+            counts, vocab, keywords=kw, residual_topics=1, batch_size=4, X_design_matrix=df_cov
+        )
         assert "cov_alpha" in model.covariates
         assert "cov_beta" in model.covariates
 
@@ -742,6 +785,7 @@ class TestCSPFGroupIndexSeparators:
 # ============================================================================
 # TBIP-specific tests
 # ============================================================================
+
 
 class TestTBIPCoverage:
     """Cover TBIP return and plot methods."""
@@ -814,6 +858,7 @@ class TestTBIPCoverage:
         fig, ax = model.plot_ideal_points(show_ci=True)
         assert fig is not None
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_plot_ideal_points_no_ci(self):
@@ -821,6 +866,7 @@ class TestTBIPCoverage:
         fig, ax = model.plot_ideal_points(show_ci=False)
         assert fig is not None
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_plot_ideal_points_save(self):
@@ -830,6 +876,7 @@ class TestTBIPCoverage:
             assert os.path.exists(f.name)
             os.unlink(f.name)
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
 
@@ -879,22 +926,28 @@ class TestTBIPValidation:
         counts, vocab = _counts_vocab()
         authors = np.array([f"a_{i}" for i in range(20)])
         with pytest.raises(ValueError, match="numpy"):
-            TBIP(counts, vocab, num_topics=2, authors=authors, batch_size=4,
-                 time_varying=True,
-                 beta_shape_init=[[1, 2]],
-                 beta_rate_init=np.ones((2, 50)))
+            TBIP(
+                counts,
+                vocab,
+                num_topics=2,
+                authors=authors,
+                batch_size=4,
+                time_varying=True,
+                beta_shape_init=[[1, 2]],
+                beta_rate_init=np.ones((2, 50)),
+            )
 
     def test_time_varying_no_init_warns(self):
         counts, vocab = _counts_vocab()
         authors = np.array([f"a_{i}" for i in range(20)])
         with pytest.warns(UserWarning, match="No initial values"):
-            TBIP(counts, vocab, num_topics=2, authors=authors, batch_size=4,
-                 time_varying=True)
+            TBIP(counts, vocab, num_topics=2, authors=authors, batch_size=4, time_varying=True)
 
 
 # ============================================================================
 # ETM-specific tests
 # ============================================================================
+
 
 class TestETMCoverage:
     """Cover ETM return methods and validation."""
@@ -916,48 +969,46 @@ class TestETMCoverage:
         vocab = np.array([f"word_{i}" for i in range(50)])
         emb = {f"word_{i}": np.random.randn(4) for i in range(50)}
         with pytest.raises(TypeError, match="sparse"):
-            ETM(dense, vocab, num_topics=2, batch_size=4,
-                embeddings_mapping=emb, embed_size=4)
+            ETM(dense, vocab, num_topics=2, batch_size=4, embeddings_mapping=emb, embed_size=4)
 
     def test_empty_counts_raises(self):
         counts = sparse.csr_matrix((0, 50), dtype=np.float32)
         vocab = np.array([f"word_{i}" for i in range(50)])
         emb = {f"word_{i}": np.random.randn(4) for i in range(50)}
         with pytest.raises(ValueError, match="empty"):
-            ETM(counts, vocab, num_topics=2, batch_size=4,
-                embeddings_mapping=emb, embed_size=4)
+            ETM(counts, vocab, num_topics=2, batch_size=4, embeddings_mapping=emb, embed_size=4)
 
     def test_zero_topics_raises(self):
         counts, vocab = _counts_vocab()
         emb = {f"word_{i}": np.random.randn(4) for i in range(50)}
         with pytest.raises(ValueError, match="num_topics"):
-            ETM(counts, vocab, num_topics=0, batch_size=4,
-                embeddings_mapping=emb, embed_size=4)
+            ETM(counts, vocab, num_topics=0, batch_size=4, embeddings_mapping=emb, embed_size=4)
 
     def test_invalid_batch_raises(self):
         counts, vocab = _counts_vocab()
         emb = {f"word_{i}": np.random.randn(4) for i in range(50)}
         with pytest.raises(ValueError, match="batch_size"):
-            ETM(counts, vocab, num_topics=2, batch_size=0,
-                embeddings_mapping=emb, embed_size=4)
+            ETM(counts, vocab, num_topics=2, batch_size=0, embeddings_mapping=emb, embed_size=4)
 
     def test_zero_embed_size_raises(self):
         counts, vocab = _counts_vocab()
         emb = {f"word_{i}": np.random.randn(4) for i in range(50)}
         with pytest.raises(ValueError, match="embed_size"):
-            ETM(counts, vocab, num_topics=2, batch_size=4,
-                embeddings_mapping=emb, embed_size=0)
+            ETM(counts, vocab, num_topics=2, batch_size=4, embeddings_mapping=emb, embed_size=0)
 
 
 # ============================================================================
 # Utils coverage
 # ============================================================================
 
+
 class TestUtilsCoverage:
     """Cover create_word2vec_embedding_from_dataset debug_mode branches."""
 
     def test_word2vec_debug_mode(self):
-        from poisson_topicmodels.utils.utils import create_word2vec_embedding_from_dataset
+        from poisson_topicmodels.utils.utils import (
+            create_word2vec_embedding_from_dataset,
+        )
 
         sentences = ["hello world foo bar", "another sentence here", "more words to process"]
         with tempfile.NamedTemporaryFile(suffix=".kv", delete=False) as f:
@@ -979,14 +1030,16 @@ class TestUtilsCoverage:
                 os.unlink(tmp_path)
 
     def test_word2vec_c_format(self):
-        from poisson_topicmodels.utils.utils import create_word2vec_embedding_from_dataset
+        from poisson_topicmodels.utils.utils import (
+            create_word2vec_embedding_from_dataset,
+        )
 
         sentences = ["hello world foo bar", "another sentence here"]
         with tempfile.NamedTemporaryFile(suffix=".kv", delete=False) as f:
             tmp_path = f.name
 
         try:
-            embeddings = create_word2vec_embedding_from_dataset(
+            create_word2vec_embedding_from_dataset(
                 sentences,
                 dim_rho=10,
                 iters=1,
@@ -1007,6 +1060,7 @@ class TestUtilsCoverage:
 # ============================================================================
 # Cross-model coherence/diversity via SPF and TBIP
 # ============================================================================
+
 
 class TestCrossModelMetrics:
     """Verify coherence/diversity works on non-PF models too."""
@@ -1041,6 +1095,7 @@ class TestCrossModelMetrics:
 # Cross-model plot tests
 # ============================================================================
 
+
 class TestCrossModelPlots:
     """Verify base-class plots work across different model types."""
 
@@ -1049,6 +1104,7 @@ class TestCrossModelPlots:
         fig, ax = model.plot_topic_prevalence()
         assert fig is not None
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_tbip_topic_correlation(self):
@@ -1056,6 +1112,7 @@ class TestCrossModelPlots:
         fig, ax = model.plot_topic_correlation()
         assert fig is not None
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_cspf_document_topic_heatmap(self):
@@ -1063,6 +1120,7 @@ class TestCrossModelPlots:
         fig, ax = model.plot_document_topic_heatmap(n_docs=5)
         assert fig is not None
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_etm_topic_prevalence(self):
@@ -1070,4 +1128,5 @@ class TestCrossModelPlots:
         fig, ax = model.plot_topic_prevalence()
         assert fig is not None
         import matplotlib.pyplot as plt
+
         plt.close(fig)

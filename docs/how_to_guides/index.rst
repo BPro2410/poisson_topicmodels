@@ -71,6 +71,7 @@ Tips & Best Practices
 - **CPF/CSPF**: Use if documents have metadata (authors, dates, etc.)
 - **ETM**: Use if you have pre-trained word embeddings
 - **TBIP**: Use for discovering ideological positions (political text)
+- **STBS**: Use for topic-specific ideological positions with author-level covariates
 
 Learn More
 ==========

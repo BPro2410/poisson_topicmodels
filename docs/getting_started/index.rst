@@ -107,7 +107,7 @@ Next Steps
 Now that you have a working model, explore:
 
 1. **Model Variants**: :doc:`../fundamentals/index`
-   Explore all models like seeded PF (SPF) for guided discovery.
+   Explore all models like seeded PF (SPF) for guided discovery and STBS for topic-specific ideology.
 
 2. **Training & Configuration**: :doc:`../tutorials/index`
    Understand training options, hyperparameters, and GPU acceleration.

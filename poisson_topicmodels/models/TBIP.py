@@ -1,5 +1,5 @@
 import warnings
-from typing import Dict, Optional, Tuple
+from typing import Optional, Tuple
 
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
@@ -369,7 +369,7 @@ class TBIP(NumpyroModel):
 
         mu = np.asarray(self.estimated_params["mu_theta"])
         sigma = np.asarray(self.estimated_params["sigma_theta"])
-        E_theta = np.exp(mu + sigma ** 2 / 2.0)
+        E_theta = np.exp(mu + sigma**2 / 2.0)
         return np.argmax(E_theta, axis=1), E_theta
 
     def return_beta(self) -> pd.DataFrame:
@@ -393,7 +393,7 @@ class TBIP(NumpyroModel):
 
         mu = np.asarray(self.estimated_params["mu_beta"])
         sigma = np.asarray(self.estimated_params["sigma_beta"])
-        E_beta = np.exp(mu + sigma ** 2 / 2.0)
+        E_beta = np.exp(mu + sigma**2 / 2.0)
         return pd.DataFrame(np.transpose(E_beta), index=self.vocab)
 
     def return_ideal_points(self) -> pd.DataFrame:
@@ -416,11 +416,13 @@ class TBIP(NumpyroModel):
         mu_x = np.asarray(self.estimated_params["mu_x"])
         sigma_x = np.asarray(self.estimated_params["sigma_x"])
 
-        df = pd.DataFrame({
-            "author": list(self.author_map.keys()),
-            "ideal_point": [float(mu_x[idx]) for idx in self.author_map.values()],
-            "std": [float(sigma_x[idx]) for idx in self.author_map.values()],
-        })
+        df = pd.DataFrame(
+            {
+                "author": list(self.author_map.keys()),
+                "ideal_point": [float(mu_x[idx]) for idx in self.author_map.values()],
+                "std": [float(sigma_x[idx]) for idx in self.author_map.values()],
+            }
+        )
         return df.sort_values("ideal_point").reset_index(drop=True)
 
     def return_ideological_words(self, topic: int, n: int = 10) -> pd.DataFrame:
@@ -459,18 +461,22 @@ class TBIP(NumpyroModel):
 
         # Top positive
         pos_idx = np.argsort(eta_k)[::-1][:n]
-        pos_df = pd.DataFrame({
-            "word": self.vocab[pos_idx],
-            "eta": eta_k[pos_idx],
-            "direction": "positive",
-        })
+        pos_df = pd.DataFrame(
+            {
+                "word": self.vocab[pos_idx],
+                "eta": eta_k[pos_idx],
+                "direction": "positive",
+            }
+        )
         # Top negative
         neg_idx = np.argsort(eta_k)[:n]
-        neg_df = pd.DataFrame({
-            "word": self.vocab[neg_idx],
-            "eta": eta_k[neg_idx],
-            "direction": "negative",
-        })
+        neg_df = pd.DataFrame(
+            {
+                "word": self.vocab[neg_idx],
+                "eta": eta_k[neg_idx],
+                "direction": "negative",
+            }
+        )
         return pd.concat([pos_df, neg_df], ignore_index=True)
 
     def __create_author_ideal_map(self) -> dict:
@@ -530,8 +536,16 @@ class TBIP(NumpyroModel):
                 x_val = float(mu_x[idx])
                 if show_ci:
                     err = z * float(sigma_x[idx])
-                    ax.errorbar(x_val, 0, xerr=err, fmt="o", color="black",
-                                markersize=4, capsize=2, linewidth=0.6)
+                    ax.errorbar(
+                        x_val,
+                        0,
+                        xerr=err,
+                        fmt="o",
+                        color="black",
+                        markersize=4,
+                        capsize=2,
+                        linewidth=0.6,
+                    )
                 else:
                     ax.scatter(x_val, 0, c="black", s=20, zorder=3)
 

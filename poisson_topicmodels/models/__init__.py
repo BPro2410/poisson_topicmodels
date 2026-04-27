@@ -12,8 +12,8 @@ from .Metrics import Metrics
 from .numpyro_model import NumpyroModel
 from .PF import PF
 from .SPF import SPF
-from .TBIP import TBIP
 from .STBS import STBS
+from .TBIP import TBIP
 from .topicmodels import topicmodels
 
 __all__ = [

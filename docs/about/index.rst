@@ -110,7 +110,7 @@ What Sets poisson-topicmodels Apart
 1. **JAX-based**: Modern automatic differentiation backend with transparent GPU support
 2. **NumPyro Integration**: Direct access to probabilistic programming tools
 3. **Scalable SVI**: Efficient stochastic variational inference with mini-batch training
-4. **Multiple Models**: Comprehensive suite of related models (PF, SPF, CPF, CSPF, ETM, TBIP)
+4. **Multiple Models**: Comprehensive suite of related models (PF, SPF, CPF, CSPF, TBIP, STBS, ETM)
 5. **Research-Oriented**: Designed for researchers who need flexibility and interpretability
 6. **Type Hints**: Comprehensive type hints for better IDE support and code clarity
 7. **Active Development**: Continuously improved with modern inference techniques
@@ -136,8 +136,9 @@ word counts. This has several advantages:
 - **Auxiliary information** through document-level covariates
 - **Combined constraints** for sophisticated analyses
 
-**Ideal point models** (TBIP) extend the framework to estimate positions of authors
-on latent dimensions based on their language use.
+**Ideal point models** (TBIP, STBS) extend the framework to estimate positions of
+authors on latent dimensions based on their language use, with STBS adding topic-specific
+ideal points and author-level covariate effects.
 
 **Embedded models** (ETM) incorporate pre-trained word embeddings to improve semantic
 coherence.

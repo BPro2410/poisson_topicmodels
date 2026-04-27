@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import jax.nn as jnn
 import jax.numpy as jnp
@@ -7,9 +7,9 @@ import numpy as np
 import numpyro.distributions as dist
 import pandas as pd
 import scipy.sparse as sparse
-from scipy import stats as sp_stats
 from numpyro import param, plate, sample
 from numpyro.distributions import constraints
+from scipy import stats as sp_stats
 
 # Abstract class - defining the minimum requirements for the probabilistic model
 from .numpyro_model import NumpyroModel
@@ -293,20 +293,22 @@ class CPF(NumpyroModel):
             raise ValueError("Model must be trained before calling return_covariate_effects_ci()")
 
         loc = np.asarray(self.estimated_params["lambda_location"])  # (C, K)
-        scale = np.asarray(self.estimated_params["lambda_scale"])   # (C, K)
+        scale = np.asarray(self.estimated_params["lambda_scale"])  # (C, K)
         z = sp_stats.norm.ppf(1.0 - (1.0 - ci) / 2.0)
 
         topic_names = [f"topic_{i + 1}" for i in range(self.K)]
         rows = []
         for c_idx, cov_name in enumerate(self.covariates):
             for k_idx, topic_name in enumerate(topic_names):
-                rows.append({
-                    "covariate": cov_name,
-                    "topic": topic_name,
-                    "mean": float(loc[c_idx, k_idx]),
-                    "lower": float(loc[c_idx, k_idx] - z * scale[c_idx, k_idx]),
-                    "upper": float(loc[c_idx, k_idx] + z * scale[c_idx, k_idx]),
-                })
+                rows.append(
+                    {
+                        "covariate": cov_name,
+                        "topic": topic_name,
+                        "mean": float(loc[c_idx, k_idx]),
+                        "lower": float(loc[c_idx, k_idx] - z * scale[c_idx, k_idx]),
+                        "upper": float(loc[c_idx, k_idx] + z * scale[c_idx, k_idx]),
+                    }
+                )
         return pd.DataFrame(rows)
 
     def plot_cov_effects(
@@ -349,7 +351,7 @@ class CPF(NumpyroModel):
             topic_idx = list(range(self.K))
 
         loc = np.asarray(self.estimated_params["lambda_location"])  # (C, K)
-        scale = np.asarray(self.estimated_params["lambda_scale"])   # (C, K)
+        scale = np.asarray(self.estimated_params["lambda_scale"])  # (C, K)
         z = sp_stats.norm.ppf(1.0 - (1.0 - ci) / 2.0)
 
         n_topics = len(plot_topics)
@@ -362,9 +364,11 @@ class CPF(NumpyroModel):
             ncols = min(n_topics, 4)
             nrows = int(np.ceil(n_topics / ncols))
             fig, axes = plt.subplots(
-                nrows, ncols,
+                nrows,
+                ncols,
                 figsize=(fig_w * ncols, fig_h * nrows),
-                sharey=True, squeeze=False,
+                sharey=True,
+                squeeze=False,
             )
             axes_flat = axes.flatten()
 
@@ -377,10 +381,22 @@ class CPF(NumpyroModel):
 
                 ax.axvline(0, color="#999999", linewidth=0.5, zorder=0)
                 for j in range(n_cov):
-                    ax.plot([lo[j], hi[j]], [y_pos[j], y_pos[j]],
-                            color="#4E79A7", linewidth=1.2, zorder=1)
-                    ax.scatter(means[j], y_pos[j], color="#4E79A7",
-                               s=18, zorder=2, edgecolors="white", linewidths=0.3)
+                    ax.plot(
+                        [lo[j], hi[j]],
+                        [y_pos[j], y_pos[j]],
+                        color="#4E79A7",
+                        linewidth=1.2,
+                        zorder=1,
+                    )
+                    ax.scatter(
+                        means[j],
+                        y_pos[j],
+                        color="#4E79A7",
+                        s=18,
+                        zorder=2,
+                        edgecolors="white",
+                        linewidths=0.3,
+                    )
 
                 ax.set_yticks(y_pos)
                 ax.set_yticklabels(list(self.covariates))

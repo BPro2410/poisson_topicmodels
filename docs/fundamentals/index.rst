@@ -40,6 +40,7 @@ use cases:
 **Advanced Models**
 
 - **Text-Based Ideal Points (TBIP)**: Estimate author positions on latent dimensions
+- **Structured Text-Based Scaling (STBS)**: Topic-specific ideal points with author-level covariates
 - **Embedded Topic Models (ETM)**: Integrate pre-trained word embeddings
 
 Which Model Should I Use?
@@ -61,10 +62,11 @@ Which Model Should I Use?
 
 **Your question**: "I want to estimate author or speaker positions"
 
-→ **Use**: Text-Based Ideal Points (TBIP)
+→ **Use**: Text-Based Ideal Points (TBIP) or Structured Text-Based Scaling (STBS)
 
 - Model ideal points (positions on a latent scale) based on language use
-- Useful for political polarization, sentiment analysis across authors
+- Use **TBIP** for a single latent position per author
+- Use **STBS** for topic-specific author positions and author-level covariate effects
 
 **Your question**: "I want to use pre-trained word embeddings"
 
@@ -77,16 +79,18 @@ Model Comparison Table
 ======================
 
 .. list-table:: Model Comparison
-   :widths: 20 15 10 15 15
+   :widths: 18 13 10 12 12 12
    :header-rows: 1
 
    * - Model
      - Unsupervised?
      - Guides?
      - Covariates?
+     - Ideal points?
      - Embeddings?
    * - **PF**
      - ✓
+     -
      -
      -
      -
@@ -95,23 +99,34 @@ Model Comparison Table
      - ✓
      -
      -
+     -
    * - **CPF**
      - ✓
      -
      - ✓
+     -
      -
    * - **CSPF**
      - ✓ (guided)
      - ✓
      - ✓
      -
+     -
    * - **TBIP**
      - ✓
      -
      -
+     - ✓
+     -
+   * - **STBS**
+     - ✓
+     -
+     - ✓ (author-level)
+     - ✓ (topic-specific)
      -
    * - **ETM**
      - ✓
+     -
      -
      -
      - ✓
@@ -206,7 +221,7 @@ Each model variant has dedicated documentation:
 - :doc:`poisson_factorization` - PF and understanding results
 - :doc:`seeded_models` - SPF for incorporating domain knowledge
 - :doc:`covariate_models` - CPF and CSPF for structured data
-- :doc:`ideal_points` - TBIP for position estimation
+- :doc:`ideal_points` - TBIP and STBS for position estimation
 - :doc:`embedded_models` - ETM for embedding integration
 
 Ready to dive deeper? Start with :doc:`core_concepts`.

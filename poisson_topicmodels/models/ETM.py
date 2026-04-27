@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Tuple
+from typing import Dict, Tuple
 
 import flax.linen as nn
 import jax
@@ -269,13 +269,13 @@ class ETM(NumpyroModel):
             raise ValueError("Model must be trained before calling return_topics()")
 
         # Reconstruct encoder from fitted params
-        encoder_params = {
-            k.replace("encoder$params$", ""): v
-            for k, v in self.estimated_params.items()
-            if k.startswith("encoder$")
-        }
+        # encoder_params = {
+        #     k.replace("encoder$params$", ""): v
+        #     for k, v in self.estimated_params.items()
+        #     if k.startswith("encoder$")
+        # }
         # Re-key into the nested structure expected by Flax
-        params_tree = {}
+        params_tree: dict = {}
         for flat_key, val in self.estimated_params.items():
             if not flat_key.startswith("encoder$params$"):
                 continue
