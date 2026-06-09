@@ -30,8 +30,11 @@ class CSPF(NumpyroModel):
         residual_topics: int,
         batch_size: int,
         X_design_matrix: Optional[np.ndarray] = None,
+        initparams: Optional[Dict[str, Any]] = None,
+        constantparams: Optional[Dict[str, Any]] = None,
+        hyperparams: Optional[Dict[str, float]] = None,
     ) -> None:
-        super().__init__()
+        super().__init__(initparams=initparams, constantparams=constantparams, hyperparams=hyperparams)
 
         if not sparse.issparse(counts):
             raise TypeError(f"counts must be a scipy sparse matrix, got {type(counts).__name__}")
@@ -109,18 +112,7 @@ class CSPF(NumpyroModel):
         self.G = int(self.group_index.max()) + 1 if self.C > 0 else 0
         self.group_scaling_diag = self._compute_group_scaling_diag(x_np, self.group_index, self.G)
 
-        self.b_theta = 0.3
-
-        self.softplus_inv_one = float(np.log(np.expm1(1.0)))
-        self.s_lambda0 = 1.0
-
-        self.a_tau = 0.5
-        self.a_rho_tau = 0.5
-        self.b_rho_tau = 1.0
-        self.a_delta = 0.5
-        self.a_rho_delta = 0.5
-        self.b_rho_delta = 1.0
-
+        
     @staticmethod
     def _build_group_index(covariate_names: List[str]) -> np.ndarray:
         """
@@ -175,30 +167,35 @@ class CSPF(NumpyroModel):
     def _model(self, Y_batch: jnp.ndarray, d_batch: jnp.ndarray) -> None:
         with plate("k", size=self.K, dim=-2):
             with plate("k_v", size=self.V, dim=-1):
-                beta = sample("beta", dist.Gamma(0.3, 0.3))
+                beta = self._sample("beta", dist.Gamma(self._hyperparam("a_beta", 0.3, positive=True),
+                                                       self._hyperparam("b_beta", 0.3, positive=True)),
+                                                       dimensions=(self.K, self.V), positive=True)
 
         with plate("tilde_v", size=self.Tilde_V):
-            beta_tilde = sample("beta_tilde", dist.Gamma(1.0, 0.3))
+            beta_tilde = self._sample("beta_tilde", dist.Gamma(self._hyperparam("a_beta_tilde", 1.0, positive=True),
+                                                               self._hyperparam("b_beta_tilde", 0.3, positive=True)),
+                                                               dimensions=(self.Tilde_V,), positive=True)
 
+        beta = jnp.array(beta)
         beta = beta.at[self.kw_indices].add(beta_tilde)
 
         with plate("k_intercept", size=self.K):
-            lambda_0 = sample(
-                "lambda_intercept", dist.Normal(self.softplus_inv_one, self.s_lambda0)
-            )
-            rho_tau = sample(
-                "rho_tau", dist.Gamma(self.a_rho_tau, self.b_rho_tau)
-            )  # tau (equation 8)
-            tau2 = sample("tau2", dist.Gamma(self.a_tau, rho_tau))  # rho | tau (equation 8)
+            lambda_0 = self._sample("lambda_intercept", dist.Normal(self._hyperparam("mu_lambda0", float(np.log(np.expm1(1.0)))),
+                                                                    self._hyperparam("s_lambda0", 1.0, positive=True),),
+                                                                    dimensions=(self.K,),)
+            rho_tau = self._sample("rho_tau", dist.Gamma(self._hyperparam("a_rho_tau", 0.5, positive=True),
+                                                         self._hyperparam("b_rho_tau", 1.0, positive=True),),
+                                                         dimensions=(self.K,), positive=True,)
+            tau2 = self._sample("tau2", dist.Gamma(self._hyperparam("a_tau", 0.5, positive=True),
+                                                   rho_tau,), dimensions=(self.K,), positive=True,)
 
         with plate("g", size=self.G, dim=-2):
             with plate("g_k", size=self.K, dim=-1):
-                rho_delta = sample(
-                    "rho_delta", dist.Gamma(self.a_rho_delta, self.b_rho_delta)
-                )  # equation 9
-                delta2 = sample(
-                    "delta2", dist.Gamma(self.a_delta, rho_delta)
-                )  # delta | rho (equation 9)
+                rho_delta = self._sample("rho_delta", dist.Gamma(self._hyperparam("a_rho_delta", 0.5, positive=True),
+                                                                 self._hyperparam("b_rho_delta", 1.0, positive=True),),
+                                                                 dimensions=(self.G, self.K), positive=True,)
+                delta2 = self._sample("delta2", dist.Gamma(self._hyperparam("a_delta", 0.5, positive=True),
+                                                           rho_delta,), dimensions=(self.G, self.K), positive=True,)
 
         group_index = jnp.asarray(self.group_index)
         delta2_per_cov = delta2[group_index, :]
@@ -207,15 +204,18 @@ class CSPF(NumpyroModel):
 
         with plate("c", size=self.C, dim=-2):
             with plate("c_k", size=self.K, dim=-1):
-                lambda_ = sample("lambda", dist.Normal(0.0, lambda_scale))
+                lambda_ = self._sample("lambda", dist.Normal(0.0, lambda_scale), dimensions=(self.C, self.K),)
 
         eta_theta = lambda_0[None, :] + jnp.matmul(self.X_design_matrix, lambda_)  # equation 2
         mu_theta = jax.nn.softplus(eta_theta)[d_batch]  # equation 2
-        theta_rate = self.b_theta / mu_theta  # equation 1
+        b_theta = self._hyperparam("b_theta", 0.3, positive=True)
+        theta_rate = b_theta / mu_theta  # equation 1
 
         with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
             with plate("d_k", size=self.K, dim=-1):
-                theta = sample("theta", dist.Gamma(self.b_theta, theta_rate))
+                theta = self._sample("theta", dist.Gamma(b_theta, theta_rate),
+                                     dimensions=(self.batch_size, self.K),
+                                     positive=True,)
 
             P = jnp.matmul(theta, beta)
 
@@ -223,93 +223,144 @@ class CSPF(NumpyroModel):
                 sample("Y_batch", dist.Poisson(P), obs=Y_batch)
 
     def _guide(self, Y_batch, d_batch):
-        a_beta = param(
-            "beta_shape", init_value=jnp.ones([self.K, self.V]), constraint=constraints.positive
-        )
-        b_beta = param(
-            "beta_rate",
-            init_value=jnp.ones([self.K, self.V]) * self.D / 1000 * 2,
-            constraint=constraints.positive,
-        )
+        if not self._is_constant("beta"):
+            a_beta = self._param(
+                "beta_shape",
+                init_value=jnp.ones([self.K, self.V]),
+                constraint=constraints.positive,
+            )
+            b_beta = self._param(
+                "beta_rate",
+                init_value=jnp.ones([self.K, self.V]) * self.D / 1000 * 2,
+                constraint=constraints.positive,
+            )
 
-        a_theta = param(
-            "theta_shape", init_value=jnp.ones([self.D, self.K]), constraint=constraints.positive
-        )
-        b_theta = param(
-            "theta_rate",
-            init_value=jnp.ones([self.D, self.K]) * self.D / 1000,
-            constraint=constraints.positive,
-        )
+            with plate("k", size=self.K, dim=-2):
+                with plate("k_v", size=self.V, dim=-1):
+                    sample("beta", dist.Gamma(a_beta, b_beta))
 
-        a_beta_tilde = param(
-            "beta_tilde_shape",
-            init_value=jnp.ones([self.Tilde_V]) * 2,
-            constraint=constraints.positive,
-        )
-        b_beta_tilde = param(
-            "beta_tilde_rate", init_value=jnp.ones([self.Tilde_V]), constraint=constraints.positive
-        )
+        if not self._is_constant("beta_tilde"):
+            a_beta_tilde = self._param(
+                "beta_tilde_shape",
+                init_value=jnp.ones([self.Tilde_V]) * 2,
+                constraint=constraints.positive,
+            )
+            b_beta_tilde = self._param(
+                "beta_tilde_rate",
+                init_value=jnp.ones([self.Tilde_V]),
+                constraint=constraints.positive,
+            )
 
-        location_lambda0 = param("lambda_intercept_location", init_value=jnp.zeros([self.K]))
-        scale_lambda0 = param(
-            "lambda_intercept_scale",
-            init_value=jnp.ones([self.K]),
-            constraint=constraints.positive,
-        )
+            with plate("tilde_v", size=self.Tilde_V):
+                sample("beta_tilde", dist.Gamma(a_beta_tilde, b_beta_tilde))
 
-        location_lambda = param("lambda_location", init_value=jnp.zeros([self.C, self.K]))
-        scale_lambda = param(
-            "lambda_scale", init_value=jnp.ones([self.C, self.K]), constraint=constraints.positive
-        )
+        if not self._is_constant("lambda_intercept"):
+            location_lambda0 = self._param(
+                "lambda_intercept_location",
+                init_value=jnp.zeros([self.K]),
+            )
+            scale_lambda0 = self._param(
+                "lambda_intercept_scale",
+                init_value=jnp.ones([self.K]),
+                constraint=constraints.positive,
+            )
 
-        a_rho_tau = param(
-            "rho_tau_shape", init_value=jnp.ones([self.K]), constraint=constraints.positive
-        )
-        b_rho_tau = param(
-            "rho_tau_rate", init_value=jnp.ones([self.K]), constraint=constraints.positive
-        )
-        a_tau2 = param("tau2_shape", init_value=jnp.ones([self.K]), constraint=constraints.positive)
-        b_tau2 = param("tau2_rate", init_value=jnp.ones([self.K]), constraint=constraints.positive)
+            with plate("k_intercept", size=self.K):
+                sample("lambda_intercept", dist.Normal(location_lambda0, scale_lambda0))
 
-        a_rho_delta = param(
-            "rho_delta_shape",
-            init_value=jnp.ones([self.G, self.K]),
-            constraint=constraints.positive,
-        )
-        b_rho_delta = param(
-            "rho_delta_rate", init_value=jnp.ones([self.G, self.K]), constraint=constraints.positive
-        )
-        a_delta2 = param(
-            "delta2_shape", init_value=jnp.ones([self.G, self.K]), constraint=constraints.positive
-        )
-        b_delta2 = param(
-            "delta2_rate", init_value=jnp.ones([self.G, self.K]), constraint=constraints.positive
-        )
+        if not self._is_constant("rho_tau"):
+            a_rho_tau = self._param(
+                "rho_tau_shape",
+                init_value=jnp.ones([self.K]),
+                constraint=constraints.positive,
+            )
+            b_rho_tau = self._param(
+                "rho_tau_rate",
+                init_value=jnp.ones([self.K]),
+                constraint=constraints.positive,
+            )
 
-        with plate("k", size=self.K, dim=-2):
-            with plate("k_v", size=self.V, dim=-1):
-                sample("beta", dist.Gamma(a_beta, b_beta))
+            with plate("k_intercept", size=self.K):
+                sample("rho_tau", dist.Gamma(a_rho_tau, b_rho_tau))
 
-        with plate("tilde_v", size=self.Tilde_V):
-            sample("beta_tilde", dist.Gamma(a_beta_tilde, b_beta_tilde))
+        if not self._is_constant("tau2"):
+            a_tau2 = self._param(
+                "tau2_shape",
+                init_value=jnp.ones([self.K]),
+                constraint=constraints.positive,
+            )
+            b_tau2 = self._param(
+                "tau2_rate",
+                init_value=jnp.ones([self.K]),
+                constraint=constraints.positive,
+            )
 
-        with plate("k_intercept", size=self.K):
-            sample("lambda_intercept", dist.Normal(location_lambda0, scale_lambda0))
-            sample("rho_tau", dist.Gamma(a_rho_tau, b_rho_tau))
-            sample("tau2", dist.Gamma(a_tau2, b_tau2))
+            with plate("k_intercept", size=self.K):
+                sample("tau2", dist.Gamma(a_tau2, b_tau2))
 
-        with plate("g", size=self.G, dim=-2):
-            with plate("g_k", size=self.K, dim=-1):
-                sample("rho_delta", dist.Gamma(a_rho_delta, b_rho_delta))
-                sample("delta2", dist.Gamma(a_delta2, b_delta2))
+        if not self._is_constant("rho_delta"):
+            a_rho_delta = self._param(
+                "rho_delta_shape",
+                init_value=jnp.ones([self.G, self.K]),
+                constraint=constraints.positive,
+            )
+            b_rho_delta = self._param(
+                "rho_delta_rate",
+                init_value=jnp.ones([self.G, self.K]),
+                constraint=constraints.positive,
+            )
 
-        with plate("c", size=self.C, dim=-2):
-            with plate("c_k", size=self.K, dim=-1):
-                sample("lambda", dist.Normal(location_lambda, scale_lambda))
+            with plate("g", size=self.G, dim=-2):
+                with plate("g_k", size=self.K, dim=-1):
+                    sample("rho_delta", dist.Gamma(a_rho_delta, b_rho_delta))
 
-        with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
-            with plate("d_k", size=self.K, dim=-1):
-                sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))
+        if not self._is_constant("delta2"):
+            a_delta2 = self._param(
+                "delta2_shape",
+                init_value=jnp.ones([self.G, self.K]),
+                constraint=constraints.positive,
+            )
+            b_delta2 = self._param(
+                "delta2_rate",
+                init_value=jnp.ones([self.G, self.K]),
+                constraint=constraints.positive,
+            )
+
+            with plate("g", size=self.G, dim=-2):
+                with plate("g_k", size=self.K, dim=-1):
+                    sample("delta2", dist.Gamma(a_delta2, b_delta2))
+
+        if not self._is_constant("lambda"):
+            location_lambda = self._param(
+                "lambda_location",
+                init_value=jnp.zeros([self.C, self.K]),
+            )
+            scale_lambda = self._param(
+                "lambda_scale",
+                init_value=jnp.ones([self.C, self.K]),
+                constraint=constraints.positive,
+            )
+
+            with plate("c", size=self.C, dim=-2):
+                with plate("c_k", size=self.K, dim=-1):
+                    sample("lambda", dist.Normal(location_lambda, scale_lambda))
+
+        if not self._is_constant("theta"):
+            a_theta = self._param(
+                "theta_shape",
+                init_value=jnp.ones([self.D, self.K]),
+                constraint=constraints.positive,
+            )
+            b_theta = self._param(
+                "theta_rate",
+                init_value=jnp.ones([self.D, self.K]) * self.D / 1000,
+                constraint=constraints.positive,
+            )
+
+            with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
+                with plate("d_k", size=self.K, dim=-1):
+                    sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))
+
 
     def return_topics(self):
         def recode_cats(argmaxes, keywords):
@@ -327,7 +378,10 @@ class CSPF(NumpyroModel):
 
             return topics
 
-        E_theta = self.estimated_params["theta_shape"] / self.estimated_params["theta_rate"]
+        if self._is_constant("theta"):
+            E_theta = np.asarray(self._constantparams["theta"])
+        else:
+            E_theta = self.estimated_params["theta_shape"] / self.estimated_params["theta_rate"]
 
         categories = np.argmax(E_theta, axis=1)
         topics = recode_cats(np.array(categories), self.keywords)
@@ -335,10 +389,17 @@ class CSPF(NumpyroModel):
         return topics, E_theta
 
     def return_beta(self):
-        E_beta = self.estimated_params["beta_shape"] / self.estimated_params["beta_rate"]
-        E_beta_tilde = (
-            self.estimated_params["beta_tilde_shape"] / self.estimated_params["beta_tilde_rate"]
-        )
+        if self._is_constant("beta"):
+            E_beta = jnp.array(self._constantparams["beta"])
+        else:
+            E_beta = self.estimated_params["beta_shape"] / self.estimated_params["beta_rate"]
+
+        if self._is_constant("beta_tilde"):
+            E_beta_tilde = jnp.array(self._constantparams["beta_tilde"])
+        else:
+            E_beta_tilde = (
+                self.estimated_params["beta_tilde_shape"] / self.estimated_params["beta_tilde_rate"]
+            )
         E_beta = E_beta.at[self.kw_indices].add(E_beta_tilde)
 
         return pd.DataFrame(jnp.transpose(E_beta), index=self.vocab, columns=self._topic_names())
@@ -352,9 +413,12 @@ class CSPF(NumpyroModel):
             DataFrame with covariates as rows and topics as columns.
         """
         index = self.covariates
-        return pd.DataFrame(
-            self.estimated_params["lambda_location"], index=index, columns=self._topic_names()
-        )
+        if self._is_constant("lambda"):
+            values = np.asarray(self._constantparams["lambda"])
+        else:
+            values = self.estimated_params["lambda_location"]
+
+        return pd.DataFrame(values, index=index, columns=self._topic_names())
 
     def return_covariate_effects_ci(self, ci: float = 0.95) -> pd.DataFrame:
         """Return covariate effects with credible intervals.
@@ -381,8 +445,13 @@ class CSPF(NumpyroModel):
         if not self.estimated_params:
             raise ValueError("Model must be trained before calling return_covariate_effects_ci()")
 
-        loc = np.asarray(self.estimated_params["lambda_location"])  # (C, K)
-        scale = np.asarray(self.estimated_params["lambda_scale"])  # (C, K)
+        if self._is_constant("lambda"):
+            loc = np.asarray(self._constantparams["lambda"])
+            scale = np.zeros_like(loc)
+        else:
+            loc = np.asarray(self.estimated_params["lambda_location"])
+            scale = np.asarray(self.estimated_params["lambda_scale"])
+
         z = sp_stats.norm.ppf(1.0 - (1.0 - ci) / 2.0)
 
         topic_names = self._topic_names()
@@ -528,8 +597,13 @@ class CSPF(NumpyroModel):
         # ================================================================
         # Lambda forest plot
         # ================================================================
-        loc = np.asarray(self.estimated_params["lambda_location"])  # (C, K)
-        scale = np.asarray(self.estimated_params["lambda_scale"])  # (C, K)
+        if self._is_constant("lambda"):
+            loc = np.asarray(self._constantparams["lambda"])
+            scale = np.zeros_like(loc)
+        else:
+            loc = np.asarray(self.estimated_params["lambda_location"])
+            scale = np.asarray(self.estimated_params["lambda_scale"])
+
         z = sp_stats.norm.ppf(1.0 - (1.0 - ci) / 2.0)
 
         n_topics = len(plot_topics)
@@ -657,8 +731,13 @@ class CSPF(NumpyroModel):
         if include_shrinkage:
             with plt.rc_context(self._setup_academic_style()):
                 # --- lambda_intercept ---
-                loc0 = np.asarray(self.estimated_params["lambda_intercept_location"])
-                scale0 = np.asarray(self.estimated_params["lambda_intercept_scale"])
+                if self._is_constant("lambda_intercept"):
+                    loc0 = np.asarray(self._constantparams["lambda_intercept"])
+                    scale0 = np.zeros_like(loc0)
+                else:
+                    loc0 = np.asarray(self.estimated_params["lambda_intercept_location"])
+                    scale0 = np.asarray(self.estimated_params["lambda_intercept_scale"])
+
                 means0 = loc0[topic_idx]
                 lo0 = means0 - z * scale0[topic_idx]
                 hi0 = means0 + z * scale0[topic_idx]
@@ -705,9 +784,14 @@ class CSPF(NumpyroModel):
                     )
 
                 # --- tau2 (global shrinkage per topic) ---
-                tau2_s = np.asarray(self.estimated_params["tau2_shape"])
-                tau2_r = np.asarray(self.estimated_params["tau2_rate"])
-                tau_mean, tau_lo, tau_hi = self._gamma_ci(tau2_s[topic_idx], tau2_r[topic_idx], ci)
+                if self._is_constant("tau2"):
+                    tau_mean = np.asarray(self._constantparams["tau2"])[topic_idx]
+                    tau_lo = tau_mean
+                    tau_hi = tau_mean
+                else:
+                    tau2_s = np.asarray(self.estimated_params["tau2_shape"])
+                    tau2_r = np.asarray(self.estimated_params["tau2_rate"])
+                    tau_mean, tau_lo, tau_hi = self._gamma_ci(tau2_s[topic_idx], tau2_r[topic_idx], ci)
 
                 fig_tau, ax_tau = plt.subplots(figsize=(4.5, max(2.5, 0.35 * n_topics)))
                 for j in range(n_topics):
@@ -750,11 +834,15 @@ class CSPF(NumpyroModel):
                     )
 
                 # --- delta2 (group shrinkage, per group × topic) ---
-                d2_s = np.asarray(self.estimated_params["delta2_shape"])  # (G, K)
-                d2_r = np.asarray(self.estimated_params["delta2_rate"])
-
-                n_groups = d2_s.shape[0]
-                grp_labels = self._group_names()
+                if self._is_constant("delta2"):
+                    d2_const = np.asarray(self._constantparams["delta2"])
+                    n_groups = d2_const.shape[0]
+                    grp_labels = self._group_names()
+                else:
+                    d2_s = np.asarray(self.estimated_params["delta2_shape"])
+                    d2_r = np.asarray(self.estimated_params["delta2_rate"])
+                    n_groups = d2_s.shape[0]
+                    grp_labels = self._group_names()
 
                 ncols_d = min(n_topics, 4)
                 nrows_d = int(np.ceil(n_topics / ncols_d))
@@ -768,14 +856,17 @@ class CSPF(NumpyroModel):
                 axes_d_flat = axes_d.flatten()
 
                 # Pre-compute global x-range for delta2 panels
-                all_d_means = []
                 all_d_los = []
                 all_d_his = []
                 for ki in topic_idx:
-                    dm, dl, dh = self._gamma_ci(d2_s[:, ki], d2_r[:, ki], ci)
-                    all_d_means.append(dm)
-                    all_d_los.append(dl)
-                    all_d_his.append(dh)
+                    if self._is_constant("delta2"):
+                        d_mean = d2_const[:, ki]
+                        d_lo = d_mean
+                        d_hi = d_mean
+                    else:
+                        d_mean, d_lo, d_hi = self._gamma_ci(d2_s[:, ki], d2_r[:, ki], ci)
+                    all_d_los.append(d_lo)
+                    all_d_his.append(d_hi)
                 d_global_xmin = float(np.min(np.concatenate(all_d_los)))
                 d_global_xmax = float(np.max(np.concatenate(all_d_his)))
                 d_x_pad = (d_global_xmax - d_global_xmin) * 0.08
@@ -784,7 +875,12 @@ class CSPF(NumpyroModel):
 
                 for panel_i, (ki, tname) in enumerate(zip(topic_idx, plot_topics)):
                     ax = axes_d_flat[panel_i]
-                    d_mean, d_lo, d_hi = self._gamma_ci(d2_s[:, ki], d2_r[:, ki], ci)
+                    if self._is_constant("delta2"):
+                        d_mean = d2_const[:, ki]
+                        d_lo = d_mean
+                        d_hi = d_mean
+                    else:
+                        d_mean, d_lo, d_hi = self._gamma_ci(d2_s[:, ki], d2_r[:, ki], ci)
                     yp = np.arange(n_groups)[::-1]
                     for j in range(n_groups):
                         ax.plot(

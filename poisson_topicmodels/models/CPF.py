@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import jax.nn as jnn
 import jax.numpy as jnp
@@ -36,6 +36,12 @@ class CPF(NumpyroModel):
     batch_size : int
         Mini-batch size for stochastic variational inference.
         Must satisfy 0 < batch_size <= D.
+    initparams : dict, optional
+        User-specified initial values for variational parameters in the guide.
+    constantparams : dict, optional
+        User-specified constant values for latent variables (not updated by SVI).
+    hyperparams : dict, optional
+        User-specified hyperparameters overriding default prior settings.
 
     Attributes
     ----------
@@ -73,6 +79,9 @@ class CPF(NumpyroModel):
         num_topics: int,
         batch_size: int,
         X_design_matrix: Optional[np.ndarray] = None,
+        initparams: Optional[Dict[str, Any]] = None,
+        constantparams: Optional[Dict[str, Any]] = None,
+        hyperparams: Optional[Dict[str, float]] = None,
     ) -> None:
         """
         Initialize the CPF model with input validation.
@@ -89,6 +98,12 @@ class CPF(NumpyroModel):
             Mini-batch size.
         X_design_matrix : np.ndarray or pd.DataFrame, optional
             Document-level covariates.
+        initparams : dict, optional
+            Initial values for variational parameters.
+        constantparams : dict, optional
+            Fixed values for latent variables.
+        hyperparams : dict, optional
+            Hyperparameters overriding default priors.
 
         Raises
         ------
@@ -97,7 +112,7 @@ class CPF(NumpyroModel):
         ValueError
             If dimensions are invalid or inconsistent.
         """
-        super().__init__()
+        super().__init__(initparams=initparams, constantparams=constantparams, hyperparams=hyperparams,)
 
         # Input validation
         if not sparse.issparse(counts):
@@ -171,12 +186,16 @@ class CPF(NumpyroModel):
         # Topic distributions
         with plate("k", size=self.K, dim=-2):
             with plate("k_v", size=self.V, dim=-1):
-                beta = sample("beta", dist.Gamma(0.3, 0.3))
+                beta = self._sample("beta", dist.Gamma(self._hyperparam("a_beta", 0.3, positive=True),
+                                                       self._hyperparam("b_beta", 0.3, positive=True),), 
+                                                       dimensions=(self.K, self.V), positive=True,)
 
         # Covariate effects
         with plate("c", size=self.C, dim=-2):
             with plate("c_k", size=self.K, dim=-1):
-                lambda_ = sample("phi", dist.Normal(0.0, 1.0))
+                lambda_ = self._sample("phi", dist.Normal(self._hyperparam("mu_lambda", 0.0),
+                                                          self._hyperparam("sigma_lambda", 1.0, positive=True),),
+                                                          dimensions=(self.C, self.K),)
 
         # Transform covariate effects via softplus
         a_theta_S = jnn.softplus(jnp.matmul(self.X_design_matrix, lambda_))[d_batch]
@@ -184,7 +203,8 @@ class CPF(NumpyroModel):
         # Document distribution
         with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
             with plate("d_k", size=self.K, dim=-1):
-                theta = sample("theta", dist.Gamma(a_theta_S, 0.3))
+                theta = self._sample("theta", dist.Gamma(a_theta_S, self._hyperparam("b_theta", 0.3, positive=True),),
+                                     dimensions=(self.batch_size, self.K), positive=True,)
 
             # Poisson rate
             P = jnp.matmul(theta, beta)
@@ -207,42 +227,49 @@ class CPF(NumpyroModel):
         d_batch : jnp.ndarray
             Document indices in batch.
         """
+ 
+        if not self._is_constant("beta"):
+            a_beta = self._param(
+                "beta_shape", init_value=jnp.ones([self.K, self.V]), constraint=constraints.positive
+            )
+            b_beta = self._param(
+                "beta_rate",
+                init_value=jnp.ones([self.K, self.V]) * self.D / 1000 * 2,
+                constraint=constraints.positive,
+            )
 
-        # Define variational parameter
-        a_beta = param(
-            "beta_shape", init_value=jnp.ones([self.K, self.V]), constraint=constraints.positive
-        )
-        b_beta = param(
-            "beta_rate",
-            init_value=jnp.ones([self.K, self.V]) * self.D / 1000 * 2,
-            constraint=constraints.positive,
-        )
+            with plate("k", size=self.K, dim=-2):
+                with plate("k_v", size=self.V, dim=-1):
+                    sample("beta", dist.Gamma(a_beta, b_beta))
 
-        a_theta = param(
-            "theta_shape", init_value=jnp.ones([self.D, self.K]), constraint=constraints.positive
-        )
-        b_theta = param(
-            "theta_rate",
-            init_value=jnp.ones([self.D, self.K]) * self.D / 1000,
-            constraint=constraints.positive,
-        )
+        if not self._is_constant("phi"):
+            location_lambda = self._param(
+                "lambda_location", init_value=jnp.zeros([self.C, self.K])
+            )
+            scale_lambda = self._param(
+                "lambda_scale",
+                init_value=jnp.ones([self.C, self.K]),
+                constraint=constraints.positive,
+            )
 
-        location_lambda = param("lambda_location", init_value=jnp.zeros([self.C, self.K]))
-        scale_lambda = param(
-            "lambda_scale", init_value=jnp.ones([self.C, self.K]), constraint=constraints.positive
-        )
+            with plate("c", size=self.C, dim=-2):
+                with plate("c_k", size=self.K, dim=-1):
+                    sample("phi", dist.Normal(location_lambda, scale_lambda))
 
-        with plate("k", size=self.K, dim=-2):
-            with plate("k_v", size=self.V, dim=-1):
-                sample("beta", dist.Gamma(a_beta, b_beta))
+        if not self._is_constant("theta"):
+            a_theta = self._param(
+                "theta_shape", init_value=jnp.ones([self.D, self.K]), constraint=constraints.positive
+            )
+            b_theta = self._param(
+                "theta_rate",
+                init_value=jnp.ones([self.D, self.K]) * self.D / 1000,
+                constraint=constraints.positive,
+            )
 
-        with plate("c", size=self.C, dim=-2):
-            with plate("c_k", size=self.K, dim=-1):
-                sample("phi", dist.Normal(location_lambda, scale_lambda))
+            with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
+                with plate("d_k", size=self.K, dim=-1):
+                    sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))
 
-        with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
-            with plate("d_k", size=self.K, dim=-1):
-                sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))
 
     def return_covariate_effects(self) -> pd.DataFrame:
         """Return point estimates of covariate effects (lambda).
@@ -261,8 +288,14 @@ class CPF(NumpyroModel):
             raise ValueError("Model must be trained before calling return_covariate_effects()")
 
         topic_names = [f"topic_{i + 1}" for i in range(self.K)]
+
+        if self._is_constant("phi"):
+            E_lambda = np.asarray(self._constantparams["phi"])
+        else:
+            E_lambda = np.asarray(self.estimated_params["lambda_location"])
+
         return pd.DataFrame(
-            np.asarray(self.estimated_params["lambda_location"]),
+            E_lambda,
             index=self.covariates,
             columns=topic_names,
         )
@@ -292,8 +325,13 @@ class CPF(NumpyroModel):
         if not self.estimated_params:
             raise ValueError("Model must be trained before calling return_covariate_effects_ci()")
 
-        loc = np.asarray(self.estimated_params["lambda_location"])  # (C, K)
-        scale = np.asarray(self.estimated_params["lambda_scale"])  # (C, K)
+        if self._is_constant("phi"):
+            loc = np.asarray(self._constantparams["phi"]) 
+            scale = np.zeros_like(loc)
+        else:
+            loc = np.asarray(self.estimated_params["lambda_location"])  # (C, K)
+            scale = np.asarray(self.estimated_params["lambda_scale"])  # (C, K)
+
         z = sp_stats.norm.ppf(1.0 - (1.0 - ci) / 2.0)
 
         topic_names = [f"topic_{i + 1}" for i in range(self.K)]
@@ -350,8 +388,13 @@ class CPF(NumpyroModel):
             plot_topics = topic_names
             topic_idx = list(range(self.K))
 
-        loc = np.asarray(self.estimated_params["lambda_location"])  # (C, K)
-        scale = np.asarray(self.estimated_params["lambda_scale"])  # (C, K)
+        if self._is_constant("phi"):
+            loc = np.asarray(self._constantparams["phi"]) 
+            scale = np.zeros_like(loc)
+        else:
+            loc = np.asarray(self.estimated_params["lambda_location"])  # (C, K)
+            scale = np.asarray(self.estimated_params["lambda_scale"])  # (C, K)
+
         z = sp_stats.norm.ppf(1.0 - (1.0 - ci) / 2.0)
 
         n_topics = len(plot_topics)
