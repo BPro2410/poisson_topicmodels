@@ -30,7 +30,7 @@ V = 200  # Vocabulary size
 counts = sparse.random(D, V, density=0.05, format="csr", dtype=np.float32)
 
 # Create vocabulary with some recognizable terms
-vocab = np.array([f"word_{i}" for i in range(V)])
+vocab = np.array([f"word_{i}" for i in range(V)], dtype=object)
 
 # For this example, let's create some meaningful vocabulary
 vocab[0:5] = ["climate", "weather", "temperature", "environment", "sustainability"]
@@ -107,6 +107,13 @@ params = model.train_step(
 
 print("✓ Training completed")
 print(f"✓ Final loss: {model.Metrics.loss[-1]:.4f}")
+print()
+
+# Inspect customizable parameters. 
+print("Available parameter groups:", model.input_params().keys())
+print("Initializable variables:", model.input_params()["initialized_variables"].keys())
+print("Constant latent variables:", model.input_params()["latent_constant_variables"].keys())
+print("Hyperparameters:", model.input_params()["hyperparameters"].keys())
 print()
 
 # ============================================================================

@@ -34,7 +34,7 @@ C = 2  # Number of covariates
 counts = sparse.random(D, V, density=0.05, format="csr", dtype=np.float32)
 
 # Create vocabulary
-vocab = np.array([f"word_{i}" for i in range(V)])
+vocab = np.array([f"word_{i}" for i in range(V)], dtype=object)
 
 # Add some meaningful terms
 vocab[0:5] = ["climate", "weather", "environment", "sustainability", "carbon"]
@@ -170,6 +170,13 @@ cspf_params = cspf_model.train_step(
 print(f"  ✓ Final loss: {cspf_model.Metrics.loss[-1]:.4f}")
 print()
 
+# Inspect customizable parameters. 
+print("Available parameter groups:", cspf_model.input_params().keys())
+print("Initializable variables:", cspf_model.input_params()["initialized_variables"].keys())
+print("Constant latent variables:", cspf_model.input_params()["latent_constant_variables"].keys())
+print("Hyperparameters:", cspf_model.input_params()["hyperparameters"].keys())
+print()
+
 # ============================================================================
 # STEP 4: Loss Comparison
 # ============================================================================
@@ -252,7 +259,8 @@ print(cspf_effects_ci.head(10))
 print()
 
 # Forest plot of CSPF covariate effects
-cspf_fig, cspf_axes = cspf_model.plot_cov_effects(ci=0.90)
+plots = cspf_model.plot_cov_effects(ci=0.90)
+cspf_fig, cspf_axes = plots["lambda"]
 print("  ✓ Generated CSPF covariate effects forest plot")
 print()
 

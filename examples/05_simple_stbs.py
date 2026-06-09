@@ -122,6 +122,9 @@ print("-" * 50)
 num_topics = 10
 batch_size = 64
 
+i_mu_init = jnp.tile(i_mu_init[:, None], (1, num_topics))
+print(i_mu_init.shape)
+
 model = STBS(
     counts=counts,
     vocab=vocab,
@@ -129,7 +132,7 @@ model = STBS(
     batch_size=batch_size,
     authors=authors_doc,
     X_design_matrix=covariate_df,
-    i_mu_init=i_mu_init,
+    initparams={"mu_i": i_mu_init}
 )
 
 print("✓ Initialised STBS model")
@@ -240,7 +243,7 @@ group_labels = {-1: "D", 0: "I", 1: "R"}
 group_palette = {"D": "dodgerblue", "I": "gray", "R": "red"}
 
 fig, ax = model.plot_ideol_points(
-    group_var=np.array(i_mu_init),
+    group_var=np.array(i_mu_init[:, 0]),
     group_labels=group_labels,
     group_palette=group_palette,
 )

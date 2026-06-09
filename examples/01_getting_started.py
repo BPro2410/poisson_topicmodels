@@ -54,12 +54,22 @@ model = PF(
     vocab=vocab,
     num_topics=num_topics,
     batch_size=batch_size,
+    # Optionally, one can user-specify some parameters. 
+    initparams={}, 
+    hyperparams={},
+    constantparams={},
 )
 
 print("✓ Initialized Poisson Factorization model")
 print(f"✓ Number of topics: {num_topics}")
 print(f"✓ Batch size: {batch_size}")
 print(f"✓ Model dimensions: {model.D} documents, {model.V} vocabulary terms")
+print()
+
+print("Optional configuration:")
+print("  - initparams: provide custom initial values for variational params")
+print("  - hyperparams: set priors, e.g. {'a_beta': 0.5, 'b_beta': 1.0}")
+print("  - constantparams: fix specific latent variables to given values")
 print()
 
 # ============================================================================
@@ -83,6 +93,23 @@ print("✓ Training completed")
 print(f"✓ Trained for {num_steps} steps with learning rate {learning_rate}")
 print(f"✓ Final loss: {model.Metrics.loss[-1]:.4f}")
 print(f"✓ Loss history: {len(model.Metrics.loss)} values tracked")
+print()
+
+# Inspect user-specified settings (and see which variables can be customized).
+print("Available parameter groups:", model.input_params().keys())
+print("Initializable variables:", model.input_params()["initialized_variables"].keys())
+print("Constant latent variables:", model.input_params()["latent_constant_variables"].keys())
+print("Hyperparameters:", model.input_params()["hyperparameters"].keys())
+print()
+
+print("Full initialization map:")
+print(model.input_params()["initialized_variables"])
+print()
+print("Full constant-latent map:")
+print(model.input_params()["latent_constant_variables"])
+print()
+print("Full hyperparameter map:")
+print(model.input_params()["hyperparameters"])
 print()
 
 # ============================================================================
