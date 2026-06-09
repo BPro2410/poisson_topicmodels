@@ -8,7 +8,7 @@ import numpyro.distributions as dist
 import pandas as pd
 import scipy.sparse as sparse
 from jax import jit, random
-from numpyro import param, plate, sample
+from numpyro import plate, sample
 from numpyro.distributions import constraints
 from numpyro.infer import SVI, TraceMeanField_ELBO
 from optax import adam
@@ -71,7 +71,9 @@ class TBIP(NumpyroModel):
             If dimensions are invalid or time_varying parameters have wrong shape.
         """
 
-        super().__init__(initparams=initparams, constantparams=constantparams, hyperparams=hyperparams)
+        super().__init__(
+            initparams=initparams, constantparams=constantparams, hyperparams=hyperparams
+        )
 
         # Input validation
         if not sparse.issparse(counts):
@@ -116,7 +118,6 @@ class TBIP(NumpyroModel):
                 "the estimated parameters in t. See documentation for more details."
             )
 
-
     def _model(self, Y_batch: jnp.ndarray, d_batch: jnp.ndarray, i_batch: jnp.ndarray) -> None:  # type: ignore[override]
         """Define the probabilistic model using NumPyro.
 
@@ -139,25 +140,49 @@ class TBIP(NumpyroModel):
 
         with plate("i", self.N):
             # Sample the per-unit latent variables (ideal points)
-            x = self._sample("x", dist.Normal(loc=self._hyperparam("mu_x_prior", 0.0),
-                                              scale=self._hyperparam("sigma_x_prior", 1.0, positive=True),),
-                                              dimensions=(self.N,),)
+            x = self._sample(
+                "x",
+                dist.Normal(
+                    loc=self._hyperparam("mu_x_prior", 0.0),
+                    scale=self._hyperparam("sigma_x_prior", 1.0, positive=True),
+                ),
+                dimensions=(self.N,),
+            )
 
         with plate("k", size=self.K, dim=-2):
             with plate("k_v", size=self.V, dim=-1):
-                beta = self._sample("beta", dist.Gamma(self._hyperparam("a_beta", 0.3, positive=True),
-                                                       self._hyperparam("b_beta", 0.3, positive=True),),
-                                                       dimensions=(self.K, self.V), positive=True,)
-                eta = self._sample("eta", dist.Normal(loc=self._hyperparam("mu_eta_prior", 0.0),
-                                                      scale=self._hyperparam("sigma_eta_prior", 1.0, positive=True),),
-                                                      dimensions=(self.K, self.V),)
+                beta = self._sample(
+                    "beta",
+                    dist.Gamma(
+                        self._hyperparam("a_beta", 0.3, positive=True),
+                        self._hyperparam("b_beta", 0.3, positive=True),
+                    ),
+                    dimensions=(self.K, self.V),
+                    positive=True,
+                )
+
+                eta = self._sample(
+                    "eta",
+                    dist.Normal(
+                        loc=self._hyperparam("mu_eta_prior", 0.0),
+                        scale=self._hyperparam("sigma_eta_prior", 1.0, positive=True),
+                    ),
+                    dimensions=(self.K, self.V),
+                )
 
         with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
             with plate("d_k", size=self.K, dim=-1):
                 # Sample document-level latent variables (topic intensities)
-                theta = self._sample("theta", dist.Gamma(self._hyperparam("a_theta", 0.3, positive=True),
-                                                         self._hyperparam("b_theta", 0.3, positive=True),),
-                                                         dimensions=(self.batch_size, self.K), positive=True,)
+                theta = self._sample(
+                    "theta",
+                    dist.Gamma(
+                        self._hyperparam("a_theta", 0.3, positive=True),
+                        self._hyperparam("b_theta", 0.3, positive=True),
+                    ),
+                    dimensions=(self.batch_size, self.K),
+                    positive=True,
+                )
+
             # Compute Poisson rates for each word
             P = jnp.sum(
                 jnp.expand_dims(theta, 2)
@@ -242,7 +267,6 @@ class TBIP(NumpyroModel):
             with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
                 with plate("d_k", size=self.K, dim=-1):
                     sample("theta", dist.LogNormal(mu_theta[d_batch], sigma_theta[d_batch]))
-
 
     def _get_batch(
         self, rng: jnp.ndarray, Y: sparse.csr_matrix
@@ -469,7 +493,7 @@ class TBIP(NumpyroModel):
             mu_eta = np.asarray(self._constantparams["eta"])
         else:
             mu_eta = np.asarray(self.estimated_params["mu_eta"])
-            
+
         eta_k = mu_eta[topic, :]
 
         # Top positive

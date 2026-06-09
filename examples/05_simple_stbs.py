@@ -132,7 +132,7 @@ model = STBS(
     batch_size=batch_size,
     authors=authors_doc,
     X_design_matrix=covariate_df,
-    initparams={"mu_i": i_mu_init}
+    initparams={"mu_i": i_mu_init},
 )
 
 print("✓ Initialised STBS model")

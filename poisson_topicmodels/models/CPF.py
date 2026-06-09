@@ -7,7 +7,7 @@ import numpy as np
 import numpyro.distributions as dist
 import pandas as pd
 import scipy.sparse as sparse
-from numpyro import param, plate, sample
+from numpyro import plate, sample
 from numpyro.distributions import constraints
 from scipy import stats as sp_stats
 
@@ -112,7 +112,11 @@ class CPF(NumpyroModel):
         ValueError
             If dimensions are invalid or inconsistent.
         """
-        super().__init__(initparams=initparams, constantparams=constantparams, hyperparams=hyperparams,)
+        super().__init__(
+            initparams=initparams,
+            constantparams=constantparams,
+            hyperparams=hyperparams,
+        )
 
         # Input validation
         if not sparse.issparse(counts):
@@ -186,16 +190,26 @@ class CPF(NumpyroModel):
         # Topic distributions
         with plate("k", size=self.K, dim=-2):
             with plate("k_v", size=self.V, dim=-1):
-                beta = self._sample("beta", dist.Gamma(self._hyperparam("a_beta", 0.3, positive=True),
-                                                       self._hyperparam("b_beta", 0.3, positive=True),), 
-                                                       dimensions=(self.K, self.V), positive=True,)
-
+                beta = self._sample(
+                    "beta",
+                    dist.Gamma(
+                        self._hyperparam("a_beta", 0.3, positive=True),
+                        self._hyperparam("b_beta", 0.3, positive=True),
+                    ),
+                    dimensions=(self.K, self.V),
+                    positive=True,
+                )
         # Covariate effects
         with plate("c", size=self.C, dim=-2):
             with plate("c_k", size=self.K, dim=-1):
-                lambda_ = self._sample("phi", dist.Normal(self._hyperparam("mu_lambda", 0.0),
-                                                          self._hyperparam("sigma_lambda", 1.0, positive=True),),
-                                                          dimensions=(self.C, self.K),)
+                lambda_ = self._sample(
+                    "phi",
+                    dist.Normal(
+                        self._hyperparam("mu_lambda", 0.0),
+                        self._hyperparam("sigma_lambda", 1.0, positive=True),
+                    ),
+                    dimensions=(self.C, self.K),
+                )
 
         # Transform covariate effects via softplus
         a_theta_S = jnn.softplus(jnp.matmul(self.X_design_matrix, lambda_))[d_batch]
@@ -203,8 +217,15 @@ class CPF(NumpyroModel):
         # Document distribution
         with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
             with plate("d_k", size=self.K, dim=-1):
-                theta = self._sample("theta", dist.Gamma(a_theta_S, self._hyperparam("b_theta", 0.3, positive=True),),
-                                     dimensions=(self.batch_size, self.K), positive=True,)
+                theta = self._sample(
+                    "theta",
+                    dist.Gamma(
+                        a_theta_S,
+                        self._hyperparam("b_theta", 0.3, positive=True),
+                    ),
+                    dimensions=(self.batch_size, self.K),
+                    positive=True,
+                )
 
             # Poisson rate
             P = jnp.matmul(theta, beta)
@@ -227,7 +248,7 @@ class CPF(NumpyroModel):
         d_batch : jnp.ndarray
             Document indices in batch.
         """
- 
+
         if not self._is_constant("beta"):
             a_beta = self._param(
                 "beta_shape", init_value=jnp.ones([self.K, self.V]), constraint=constraints.positive
@@ -243,9 +264,7 @@ class CPF(NumpyroModel):
                     sample("beta", dist.Gamma(a_beta, b_beta))
 
         if not self._is_constant("phi"):
-            location_lambda = self._param(
-                "lambda_location", init_value=jnp.zeros([self.C, self.K])
-            )
+            location_lambda = self._param("lambda_location", init_value=jnp.zeros([self.C, self.K]))
             scale_lambda = self._param(
                 "lambda_scale",
                 init_value=jnp.ones([self.C, self.K]),
@@ -258,7 +277,9 @@ class CPF(NumpyroModel):
 
         if not self._is_constant("theta"):
             a_theta = self._param(
-                "theta_shape", init_value=jnp.ones([self.D, self.K]), constraint=constraints.positive
+                "theta_shape",
+                init_value=jnp.ones([self.D, self.K]),
+                constraint=constraints.positive,
             )
             b_theta = self._param(
                 "theta_rate",
@@ -269,7 +290,6 @@ class CPF(NumpyroModel):
             with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
                 with plate("d_k", size=self.K, dim=-1):
                     sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))
-
 
     def return_covariate_effects(self) -> pd.DataFrame:
         """Return point estimates of covariate effects (lambda).
@@ -326,7 +346,7 @@ class CPF(NumpyroModel):
             raise ValueError("Model must be trained before calling return_covariate_effects_ci()")
 
         if self._is_constant("phi"):
-            loc = np.asarray(self._constantparams["phi"]) 
+            loc = np.asarray(self._constantparams["phi"])
             scale = np.zeros_like(loc)
         else:
             loc = np.asarray(self.estimated_params["lambda_location"])  # (C, K)
@@ -389,7 +409,7 @@ class CPF(NumpyroModel):
             topic_idx = list(range(self.K))
 
         if self._is_constant("phi"):
-            loc = np.asarray(self._constantparams["phi"]) 
+            loc = np.asarray(self._constantparams["phi"])
             scale = np.zeros_like(loc)
         else:
             loc = np.asarray(self.estimated_params["lambda_location"])  # (C, K)

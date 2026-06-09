@@ -7,7 +7,7 @@ import numpy as np
 import numpyro.distributions as dist
 import pandas as pd
 import scipy.sparse as sparse
-from numpyro import param, plate, sample
+from numpyro import plate, sample
 from numpyro.distributions import constraints
 from scipy import stats as sp_stats
 
@@ -34,7 +34,9 @@ class CSPF(NumpyroModel):
         constantparams: Optional[Dict[str, Any]] = None,
         hyperparams: Optional[Dict[str, float]] = None,
     ) -> None:
-        super().__init__(initparams=initparams, constantparams=constantparams, hyperparams=hyperparams)
+        super().__init__(
+            initparams=initparams, constantparams=constantparams, hyperparams=hyperparams
+        )
 
         if not sparse.issparse(counts):
             raise TypeError(f"counts must be a scipy sparse matrix, got {type(counts).__name__}")
@@ -112,7 +114,6 @@ class CSPF(NumpyroModel):
         self.G = int(self.group_index.max()) + 1 if self.C > 0 else 0
         self.group_scaling_diag = self._compute_group_scaling_diag(x_np, self.group_index, self.G)
 
-        
     @staticmethod
     def _build_group_index(covariate_names: List[str]) -> np.ndarray:
         """
@@ -167,35 +168,75 @@ class CSPF(NumpyroModel):
     def _model(self, Y_batch: jnp.ndarray, d_batch: jnp.ndarray) -> None:
         with plate("k", size=self.K, dim=-2):
             with plate("k_v", size=self.V, dim=-1):
-                beta = self._sample("beta", dist.Gamma(self._hyperparam("a_beta", 0.3, positive=True),
-                                                       self._hyperparam("b_beta", 0.3, positive=True)),
-                                                       dimensions=(self.K, self.V), positive=True)
+                beta = self._sample(
+                    "beta",
+                    dist.Gamma(
+                        self._hyperparam("a_beta", 0.3, positive=True),
+                        self._hyperparam("b_beta", 0.3, positive=True),
+                    ),
+                    dimensions=(self.K, self.V),
+                    positive=True,
+                )
 
         with plate("tilde_v", size=self.Tilde_V):
-            beta_tilde = self._sample("beta_tilde", dist.Gamma(self._hyperparam("a_beta_tilde", 1.0, positive=True),
-                                                               self._hyperparam("b_beta_tilde", 0.3, positive=True)),
-                                                               dimensions=(self.Tilde_V,), positive=True)
+            beta_tilde = self._sample(
+                "beta_tilde",
+                dist.Gamma(
+                    self._hyperparam("a_beta_tilde", 1.0, positive=True),
+                    self._hyperparam("b_beta_tilde", 0.3, positive=True),
+                ),
+                dimensions=(self.Tilde_V,),
+                positive=True,
+            )
 
         beta = jnp.array(beta)
         beta = beta.at[self.kw_indices].add(beta_tilde)
 
         with plate("k_intercept", size=self.K):
-            lambda_0 = self._sample("lambda_intercept", dist.Normal(self._hyperparam("mu_lambda0", float(np.log(np.expm1(1.0)))),
-                                                                    self._hyperparam("s_lambda0", 1.0, positive=True),),
-                                                                    dimensions=(self.K,),)
-            rho_tau = self._sample("rho_tau", dist.Gamma(self._hyperparam("a_rho_tau", 0.5, positive=True),
-                                                         self._hyperparam("b_rho_tau", 1.0, positive=True),),
-                                                         dimensions=(self.K,), positive=True,)
-            tau2 = self._sample("tau2", dist.Gamma(self._hyperparam("a_tau", 0.5, positive=True),
-                                                   rho_tau,), dimensions=(self.K,), positive=True,)
+            lambda_0 = self._sample(
+                "lambda_intercept",
+                dist.Normal(
+                    self._hyperparam("mu_lambda0", float(np.log(np.expm1(1.0)))),
+                    self._hyperparam("s_lambda0", 1.0, positive=True),
+                ),
+                dimensions=(self.K,),
+            )
+
+            rho_tau = self._sample(
+                "rho_tau",
+                dist.Gamma(
+                    self._hyperparam("a_rho_tau", 0.5, positive=True),
+                    self._hyperparam("b_rho_tau", 1.0, positive=True),
+                ),
+                dimensions=(self.K,),
+                positive=True,
+            )
+
+            tau2 = self._sample(
+                "tau2",
+                dist.Gamma(self._hyperparam("a_tau", 0.5, positive=True), rho_tau),
+                dimensions=(self.K,),
+                positive=True,
+            )
 
         with plate("g", size=self.G, dim=-2):
             with plate("g_k", size=self.K, dim=-1):
-                rho_delta = self._sample("rho_delta", dist.Gamma(self._hyperparam("a_rho_delta", 0.5, positive=True),
-                                                                 self._hyperparam("b_rho_delta", 1.0, positive=True),),
-                                                                 dimensions=(self.G, self.K), positive=True,)
-                delta2 = self._sample("delta2", dist.Gamma(self._hyperparam("a_delta", 0.5, positive=True),
-                                                           rho_delta,), dimensions=(self.G, self.K), positive=True,)
+                rho_delta = self._sample(
+                    "rho_delta",
+                    dist.Gamma(
+                        self._hyperparam("a_rho_delta", 0.5, positive=True),
+                        self._hyperparam("b_rho_delta", 1.0, positive=True),
+                    ),
+                    dimensions=(self.G, self.K),
+                    positive=True,
+                )
+
+                delta2 = self._sample(
+                    "delta2",
+                    dist.Gamma(self._hyperparam("a_delta", 0.5, positive=True), rho_delta),
+                    dimensions=(self.G, self.K),
+                    positive=True,
+                )
 
         group_index = jnp.asarray(self.group_index)
         delta2_per_cov = delta2[group_index, :]
@@ -204,7 +245,11 @@ class CSPF(NumpyroModel):
 
         with plate("c", size=self.C, dim=-2):
             with plate("c_k", size=self.K, dim=-1):
-                lambda_ = self._sample("lambda", dist.Normal(0.0, lambda_scale), dimensions=(self.C, self.K),)
+                lambda_ = self._sample(
+                    "lambda",
+                    dist.Normal(0.0, lambda_scale),
+                    dimensions=(self.C, self.K),
+                )
 
         eta_theta = lambda_0[None, :] + jnp.matmul(self.X_design_matrix, lambda_)  # equation 2
         mu_theta = jax.nn.softplus(eta_theta)[d_batch]  # equation 2
@@ -213,9 +258,12 @@ class CSPF(NumpyroModel):
 
         with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
             with plate("d_k", size=self.K, dim=-1):
-                theta = self._sample("theta", dist.Gamma(b_theta, theta_rate),
-                                     dimensions=(self.batch_size, self.K),
-                                     positive=True,)
+                theta = self._sample(
+                    "theta",
+                    dist.Gamma(b_theta, theta_rate),
+                    dimensions=(self.batch_size, self.K),
+                    positive=True,
+                )
 
             P = jnp.matmul(theta, beta)
 
@@ -360,7 +408,6 @@ class CSPF(NumpyroModel):
             with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
                 with plate("d_k", size=self.K, dim=-1):
                     sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))
-
 
     def return_topics(self):
         def recode_cats(argmaxes, keywords):
@@ -791,7 +838,9 @@ class CSPF(NumpyroModel):
                 else:
                     tau2_s = np.asarray(self.estimated_params["tau2_shape"])
                     tau2_r = np.asarray(self.estimated_params["tau2_rate"])
-                    tau_mean, tau_lo, tau_hi = self._gamma_ci(tau2_s[topic_idx], tau2_r[topic_idx], ci)
+                    tau_mean, tau_lo, tau_hi = self._gamma_ci(
+                        tau2_s[topic_idx], tau2_r[topic_idx], ci
+                    )
 
                 fig_tau, ax_tau = plt.subplots(figsize=(4.5, max(2.5, 0.35 * n_topics)))
                 for j in range(n_topics):

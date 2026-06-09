@@ -482,7 +482,7 @@ class TestEdgeCases:
     def test_spf_large_number_of_keywords(self, small_dtm, small_vocab):
         """SPF should handle many keywords."""
         # Create keywords for many topics
-        keywords = {i: [f"word_{i}", f"word_{i+1}"] for i in range(0, 20, 2)}
+        keywords = {i: [f"word_{i}", f"word_{i + 1}"] for i in range(0, 20, 2)}
         model = SPF(
             small_dtm,
             small_vocab,

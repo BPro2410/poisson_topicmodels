@@ -54,8 +54,8 @@ model = PF(
     vocab=vocab,
     num_topics=num_topics,
     batch_size=batch_size,
-    # Optionally, one can user-specify some parameters. 
-    initparams={}, 
+    # Optionally, one can user-specify some parameters.
+    initparams={},
     hyperparams={},
     constantparams={},
 )

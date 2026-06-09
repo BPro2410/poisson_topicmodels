@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Tuple
-import warnings
 
 import jax
 import jax.numpy as jnp
@@ -9,9 +8,9 @@ import numpy as np
 import pandas as pd
 import scipy.sparse as sparse
 from jax import jit, random
-from numpyro.infer import SVI, TraceMeanField_ELBO
-from numpyro.distributions import constraints
 from numpyro import param, sample
+from numpyro.distributions import constraints
+from numpyro.infer import SVI, TraceMeanField_ELBO
 from optax import adam
 from tqdm import tqdm
 from wordcloud import WordCloud
@@ -44,16 +43,18 @@ class NumpyroModel(ABC):
         Number of topics.
     """
 
-    def __init__(self, 
-                initparams: Optional[Dict[str, Any]] = None, 
-                constantparams: Optional[Dict[str, Any]] = None, 
-                hyperparams: Optional[Dict[str, float]] = None) -> None:
+    def __init__(
+        self,
+        initparams: Optional[Dict[str, Any]] = None,
+        constantparams: Optional[Dict[str, Any]] = None,
+        hyperparams: Optional[Dict[str, float]] = None,
+    ) -> None:
         """Initialize base model with per-instance metrics."""
         self.Metrics = Metrics(loss=[])
         self.estimated_params: Dict[str, Any] = {}
         self._initparams: Dict[str, Any] = initparams or {}
         self._constantparams: Dict[str, Any] = constantparams or {}
-        self._hyperparams: Dict[str, float] = hyperparams or {} 
+        self._hyperparams: Dict[str, float] = hyperparams or {}
         # These will be set by child classes, declared here for type checking
         self.D: int
         self.V: int
@@ -65,34 +66,40 @@ class NumpyroModel(ABC):
 
     def _param(self, name: str, init_value: Any, constraint=constraints.real) -> Any:
         """Optionally define user-specific initialization variables for estimating
-        the variational families in the guide. If no variables are defined, then 
+        the variational families in the guide. If no variables are defined, then
         the default initialization will be used to initialize the guide."""
-        if self._initparams is None: 
+        if self._initparams is None:
             self._initparams = {}
 
         value = self._initparams.get(name, init_value)
 
         if callable(value):
             raise TypeError(f"Constant latent variable '{name}' must be a value, not a callable.")
-        
+
         value = jnp.asarray(value, dtype=jnp.float32)
         if value.shape != init_value.shape:
-            raise ValueError(f"Initialization of '{name}' has shape {value.shape}, expected {jnp.asarray(init_value).shape}.")
-    
+            raise ValueError(
+                f"Initialization of '{name}' has shape {value.shape}, expected {jnp.asarray(init_value).shape}."
+            )
+
         self._initparams[name] = value
         return param(name, init_value=value, constraint=constraint)
 
     def _is_constant(self, name: str) -> bool:
         """A helper function that turns off guide sampling for constant latent variables. If True, then
         the variational family for the constant latent variable is not estimated by the model."""
-        return(self._constantparams is not None
-               and name in self._constantparams
-               and self._constantparams[name] is not None)
+        return (
+            self._constantparams is not None
+            and name in self._constantparams
+            and self._constantparams[name] is not None
+        )
 
-    def _sample(self, name: str, distribution, dimensions: Tuple[int, ...], positive: bool = False) -> Any:
-        """Optionally define constant latent variables. If defined, these variables will be held constant 
+    def _sample(
+        self, name: str, distribution, dimensions: Tuple[int, ...], positive: bool = False
+    ) -> Any:
+        """Optionally define constant latent variables. If defined, these variables will be held constant
         and will not be estimated by the model. If None then all variables will be estimated."""
-        if self._constantparams is None: 
+        if self._constantparams is None:
             self._constantparams = {}
 
         value = self._constantparams.setdefault(name, None)
@@ -102,20 +109,24 @@ class NumpyroModel(ABC):
 
         if callable(value):
             raise TypeError(f"Constant latent variable '{name}' must be a value, not a callable.")
-        
+
         value = np.asarray(value, dtype=np.float32)
         if value.shape != tuple(dimensions):
-            raise ValueError(f"Constant latent variable '{name}' has shape {value.shape}, expected {dimensions}.")
+            raise ValueError(
+                f"Constant latent variable '{name}' has shape {value.shape}, expected {dimensions}."
+            )
         if positive and not np.all(value > 0):
-            raise ValueError(f"Constant latent variable '{name}' must be > 0 elementwise, got {value}.")
-    
+            raise ValueError(
+                f"Constant latent variable '{name}' must be > 0 elementwise, got {value}."
+            )
+
         self._constantparams[name] = value
         return value
-    
+
     def _hyperparam(self, name: str, default: Any, positive: bool = False) -> Any:
-        """Optionally define user-specific hyperparameters. If no hyperparameters are 
+        """Optionally define user-specific hyperparameters. If no hyperparameters are
         defined, then the default is used."""
-        if self._hyperparams is None: 
+        if self._hyperparams is None:
             self._hyperparams = {}
 
         value = self._hyperparams.get(name, default)
@@ -280,12 +291,16 @@ class NumpyroModel(ABC):
         self._dense_counts_cache = None
 
         return self.estimated_params
-    
+
     def input_params(self) -> dict:
         """Return user-defined variable settings."""
-        return {"initialized_variables": {} if self._initparams is None else self._initparams.copy(),
-                "latent_constant_variables": {} if self._constantparams is None else self._constantparams.copy(),
-                "hyperparameters": {} if self._hyperparams is None else self._hyperparams.copy(),}
+        return {
+            "initialized_variables": {} if self._initparams is None else self._initparams.copy(),
+            "latent_constant_variables": {}
+            if self._constantparams is None
+            else self._constantparams.copy(),
+            "hyperparameters": {} if self._hyperparams is None else self._hyperparams.copy(),
+        }
 
     def return_topics(self) -> Tuple[np.ndarray, np.ndarray]:
         """

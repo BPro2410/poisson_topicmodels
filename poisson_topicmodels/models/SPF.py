@@ -6,7 +6,7 @@ import numpy as np
 import numpyro.distributions as dist
 import pandas as pd
 import scipy.sparse as sparse
-from numpyro import param, plate, sample
+from numpyro import plate, sample
 from numpyro.distributions import constraints
 
 # Abstract class - defining the minimum requirements for the probabilistic model
@@ -115,7 +115,9 @@ class SPF(NumpyroModel):
         ValueError
             If dimensions are invalid or keywords contain unknown terms.
         """
-        super().__init__(initparams=initparams, constantparams=constantparams, hyperparams=hyperparams)
+        super().__init__(
+            initparams=initparams, constantparams=constantparams, hyperparams=hyperparams
+        )
 
         # Input validation
         if not sparse.issparse(counts):
@@ -196,16 +198,27 @@ class SPF(NumpyroModel):
         # Topic-word distributions: Beta ~ Gamma(0.3, 0.3)
         with plate("k", size=self.K, dim=-2):
             with plate("k_v", size=self.V, dim=-1):
-                beta = self._sample("beta", dist.Gamma(self._hyperparam("a_beta", 0.3, positive=True), 
-                                                       self._hyperparam("b_beta", 0.3, positive=True)), 
-                                                       dimensions=(self.K, self.V), positive=True)
+                beta = self._sample(
+                    "beta",
+                    dist.Gamma(
+                        self._hyperparam("a_beta", 0.3, positive=True),
+                        self._hyperparam("b_beta", 0.3, positive=True),
+                    ),
+                    dimensions=(self.K, self.V),
+                    positive=True,
+                )
 
         # Boost for seed words: Beta_tilde ~ Gamma(1, 0.3)
         with plate("tilde_v", size=self.Tilde_V):
-            beta_tilde = self._sample("beta_tilde", dist.Gamma(self._hyperparam("a_beta_tilde", 1.0, positive=True), 
-                                                               self._hyperparam("b_beta_tilde", 0.3, positive=True)), 
-                                                               dimensions=(self.Tilde_V,), positive=True)
-
+            beta_tilde = self._sample(
+                "beta_tilde",
+                dist.Gamma(
+                    self._hyperparam("a_beta_tilde", 1.0, positive=True),
+                    self._hyperparam("b_beta_tilde", 0.3, positive=True),
+                ),
+                dimensions=(self.Tilde_V,),
+                positive=True,
+            )
         # Add seed word boosts to beta
         beta = jnp.array(beta)
         beta = beta.at[self.kw_indices].add(beta_tilde)
@@ -213,9 +226,15 @@ class SPF(NumpyroModel):
         # Document-topic distributions: Theta ~ Gamma(0.3, 0.3)
         with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
             with plate("d_k", size=self.K, dim=-1):
-                theta = self._sample("theta", dist.Gamma(self._hyperparam("a_theta", 0.3, positive=True), 
-                                                         self._hyperparam("b_theta", 0.3, positive=True)), 
-                                                         dimensions=(self.batch_size, self.K), positive=True)
+                theta = self._sample(
+                    "theta",
+                    dist.Gamma(
+                        self._hyperparam("a_theta", 0.3, positive=True),
+                        self._hyperparam("b_theta", 0.3, positive=True),
+                    ),
+                    dimensions=(self.batch_size, self.K),
+                    positive=True,
+                )
 
             # Poisson rate parameter
             P = jnp.matmul(theta, beta)
@@ -238,9 +257,7 @@ class SPF(NumpyroModel):
 
         if not self._is_constant("beta"):
             a_beta = self._param(
-                "beta_shape", 
-                init_value=jnp.ones([self.K, self.V]), 
-                constraint=constraints.positive
+                "beta_shape", init_value=jnp.ones([self.K, self.V]), constraint=constraints.positive
             )
             b_beta = self._param(
                 "beta_rate",
@@ -249,9 +266,8 @@ class SPF(NumpyroModel):
             )
 
             with plate("k", size=self.K, dim=-2):
-                    with plate("k_v", size=self.V, dim=-1):
-                        sample("beta", dist.Gamma(a_beta, b_beta))
-
+                with plate("k_v", size=self.V, dim=-1):
+                    sample("beta", dist.Gamma(a_beta, b_beta))
 
         if not self._is_constant("beta_tilde"):
             a_beta_tilde = self._param(
@@ -260,20 +276,19 @@ class SPF(NumpyroModel):
                 constraint=constraints.positive,
             )
             b_beta_tilde = self._param(
-                "beta_tilde_rate", 
-                init_value=jnp.ones([self.Tilde_V]), 
-                constraint=constraints.positive
+                "beta_tilde_rate",
+                init_value=jnp.ones([self.Tilde_V]),
+                constraint=constraints.positive,
             )
 
             with plate("tilde_v", size=self.Tilde_V):
                 sample("beta_tilde", dist.Gamma(a_beta_tilde, b_beta_tilde))
 
-
-        if not self._is_constant("theta"):      
+        if not self._is_constant("theta"):
             a_theta = self._param(
-                "theta_shape", 
-                init_value=jnp.ones([self.D, self.K]), 
-                constraint=constraints.positive
+                "theta_shape",
+                init_value=jnp.ones([self.D, self.K]),
+                constraint=constraints.positive,
             )
             b_theta = self._param(
                 "theta_rate",
@@ -321,7 +336,7 @@ class SPF(NumpyroModel):
             )
 
             return topics
-        
+
         if self._is_constant("theta"):
             E_theta = self._constantparams["theta"]
         else:
@@ -350,10 +365,12 @@ class SPF(NumpyroModel):
         if self._is_constant("beta_tilde"):
             E_beta_tilde = jnp.array(self._constantparams["beta_tilde"])
         else:
-            E_beta_tilde = (self.estimated_params["beta_tilde_shape"] / self.estimated_params["beta_tilde_rate"])
+            E_beta_tilde = (
+                self.estimated_params["beta_tilde_shape"] / self.estimated_params["beta_tilde_rate"]
+            )
         E_beta = E_beta.at[self.kw_indices].add(E_beta_tilde)
 
-        rs_names = [f"residual_topic_{i+1}" for i in range(self.residual_topics)]
+        rs_names = [f"residual_topic_{i + 1}" for i in range(self.residual_topics)]
 
         return pd.DataFrame(
             jnp.transpose(E_beta), index=self.vocab, columns=list(self.keywords.keys()) + rs_names

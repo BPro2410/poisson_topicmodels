@@ -1,10 +1,11 @@
+from typing import Any, Dict, Optional
+
 import jax.numpy as jnp
 import numpy as np
 import numpyro.distributions as dist
 import scipy.sparse as sparse
-from numpyro import param, plate, sample
+from numpyro import plate, sample
 from numpyro.distributions import constraints
-from typing import Any, Dict, Optional
 
 # Abstract class - defining the minimum requirements for the probabilistic model
 from .numpyro_model import NumpyroModel
@@ -69,7 +70,7 @@ class PF(NumpyroModel):
         vocab: np.ndarray,
         num_topics: int,
         batch_size: int,
-        initparams: Optional[Dict[str, Any]] = None, 
+        initparams: Optional[Dict[str, Any]] = None,
         constantparams: Optional[Dict[str, Any]] = None,
         hyperparams: Optional[Dict[str, float]] = None,
     ) -> None:
@@ -100,8 +101,10 @@ class PF(NumpyroModel):
         ValueError
             If dimensions are invalid or inconsistent.
         """
-        
-        super().__init__(initparams=initparams, constantparams=constantparams, hyperparams=hyperparams)
+
+        super().__init__(
+            initparams=initparams, constantparams=constantparams, hyperparams=hyperparams
+        )
 
         # Input validation
         if not sparse.issparse(counts):
@@ -147,12 +150,28 @@ class PF(NumpyroModel):
         # Topic-word distributions: Beta ~ Gamma(0.3, 0.3)
         with plate("k", size=self.K, dim=-2):
             with plate("k_v", size=self.V, dim=-1):
-                beta = self._sample("beta", dist.Gamma(self._hyperparam("a_beta", 0.3, positive=True), self._hyperparam("b_beta", 0.3, positive=True),), dimensions=(self.K, self.V), positive=True)
+                beta = self._sample(
+                    "beta",
+                    dist.Gamma(
+                        self._hyperparam("a_beta", 0.3, positive=True),
+                        self._hyperparam("b_beta", 0.3, positive=True),
+                    ),
+                    dimensions=(self.K, self.V),
+                    positive=True,
+                )
 
         # Document-topic distributions: Theta ~ Gamma(0.3, 0.3)
         with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
             with plate("d_k", size=self.K, dim=-1):
-                theta = self._sample("theta", dist.Gamma(self._hyperparam("a_theta", 0.3, positive=True), self._hyperparam("b_theta", 0.3, positive=True),), dimensions=(self.batch_size, self.K), positive=True)
+                theta = self._sample(
+                    "theta",
+                    dist.Gamma(
+                        self._hyperparam("a_theta", 0.3, positive=True),
+                        self._hyperparam("b_theta", 0.3, positive=True),
+                    ),
+                    dimensions=(self.batch_size, self.K),
+                    positive=True,
+                )
 
             # Poisson rate parameter
             P = jnp.matmul(theta, beta)
@@ -193,7 +212,9 @@ class PF(NumpyroModel):
         # Variational parameters for theta
         if not self._is_constant("theta"):
             a_theta = self._param(
-                "theta_shape", init_value=jnp.ones([self.D, self.K]), constraint=constraints.positive
+                "theta_shape",
+                init_value=jnp.ones([self.D, self.K]),
+                constraint=constraints.positive,
             )
             b_theta = self._param(
                 "theta_rate",
