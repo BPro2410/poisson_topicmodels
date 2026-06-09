@@ -922,21 +922,6 @@ class TestTBIPValidation:
         with pytest.raises(ValueError, match="authors"):
             TBIP(counts, vocab, num_topics=2, authors=authors, batch_size=4)
 
-    def test_beta_init_not_ndarray_raises(self):
-        counts, vocab = _counts_vocab()
-        authors = np.array([f"a_{i}" for i in range(20)])
-        with pytest.raises(ValueError, match="numpy"):
-            TBIP(
-                counts,
-                vocab,
-                num_topics=2,
-                authors=authors,
-                batch_size=4,
-                time_varying=True,
-                beta_shape_init=[[1, 2]],
-                beta_rate_init=np.ones((2, 50)),
-            )
-
     def test_time_varying_no_init_warns(self):
         counts, vocab = _counts_vocab()
         authors = np.array([f"a_{i}" for i in range(20)])

@@ -118,6 +118,11 @@ class TBIP(NumpyroModel):
                 "the estimated parameters in t. See documentation for more details."
             )
 
+            if not initparams:
+                warnings.warn(
+                    "No initial values were provided. " "The model will initialize them uniformly."
+                )
+
     def _model(self, Y_batch: jnp.ndarray, d_batch: jnp.ndarray, i_batch: jnp.ndarray) -> None:  # type: ignore[override]
         """Define the probabilistic model using NumPyro.
 
@@ -223,21 +228,6 @@ class TBIP(NumpyroModel):
             with plate("i", self.N):
                 sample("x", dist.Normal(mu_x, sigma_x))
 
-        if not self._is_constant("eta"):
-            mu_eta = self._param(
-                "mu_eta",
-                init_value=random.normal(random.PRNGKey(2), (self.K, self.V)),
-            )
-            sigma_eta = self._param(
-                "sigma_eta",
-                init_value=jnp.ones([self.K, self.V]),
-                constraint=constraints.positive,
-            )
-
-            with plate("k", size=self.K, dim=-2):
-                with plate("k_v", size=self.V, dim=-1):
-                    sample("eta", dist.Normal(mu_eta, sigma_eta))
-
         if not self._is_constant("beta"):
             mu_beta = self._param(
                 "mu_beta",
@@ -252,6 +242,21 @@ class TBIP(NumpyroModel):
             with plate("k", size=self.K, dim=-2):
                 with plate("k_v", size=self.V, dim=-1):
                     sample("beta", dist.LogNormal(mu_beta, sigma_beta))
+
+        if not self._is_constant("eta"):
+            mu_eta = self._param(
+                "mu_eta",
+                init_value=random.normal(random.PRNGKey(2), (self.K, self.V)),
+            )
+            sigma_eta = self._param(
+                "sigma_eta",
+                init_value=jnp.ones([self.K, self.V]),
+                constraint=constraints.positive,
+            )
+
+            with plate("k", size=self.K, dim=-2):
+                with plate("k_v", size=self.V, dim=-1):
+                    sample("eta", dist.Normal(mu_eta, sigma_eta))
 
         if not self._is_constant("theta"):
             mu_theta = self._param(
