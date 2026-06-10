@@ -137,6 +137,7 @@ cpf_model = CPF(
     num_topics=6,
     batch_size=10,
     X_design_matrix=covariate_df,
+    link_function="softplus",
 )
 
 cpf_params = cpf_model.train_step(
@@ -159,6 +160,7 @@ cspf_model = CSPF(
     residual_topics=3,
     batch_size=10,
     X_design_matrix=covariate_df,
+    link_function="softplus",
 )
 
 cspf_params = cspf_model.train_step(
@@ -243,7 +245,8 @@ print(cpf_effects_ci.head(10))  # Show first 10 rows
 print()
 
 # Forest plot of CPF covariate effects
-cpf_fig, cpf_axes = cpf_model.plot_cov_effects(ci=0.90)
+plots = cpf_model.plot_cov_effects(ci=0.90)
+cpf_fig, cpf_axes = plots["lambda"]
 print("  ✓ Generated CPF covariate effects forest plot")
 print()
 

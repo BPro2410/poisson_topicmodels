@@ -87,6 +87,7 @@ model = CPF(
     num_topics=num_topics,
     batch_size=batch_size,
     X_design_matrix=covariate_df,  # Pass DataFrame with column names
+    link_function="softplus",  # Link function for covariate effects (default is softplus)
 )
 
 print("✓ Initialized Covariate Poisson Factorization model")
@@ -197,8 +198,9 @@ print("-" * 50)
 print()
 
 # Forest plot shows point estimates with credible intervals per topic
-fig_cov, _ = model.plot_cov_effects(ci=0.95, save_path=None)
-print("✓ Covariate effects forest plot generated")
+plots = model.plot_cov_effects(ci=0.90)
+cspf_fig, cspf_axes = plots["lambda"]
+print("  ✓ Generated CPF covariate effects forest plot")
 print()
 
 # ============================================================================
