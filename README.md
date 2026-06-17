@@ -52,8 +52,10 @@ Whether analyzing legislative text, social media discourse, or scientific abstra
 - ✨ Transparent GPU acceleration via JAX
 - ✨ Reproducible results with seed control
 - ✨ Type hints and comprehensive API documentation
-- ✨ >70% test coverage with continuous integration
+- ✨ >90% test coverage target with continuous integration
 - ✨ Clear error messages and input validation
+- ✨ Flexible inference configuration through custom priors, fixed latent variables,
+  and custom variational initialization
 
 ## Quick Start
 
@@ -185,6 +187,45 @@ covariates = np.random.randn(100, 3)  # 100 documents, 3 covariates
 model = CPF(counts, vocab, covariates, num_topics=10, batch_size=64)
 model.train_step(num_steps=500, lr=0.001, random_seed=42)
 ```
+
+### 4. Custom Priors and Fixed Parameters
+
+PF, SPF, CPF, CSPF, TBIP, and STBS accept three optional dictionaries for
+advanced inference control:
+
+```python
+from poisson_topicmodels import PF
+
+model = PF(
+    counts,
+    vocab,
+    num_topics=10,
+    batch_size=64,
+    hyperparams={"a_beta": 0.5, "b_beta": 1.0},
+    initparams={
+        "beta_shape": np.ones((10, len(vocab)), dtype=np.float32),
+        "beta_rate": np.ones((10, len(vocab)), dtype=np.float32),
+    },
+    constantparams={
+        # Fix a latent variable instead of estimating it.
+        # Values must match the model's expected shape.
+        # "beta": fixed_topic_word_matrix,
+    },
+)
+
+params = model.train_step(num_steps=500, lr=0.001, random_seed=42)
+print(model.input_params())
+```
+
+- ``hyperparams`` overrides model priors such as ``a_beta`` or ``b_theta``.
+- ``initparams`` supplies initial values for variational parameters such as
+  ``beta_shape`` or ``theta_rate``.
+- ``constantparams`` fixes latent variables such as ``beta`` or ``theta`` so SVI
+  does not update them.
+- ``input_params()`` returns the currently registered initialization,
+  constant-variable, and hyperparameter dictionaries. Constructor-provided
+  values appear immediately; default keys are populated as model and guide code
+  runs, typically during training.
 
 ## Custom Model Extension
 

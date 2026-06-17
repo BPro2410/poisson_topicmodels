@@ -102,6 +102,57 @@ Common Parameters
 - ``batch_size`` (int): Documents per training step
 - ``random_seed`` (int): Reproducibility seed (supported by PF/SPF/CPF/CSPF/ETM)
 
+**Flexible inference inputs**
+
+- ``hyperparams`` (dict): Override prior hyperparameters used inside a model,
+  such as ``a_beta``, ``b_beta``, ``a_theta``, or ``b_theta``.
+- ``initparams`` (dict): Provide custom starting values for variational
+  parameters in the guide, such as ``beta_shape``, ``beta_rate``,
+  ``theta_shape``, or ``theta_rate``.
+- ``constantparams`` (dict): Fix latent variables, such as ``beta`` or
+  ``theta``, instead of estimating them with SVI.
+
+Flexible Model Inputs
+=====================
+
+PF, SPF, CPF, CSPF, TBIP, and STBS accept ``hyperparams``, ``initparams``, and
+``constantparams`` at initialization. These dictionaries are useful when you
+need stronger priors, warm starts, ablation studies, or partially fixed model
+components.
+
+.. code-block:: python
+
+   model = PF(
+       counts=dtm,
+       vocab=vocab,
+       num_topics=10,
+       batch_size=32,
+       hyperparams={"a_beta": 0.5, "b_beta": 1.0},
+       initparams={
+           "beta_shape": np.ones((10, dtm.shape[1]), dtype=np.float32),
+           "beta_rate": np.ones((10, dtm.shape[1]), dtype=np.float32),
+       },
+       constantparams={
+           # "beta": fixed_topic_word_matrix,
+       },
+   )
+
+   params = model.train_step(num_steps=200, lr=0.01, random_seed=42)
+   configured = model.input_params()
+   print(configured["initialized_variables"].keys())
+   print(configured["latent_constant_variables"].keys())
+   print(configured["hyperparameters"].keys())
+
+Validation rules:
+
+- Initial values and constants must be concrete array-like values, not callables.
+- Initial values must match the expected variational parameter shape.
+- Constant latent variables must match the expected latent-variable shape.
+- Positive priors and positive latent variables must be strictly greater than zero.
+- ``input_params()`` returns copies of the registered dictionaries. Values
+  provided in the constructor appear immediately; defaults are registered when
+  model and guide code runs, usually during training.
+
 Common Methods (all models)
 ============================
 
@@ -122,6 +173,10 @@ Common Methods (all models)
 
 **``return_top_words_per_topic(n=10)``**
    Returns a ``dict`` mapping topic identifiers to their top-n words.
+
+**``input_params()``**
+   Returns a ``dict`` with ``initialized_variables``,
+   ``latent_constant_variables``, and ``hyperparameters``.
 
 **``summary(n_top_words=5)``**
    Prints a formatted summary of the fitted model, including loss,

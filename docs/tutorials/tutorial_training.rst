@@ -51,7 +51,6 @@ Create a topic model with initial configuration.
        vocab=vocab,
        num_topics=num_topics,
        batch_size=64,  # 64 documents per training batch
-       random_seed=42  # for reproducibility
    )
 
    print(f"Initialized PF model with {num_topics} topics")
@@ -67,11 +66,41 @@ Run inference to learn topic and document-topic distributions.
    params = model.train_step(
        num_steps=200,
        lr=0.01,
+       random_seed=42,  # for reproducibility
    )
 
    print("Training complete!")
 
 **Monitor training**: Watch the loss values. Should decrease steadily then plateau.
+
+Optional: Customize Inference Inputs
+====================================
+
+For research workflows, you can pass optional dictionaries at initialization to
+override priors, initialize variational parameters, or hold latent variables
+fixed:
+
+.. code-block:: python
+
+   model = PF(
+       counts=counts,
+       vocab=vocab,
+       num_topics=num_topics,
+       batch_size=64,
+       hyperparams={"a_beta": 0.5, "b_beta": 1.0},
+       initparams={
+           "beta_shape": np.ones((num_topics, num_words), dtype=np.float32),
+           "beta_rate": np.ones((num_topics, num_words), dtype=np.float32),
+       },
+       constantparams={
+           # Example: "theta": fixed_document_topic_matrix
+       },
+   )
+
+``hyperparams`` changes prior values, ``initparams`` changes SVI starting
+values, and ``constantparams`` fixes latent variables instead of estimating
+them. Call ``model.input_params()`` after training to inspect the registered
+keys and shapes for the model you are using.
 
 **Time expectations**:
 - 500 docs × 1000 words: ~30 seconds on CPU, ~5 seconds on GPU

@@ -13,6 +13,32 @@ Current Version
 
 For full changelog, see below.
 
+Unreleased - Flexible Inference Inputs
+======================================
+
+*June 17, 2026*
+
+**New configuration options**:
+
+- ✨ PF, SPF, CPF, CSPF, TBIP, and STBS now accept ``hyperparams`` for overriding
+  prior settings.
+- ✨ PF, SPF, CPF, CSPF, TBIP, and STBS now accept ``initparams`` for custom
+  variational initialization.
+- ✨ PF, SPF, CPF, CSPF, TBIP, and STBS now accept ``constantparams`` for fixing
+  selected latent variables during SVI.
+- ✨ ``input_params()`` exposes the registered initialization values, fixed
+  latent variables, and hyperparameters for inspection.
+
+**Documentation and examples**:
+
+- Added usage hints for configurable parameters in examples.
+- Documented the new flexible-input dictionaries in the README, getting-started
+  guide, training tutorial, and API reference.
+
+**Quality**:
+
+- Fixed pre-commit formatting issues in STBS.
+
 Version 0.2.0 - Inspection & Diagnostics
 ==========================================
 
@@ -89,7 +115,7 @@ Version 0.1.0 - Initial Release
 - ✨ Stochastic Variational Inference (SVI) with mini-batch training
 - ✨ GPU acceleration via JAX
 - ✨ Comprehensive type hints (90%+ coverage)
-- ✨ >70% test coverage
+- ✨ Automated test coverage
 - ✨ Complete documentation and tutorials
 
 **Documentation**:

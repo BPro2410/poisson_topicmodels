@@ -51,13 +51,13 @@ Step 3: Initialize and Train the Model
        vocab=vocab,
        num_topics=10,
        batch_size=32,
-       random_seed=42
    )
 
    # Train for 200 steps with learning rate 0.01
    params = model.train_step(
        num_steps=200,
-       lr=0.01
+       lr=0.01,
+       random_seed=42,
    )
 
 Step 4: Extract and Interpret Results
@@ -100,6 +100,46 @@ Understanding the Output
 
 **Summary** (``summary()``)
    Prints a formatted overview of the model: loss, top words, and model-specific details.
+
+Configuring Priors and Initial Values
+=====================================
+
+Recent versions let you control inference more directly without subclassing a
+model. Pass optional dictionaries when creating a model:
+
+.. code-block:: python
+
+   model = PF(
+       counts=counts,
+       vocab=vocab,
+       num_topics=10,
+       batch_size=32,
+       hyperparams={"a_beta": 0.5, "b_beta": 1.0},
+       initparams={
+           "beta_shape": np.ones((10, counts.shape[1]), dtype=np.float32),
+           "beta_rate": np.ones((10, counts.shape[1]), dtype=np.float32),
+       },
+       constantparams={
+           # Example: "beta": fixed_topic_word_matrix
+       },
+   )
+
+``hyperparams`` overrides model priors, ``initparams`` provides starting values
+for variational parameters, and ``constantparams`` fixes latent variables so
+they are not updated by SVI. Shapes are validated against the model's expected
+latent variables and variational parameters.
+
+Use ``input_params()`` to inspect what a model has registered:
+
+.. code-block:: python
+
+   params = model.train_step(num_steps=200, lr=0.01, random_seed=42)
+   print(model.input_params()["initialized_variables"].keys())
+   print(model.input_params()["latent_constant_variables"].keys())
+   print(model.input_params()["hyperparameters"].keys())
+
+Constructor-provided settings appear immediately. Default keys are populated
+when the model and guide execute, usually during training.
 
 Next Steps
 ==========

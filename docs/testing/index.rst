@@ -51,7 +51,7 @@ Test Categories
 Test Coverage
 =============
 
-Current coverage: >70%
+Coverage target: >90%
 
 View coverage report:
 
@@ -135,7 +135,7 @@ Testing Best Practices
 **For developers**:
 
 - Write tests for new features
-- Aim for >80% code coverage
+- Aim for >90% code coverage
 - Test edge cases and error conditions
 - Document test purpose
 
@@ -320,7 +320,7 @@ When submitting code:
 
 1. Write tests for new functionality
 2. Ensure all tests pass
-3. Maintain or increase coverage (aim for >70%)
+3. Maintain or increase coverage (aim for >90%)
 4. Document test purpose
 
 See :doc:`../contributing_guide/index` for full guidelines.
@@ -359,7 +359,7 @@ Testing Progress
 Latest test results:
 
 - Total tests: 150+
-- Coverage: >70%
+- Coverage target: >90%
 - CI status: Passing on main
 
 Contribution Checklist
