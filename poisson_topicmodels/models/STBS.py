@@ -120,11 +120,12 @@ class STBS(NumpyroModel):
                 self.covariates = list(X_design_matrix.columns)
                 X_design_matrix = X_design_matrix.values
             else:
+                X_design_matrix = np.asarray(X_design_matrix)
+                if X_design_matrix.ndim != 2:
+                    raise ValueError(f"covariates must be 2D, got shape {X_design_matrix.shape}")
                 self.covariates = [f"cov_{i}" for i in range(X_design_matrix.shape[1])]
 
             X_design_matrix = np.asarray(X_design_matrix)
-            if X_design_matrix.ndim != 2:
-                raise ValueError(f"covariates must be 2D, got shape {X_design_matrix.shape}")
             if X_design_matrix.shape[0] != self.N:
                 raise ValueError(
                     f"covariates has {X_design_matrix.shape[0]} rows, expected {self.N}"
