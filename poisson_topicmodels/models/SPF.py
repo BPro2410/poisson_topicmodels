@@ -6,7 +6,7 @@ import numpy as np
 import numpyro.distributions as dist
 import pandas as pd
 import scipy.sparse as sparse
-from numpyro import param, plate, sample
+from numpyro import plate, sample
 from numpyro.distributions import constraints
 
 # Abstract class - defining the minimum requirements for the probabilistic model
@@ -36,6 +36,12 @@ class SPF(NumpyroModel):
     batch_size : int
         Mini-batch size for stochastic variational inference.
         Must satisfy 0 < batch_size <= D.
+    initparams : dict, optional
+        User-specified initial values for variational parameters in the guide.
+    constantparams : dict, optional
+        User-specified constant values for latent variables (not updated by SVI).
+    hyperparams : dict, optional
+        User-specified hyperparameters overriding default prior settings.
 
     Attributes
     ----------
@@ -76,6 +82,9 @@ class SPF(NumpyroModel):
         keywords: Dict[Any, List[str]],
         residual_topics: int,
         batch_size: int,
+        initparams: Optional[Dict[str, Any]] = None,
+        constantparams: Optional[Dict[str, Any]] = None,
+        hyperparams: Optional[Dict[str, float]] = None,
     ) -> None:
         """
         Initialize the SPF model with input validation.
@@ -92,6 +101,12 @@ class SPF(NumpyroModel):
             Number of unsupervised topics.
         batch_size : int
             Mini-batch size.
+        initparams : dict, optional
+            Initial values for variational parameters.
+        constantparams : dict, optional
+            Fixed values for latent variables.
+        hyperparams : dict, optional
+            Hyperparameters overriding default priors.
 
         Raises
         ------
@@ -100,7 +115,9 @@ class SPF(NumpyroModel):
         ValueError
             If dimensions are invalid or keywords contain unknown terms.
         """
-        super().__init__()
+        super().__init__(
+            initparams=initparams, constantparams=constantparams, hyperparams=hyperparams
+        )
 
         # Input validation
         if not sparse.issparse(counts):
@@ -181,19 +198,43 @@ class SPF(NumpyroModel):
         # Topic-word distributions: Beta ~ Gamma(0.3, 0.3)
         with plate("k", size=self.K, dim=-2):
             with plate("k_v", size=self.V, dim=-1):
-                beta = sample("beta", dist.Gamma(0.3, 0.3))
+                beta = self._sample(
+                    "beta",
+                    dist.Gamma(
+                        self._hyperparam("a_beta", 0.3, positive=True),
+                        self._hyperparam("b_beta", 0.3, positive=True),
+                    ),
+                    dimensions=(self.K, self.V),
+                    positive=True,
+                )
 
         # Boost for seed words: Beta_tilde ~ Gamma(1, 0.3)
         with plate("tilde_v", size=self.Tilde_V):
-            beta_tilde = sample("beta_tilde", dist.Gamma(1.0, 0.3))
-
+            beta_tilde = self._sample(
+                "beta_tilde",
+                dist.Gamma(
+                    self._hyperparam("a_beta_tilde", 1.0, positive=True),
+                    self._hyperparam("b_beta_tilde", 0.3, positive=True),
+                ),
+                dimensions=(self.Tilde_V,),
+                positive=True,
+            )
         # Add seed word boosts to beta
+        beta = jnp.array(beta)
         beta = beta.at[self.kw_indices].add(beta_tilde)
 
         # Document-topic distributions: Theta ~ Gamma(0.3, 0.3)
         with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
             with plate("d_k", size=self.K, dim=-1):
-                theta = sample("theta", dist.Gamma(0.3, 0.3))
+                theta = self._sample(
+                    "theta",
+                    dist.Gamma(
+                        self._hyperparam("a_theta", 0.3, positive=True),
+                        self._hyperparam("b_theta", 0.3, positive=True),
+                    ),
+                    dimensions=(self.batch_size, self.K),
+                    positive=True,
+                )
 
             # Poisson rate parameter
             P = jnp.matmul(theta, beta)
@@ -214,42 +255,50 @@ class SPF(NumpyroModel):
             Indices of documents in the current batch.
         """
 
-        # Define variational parameter
-        a_beta = param(
-            "beta_shape", init_value=jnp.ones([self.K, self.V]), constraint=constraints.positive
-        )
-        b_beta = param(
-            "beta_rate",
-            init_value=jnp.ones([self.K, self.V]) * self.D / 1000 * 2,
-            constraint=constraints.positive,
-        )
-        a_theta = param(
-            "theta_shape", init_value=jnp.ones([self.D, self.K]), constraint=constraints.positive
-        )
-        b_theta = param(
-            "theta_rate",
-            init_value=jnp.ones([self.D, self.K]) * self.D / 1000,
-            constraint=constraints.positive,
-        )
-        a_beta_tilde = param(
-            "beta_tilde_shape",
-            init_value=jnp.ones([self.Tilde_V]) * 2,
-            constraint=constraints.positive,
-        )
-        b_beta_tilde = param(
-            "beta_tilde_rate", init_value=jnp.ones([self.Tilde_V]), constraint=constraints.positive
-        )
+        if not self._is_constant("beta"):
+            a_beta = self._param(
+                "beta_shape", init_value=jnp.ones([self.K, self.V]), constraint=constraints.positive
+            )
+            b_beta = self._param(
+                "beta_rate",
+                init_value=jnp.ones([self.K, self.V]) * self.D / 1000 * 2,
+                constraint=constraints.positive,
+            )
 
-        with plate("k", size=self.K, dim=-2):
-            with plate("k_v", size=self.V, dim=-1):
-                sample("beta", dist.Gamma(a_beta, b_beta))
+            with plate("k", size=self.K, dim=-2):
+                with plate("k_v", size=self.V, dim=-1):
+                    sample("beta", dist.Gamma(a_beta, b_beta))
 
-        with plate("tilde_v", size=self.Tilde_V):
-            sample("beta_tilde", dist.Gamma(a_beta_tilde, b_beta_tilde))
+        if not self._is_constant("beta_tilde"):
+            a_beta_tilde = self._param(
+                "beta_tilde_shape",
+                init_value=jnp.ones([self.Tilde_V]) * 2,
+                constraint=constraints.positive,
+            )
+            b_beta_tilde = self._param(
+                "beta_tilde_rate",
+                init_value=jnp.ones([self.Tilde_V]),
+                constraint=constraints.positive,
+            )
 
-        with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
-            with plate("d_k", size=self.K, dim=-1):
-                sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))
+            with plate("tilde_v", size=self.Tilde_V):
+                sample("beta_tilde", dist.Gamma(a_beta_tilde, b_beta_tilde))
+
+        if not self._is_constant("theta"):
+            a_theta = self._param(
+                "theta_shape",
+                init_value=jnp.ones([self.D, self.K]),
+                constraint=constraints.positive,
+            )
+            b_theta = self._param(
+                "theta_rate",
+                init_value=jnp.ones([self.D, self.K]) * self.D / 1000,
+                constraint=constraints.positive,
+            )
+
+            with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
+                with plate("d_k", size=self.K, dim=-1):
+                    sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))
 
     def return_topics(self):
         """
@@ -288,7 +337,10 @@ class SPF(NumpyroModel):
 
             return topics
 
-        E_theta = self.estimated_params["theta_shape"] / self.estimated_params["theta_rate"]
+        if self._is_constant("theta"):
+            E_theta = self._constantparams["theta"]
+        else:
+            E_theta = self.estimated_params["theta_shape"] / self.estimated_params["theta_rate"]
 
         categories = np.argmax(E_theta, axis=1)
         topics = recode_cats(np.array(categories), self.keywords)
@@ -305,13 +357,20 @@ class SPF(NumpyroModel):
         pandas.DataFrame
             DataFrame containing the beta matrix with words as rows and topics as columns.
         """
-        E_beta = self.estimated_params["beta_shape"] / self.estimated_params["beta_rate"]
-        E_beta_tilde = (
-            self.estimated_params["beta_tilde_shape"] / self.estimated_params["beta_tilde_rate"]
-        )
+        if self._is_constant("beta"):
+            E_beta = jnp.array(self._constantparams["beta"])
+        else:
+            E_beta = self.estimated_params["beta_shape"] / self.estimated_params["beta_rate"]
+
+        if self._is_constant("beta_tilde"):
+            E_beta_tilde = jnp.array(self._constantparams["beta_tilde"])
+        else:
+            E_beta_tilde = (
+                self.estimated_params["beta_tilde_shape"] / self.estimated_params["beta_tilde_rate"]
+            )
         E_beta = E_beta.at[self.kw_indices].add(E_beta_tilde)
 
-        rs_names = [f"residual_topic_{i+1}" for i in range(self.residual_topics)]
+        rs_names = [f"residual_topic_{i + 1}" for i in range(self.residual_topics)]
 
         return pd.DataFrame(
             jnp.transpose(E_beta), index=self.vocab, columns=list(self.keywords.keys()) + rs_names

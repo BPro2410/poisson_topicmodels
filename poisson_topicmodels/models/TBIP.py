@@ -1,5 +1,5 @@
 import warnings
-from typing import Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
@@ -8,7 +8,7 @@ import numpyro.distributions as dist
 import pandas as pd
 import scipy.sparse as sparse
 from jax import jit, random
-from numpyro import param, plate, sample
+from numpyro import plate, sample
 from numpyro.distributions import constraints
 from numpyro.infer import SVI, TraceMeanField_ELBO
 from optax import adam
@@ -33,8 +33,9 @@ class TBIP(NumpyroModel):
         authors: np.ndarray,
         batch_size: int,
         time_varying: bool = False,
-        beta_shape_init: np.ndarray = None,
-        beta_rate_init: np.ndarray = None,
+        initparams: Optional[Dict[str, Any]] = None,
+        constantparams: Optional[Dict[str, Any]] = None,
+        hyperparams: Optional[Dict[str, float]] = None,
     ) -> None:
         """
         Initialize the TBIP model.
@@ -55,12 +56,12 @@ class TBIP(NumpyroModel):
             Must satisfy 0 < batch_size <= D.
         time_varying : bool, optional
             Whether to model time-varying ideal points (default is False).
-        beta_shape_init : np.ndarray, optional
-            Initial shape parameters for the topic-word distributions (default is None).
-            Must have shape (K, V) if provided.
-        beta_rate_init : np.ndarray, optional
-            Initial rate parameters for the topic-word distributions (default is None).
-            Must have shape (K, V) if provided.
+        initparams : dict, optional
+            User-specified initial values for variational parameters in the guide.
+        constantparams : dict, optional
+            User-specified constant values for latent variables (not updated by SVI).
+        hyperparams : dict, optional
+            User-specified hyperparameters overriding default prior settings.
 
         Raises
         ------
@@ -70,7 +71,9 @@ class TBIP(NumpyroModel):
             If dimensions are invalid or time_varying parameters have wrong shape.
         """
 
-        super().__init__()
+        super().__init__(
+            initparams=initparams, constantparams=constantparams, hyperparams=hyperparams
+        )
 
         # Input validation
         if not sparse.issparse(counts):
@@ -112,29 +115,13 @@ class TBIP(NumpyroModel):
             warnings.warn(
                 "Please notice: Setting time_varying=True requires to fit the TBIP model "
                 "separately for each time period. Please initiate the TBIP model in t+1 with "
-                "the estimated beta parameter in t. See documentation for more details."
+                "the estimated parameters in t. See documentation for more details."
             )
 
-            # check if beta_rate_init and beta_shape_init have the correct shape and are jnp.arrays
-            for inits in [beta_shape_init, beta_rate_init]:
-                if inits is None:
-                    warnings.warn(
-                        "No initial values for beta parameters were provided. "
-                        "The model will initialize them uniformly."
-                    )
-                if inits is not None:
-                    if not isinstance(inits, (np.ndarray, jnp.ndarray)):
-                        raise ValueError(
-                            "beta_shape_init and beta_rate_init must be numpy or jnp.ndarray objects "
-                            "with matching dimensions [num_topics times num_words]."
-                        )
-                    if inits.shape != (self.K, self.V):
-                        raise ValueError(
-                            f"beta_shape_init and beta_rate_init must have shape ({self.K}, {self.V}), "
-                            f"got {inits.shape}"
-                        )
-        self.beta_rate_init = beta_rate_init
-        self.beta_shape_init = beta_shape_init
+            if not initparams:
+                warnings.warn(
+                    "No initial values were provided. " "The model will initialize them uniformly."
+                )
 
     def _model(self, Y_batch: jnp.ndarray, d_batch: jnp.ndarray, i_batch: jnp.ndarray) -> None:  # type: ignore[override]
         """Define the probabilistic model using NumPyro.
@@ -155,19 +142,51 @@ class TBIP(NumpyroModel):
         i_batch : jnp.ndarray
             Indices of authors for the documents in the batch (batch_size,).
         """
+
         with plate("i", self.N):
             # Sample the per-unit latent variables (ideal points)
-            x = sample("x", dist.Normal())
+            x = self._sample(
+                "x",
+                dist.Normal(
+                    loc=self._hyperparam("mu_x_prior", 0.0),
+                    scale=self._hyperparam("sigma_x_prior", 1.0, positive=True),
+                ),
+                dimensions=(self.N,),
+            )
 
         with plate("k", size=self.K, dim=-2):
             with plate("k_v", size=self.V, dim=-1):
-                beta = sample("beta", dist.Gamma(0.3, 0.3))
-                eta = sample("eta", dist.Normal())
+                beta = self._sample(
+                    "beta",
+                    dist.Gamma(
+                        self._hyperparam("a_beta", 0.3, positive=True),
+                        self._hyperparam("b_beta", 0.3, positive=True),
+                    ),
+                    dimensions=(self.K, self.V),
+                    positive=True,
+                )
+
+                eta = self._sample(
+                    "eta",
+                    dist.Normal(
+                        loc=self._hyperparam("mu_eta_prior", 0.0),
+                        scale=self._hyperparam("sigma_eta_prior", 1.0, positive=True),
+                    ),
+                    dimensions=(self.K, self.V),
+                )
 
         with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
             with plate("d_k", size=self.K, dim=-1):
                 # Sample document-level latent variables (topic intensities)
-                theta = sample("theta", dist.Gamma(0.3, 0.3))
+                theta = self._sample(
+                    "theta",
+                    dist.Gamma(
+                        self._hyperparam("a_theta", 0.3, positive=True),
+                        self._hyperparam("b_theta", 0.3, positive=True),
+                    ),
+                    dimensions=(self.batch_size, self.K),
+                    positive=True,
+                )
 
             # Compute Poisson rates for each word
             P = jnp.sum(
@@ -195,57 +214,64 @@ class TBIP(NumpyroModel):
         i_batch : jnp.ndarray
             Indices of authors for the documents in the batch (batch_size,).
         """
-        mu_x = param("mu_x", init_value=-1 + 2 * random.uniform(random.PRNGKey(1), (self.N,)))
-        sigma_x = param("sigma_x", init_value=jnp.ones([self.N]), constraint=constraints.positive)
-
-        mu_eta = param("mu_eta", init_value=random.normal(random.PRNGKey(2), (self.K, self.V)))
-        sigma_eta = param(
-            "sigma_eta",
-            init_value=jnp.ones([self.K, self.V]),
-            constraint=constraints.positive,
-        )
-
-        mu_theta = param("mu_theta", init_value=jnp.zeros([self.D, self.K]))
-        sigma_theta = param(
-            "sigma_theta",
-            init_value=jnp.ones([self.D, self.K]),
-            constraint=constraints.positive,
-        )
-
-        # Add initial values for beta parameters if provided for the tv-tbip model
-        if self.beta_shape_init is not None and self.time_varying:
-            mu_beta = param(
-                "mu_beta",
-                init_value=self.beta_shape_init,
+        if not self._is_constant("x"):
+            mu_x = self._param(
+                "mu_x",
+                init_value=-1 + 2 * random.uniform(random.PRNGKey(1), (self.N,)),
             )
-        else:
-            mu_beta = param("mu_beta", init_value=jnp.zeros([self.K, self.V]))
-
-        # check if beta_shape init is not none and self.time_yvarying is true
-        if self.beta_shape_init is not None and self.time_varying:
-            sigma_beta = param(
-                "sigma_beta",
-                init_value=self.beta_rate_init,
+            sigma_x = self._param(
+                "sigma_x",
+                init_value=jnp.ones([self.N]),
                 constraint=constraints.positive,
             )
-        else:
-            sigma_beta = param(
+
+            with plate("i", self.N):
+                sample("x", dist.Normal(mu_x, sigma_x))
+
+        if not self._is_constant("beta"):
+            mu_beta = self._param(
+                "mu_beta",
+                init_value=jnp.zeros([self.K, self.V]),
+            )
+            sigma_beta = self._param(
                 "sigma_beta",
                 init_value=jnp.ones([self.K, self.V]),
                 constraint=constraints.positive,
             )
 
-        with plate("i", self.N):
-            sample("x", dist.Normal(mu_x, sigma_x))
+            with plate("k", size=self.K, dim=-2):
+                with plate("k_v", size=self.V, dim=-1):
+                    sample("beta", dist.LogNormal(mu_beta, sigma_beta))
 
-        with plate("k", size=self.K, dim=-2):
-            with plate("k_v", size=self.V, dim=-1):
-                sample("beta", dist.LogNormal(mu_beta, sigma_beta))
-                sample("eta", dist.Normal(mu_eta, sigma_eta))
+        if not self._is_constant("eta"):
+            mu_eta = self._param(
+                "mu_eta",
+                init_value=random.normal(random.PRNGKey(2), (self.K, self.V)),
+            )
+            sigma_eta = self._param(
+                "sigma_eta",
+                init_value=jnp.ones([self.K, self.V]),
+                constraint=constraints.positive,
+            )
 
-        with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
-            with plate("d_k", size=self.K, dim=-1):
-                sample("theta", dist.LogNormal(mu_theta[d_batch], sigma_theta[d_batch]))
+            with plate("k", size=self.K, dim=-2):
+                with plate("k_v", size=self.V, dim=-1):
+                    sample("eta", dist.Normal(mu_eta, sigma_eta))
+
+        if not self._is_constant("theta"):
+            mu_theta = self._param(
+                "mu_theta",
+                init_value=jnp.zeros([self.D, self.K]),
+            )
+            sigma_theta = self._param(
+                "sigma_theta",
+                init_value=jnp.ones([self.D, self.K]),
+                constraint=constraints.positive,
+            )
+
+            with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
+                with plate("d_k", size=self.K, dim=-1):
+                    sample("theta", dist.LogNormal(mu_theta[d_batch], sigma_theta[d_batch]))
 
     def _get_batch(
         self, rng: jnp.ndarray, Y: sparse.csr_matrix
@@ -367,9 +393,13 @@ class TBIP(NumpyroModel):
         if not self.estimated_params:
             raise ValueError("Model must be trained before calling return_topics()")
 
-        mu = np.asarray(self.estimated_params["mu_theta"])
-        sigma = np.asarray(self.estimated_params["sigma_theta"])
-        E_theta = np.exp(mu + sigma**2 / 2.0)
+        if self._is_constant("theta"):
+            E_theta = np.asarray(self._constantparams["theta"])
+        else:
+            mu = np.asarray(self.estimated_params["mu_theta"])
+            sigma = np.asarray(self.estimated_params["sigma_theta"])
+            E_theta = np.exp(mu + sigma**2 / 2.0)
+
         return np.argmax(E_theta, axis=1), E_theta
 
     def return_beta(self) -> pd.DataFrame:
@@ -391,9 +421,13 @@ class TBIP(NumpyroModel):
         if not self.estimated_params:
             raise ValueError("Model must be trained before calling return_beta()")
 
-        mu = np.asarray(self.estimated_params["mu_beta"])
-        sigma = np.asarray(self.estimated_params["sigma_beta"])
-        E_beta = np.exp(mu + sigma**2 / 2.0)
+        if self._is_constant("beta"):
+            E_beta = np.asarray(self._constantparams["beta"])
+        else:
+            mu = np.asarray(self.estimated_params["mu_beta"])
+            sigma = np.asarray(self.estimated_params["sigma_beta"])
+            E_beta = np.exp(mu + sigma**2 / 2.0)
+
         return pd.DataFrame(np.transpose(E_beta), index=self.vocab)
 
     def return_ideal_points(self) -> pd.DataFrame:
@@ -413,8 +447,12 @@ class TBIP(NumpyroModel):
         if not self.estimated_params:
             raise ValueError("Model must be trained before calling return_ideal_points()")
 
-        mu_x = np.asarray(self.estimated_params["mu_x"])
-        sigma_x = np.asarray(self.estimated_params["sigma_x"])
+        if self._is_constant("x"):
+            mu_x = np.asarray(self._constantparams["x"])
+            sigma_x = np.zeros_like(mu_x)
+        else:
+            mu_x = np.asarray(self.estimated_params["mu_x"])
+            sigma_x = np.asarray(self.estimated_params["sigma_x"])
 
         df = pd.DataFrame(
             {
@@ -456,7 +494,11 @@ class TBIP(NumpyroModel):
         if topic < 0 or topic >= self.K:
             raise ValueError(f"topic must be in [0, {self.K - 1}], got {topic}")
 
-        mu_eta = np.asarray(self.estimated_params["mu_eta"])
+        if self._is_constant("eta"):
+            mu_eta = np.asarray(self._constantparams["eta"])
+        else:
+            mu_eta = np.asarray(self.estimated_params["mu_eta"])
+
         eta_k = mu_eta[topic, :]
 
         # Top positive
@@ -487,7 +529,11 @@ class TBIP(NumpyroModel):
         dict
             A dictionary mapping each author to their estimated ideal point.
         """
-        x_est = self.estimated_params["mu_x"]
+        if self._is_constant("x"):
+            x_est = np.asarray(self._constantparams["x"])
+        else:
+            x_est = np.asarray(self.estimated_params["mu_x"])
+
         author_ideal_map = {author: x_est[idx] for author, idx in self.author_map.items()}
         return author_ideal_map
 
@@ -527,8 +573,12 @@ class TBIP(NumpyroModel):
             if selected_authors is None:
                 selected_authors = list(self.authors_unique)
 
-            mu_x = np.asarray(self.estimated_params["mu_x"])
-            sigma_x = np.asarray(self.estimated_params["sigma_x"])
+            if self._is_constant("x"):
+                mu_x = np.asarray(self._constantparams["x"])
+                sigma_x = np.zeros_like(mu_x)
+            else:
+                mu_x = np.asarray(self.estimated_params["mu_x"])
+                sigma_x = np.asarray(self.estimated_params["sigma_x"])
 
             z = sp_stats.norm.ppf(1.0 - (1.0 - ci) / 2.0)
 

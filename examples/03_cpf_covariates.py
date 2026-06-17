@@ -116,6 +116,13 @@ print("✓ Training completed")
 print(f"✓ Final loss: {model.Metrics.loss[-1]:.4f}")
 print()
 
+# Inspect customizable parameters.
+print("Available parameter groups:", model.input_params().keys())
+print("Initializable variables:", model.input_params()["initialized_variables"].keys())
+print("Constant latent variables:", model.input_params()["latent_constant_variables"].keys())
+print("Hyperparameters:", model.input_params()["hyperparameters"].keys())
+print()
+
 # ============================================================================
 # STEP 5: Extract Results
 # ============================================================================

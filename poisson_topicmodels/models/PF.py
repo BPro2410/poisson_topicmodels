@@ -1,8 +1,10 @@
+from typing import Any, Dict, Optional
+
 import jax.numpy as jnp
 import numpy as np
 import numpyro.distributions as dist
 import scipy.sparse as sparse
-from numpyro import param, plate, sample
+from numpyro import plate, sample
 from numpyro.distributions import constraints
 
 # Abstract class - defining the minimum requirements for the probabilistic model
@@ -30,6 +32,12 @@ class PF(NumpyroModel):
     batch_size : int
         Mini-batch size for stochastic variational inference.
         Must satisfy 0 < batch_size <= D.
+    initparams : dict, optional
+        User-specified initial values for variational parameters in the guide.
+    constantparams : dict, optional
+        User-specified constant values for latent variables (not updated by SVI).
+    hyperparams : dict, optional
+        User-specified hyperparameters overriding default prior settings.
 
     Attributes
     ----------
@@ -62,6 +70,9 @@ class PF(NumpyroModel):
         vocab: np.ndarray,
         num_topics: int,
         batch_size: int,
+        initparams: Optional[Dict[str, Any]] = None,
+        constantparams: Optional[Dict[str, Any]] = None,
+        hyperparams: Optional[Dict[str, float]] = None,
     ) -> None:
         """
         Initialize the PF model with input validation.
@@ -76,6 +87,12 @@ class PF(NumpyroModel):
             Number of topics.
         batch_size : int
             Mini-batch size.
+        initparams : dict, optional
+            Initial values for variational parameters.
+        constantparams : dict, optional
+            Fixed values for latent variables.
+        hyperparams : dict, optional
+            Hyperparameters overriding default priors.
 
         Raises
         ------
@@ -84,7 +101,10 @@ class PF(NumpyroModel):
         ValueError
             If dimensions are invalid or inconsistent.
         """
-        super().__init__()
+
+        super().__init__(
+            initparams=initparams, constantparams=constantparams, hyperparams=hyperparams
+        )
 
         # Input validation
         if not sparse.issparse(counts):
@@ -130,12 +150,28 @@ class PF(NumpyroModel):
         # Topic-word distributions: Beta ~ Gamma(0.3, 0.3)
         with plate("k", size=self.K, dim=-2):
             with plate("k_v", size=self.V, dim=-1):
-                beta = sample("beta", dist.Gamma(0.3, 0.3))
+                beta = self._sample(
+                    "beta",
+                    dist.Gamma(
+                        self._hyperparam("a_beta", 0.3, positive=True),
+                        self._hyperparam("b_beta", 0.3, positive=True),
+                    ),
+                    dimensions=(self.K, self.V),
+                    positive=True,
+                )
 
         # Document-topic distributions: Theta ~ Gamma(0.3, 0.3)
         with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
             with plate("d_k", size=self.K, dim=-1):
-                theta = sample("theta", dist.Gamma(0.3, 0.3))
+                theta = self._sample(
+                    "theta",
+                    dist.Gamma(
+                        self._hyperparam("a_theta", 0.3, positive=True),
+                        self._hyperparam("b_theta", 0.3, positive=True),
+                    ),
+                    dimensions=(self.batch_size, self.K),
+                    positive=True,
+                )
 
             # Poisson rate parameter
             P = jnp.matmul(theta, beta)
@@ -158,31 +194,35 @@ class PF(NumpyroModel):
             Document indices in batch.
         """
         # Variational parameters for beta
-        a_beta = param(
-            "beta_shape", init_value=jnp.ones([self.K, self.V]), constraint=constraints.positive
-        )
-        b_beta = param(
-            "beta_rate",
-            init_value=jnp.ones([self.K, self.V]) * self.D / 1000 * 2,
-            constraint=constraints.positive,
-        )
+        if not self._is_constant("beta"):
+            a_beta = self._param(
+                "beta_shape", init_value=jnp.ones([self.K, self.V]), constraint=constraints.positive
+            )
+            b_beta = self._param(
+                "beta_rate",
+                init_value=jnp.ones([self.K, self.V]) * self.D / 1000 * 2,
+                constraint=constraints.positive,
+            )
+
+            # Variational distribution for beta
+            with plate("k", size=self.K, dim=-2):
+                with plate("k_v", size=self.V, dim=-1):
+                    sample("beta", dist.Gamma(a_beta, b_beta))
 
         # Variational parameters for theta
-        a_theta = param(
-            "theta_shape", init_value=jnp.ones([self.D, self.K]), constraint=constraints.positive
-        )
-        b_theta = param(
-            "theta_rate",
-            init_value=jnp.ones([self.D, self.K]) * self.D / 1000,
-            constraint=constraints.positive,
-        )
+        if not self._is_constant("theta"):
+            a_theta = self._param(
+                "theta_shape",
+                init_value=jnp.ones([self.D, self.K]),
+                constraint=constraints.positive,
+            )
+            b_theta = self._param(
+                "theta_rate",
+                init_value=jnp.ones([self.D, self.K]) * self.D / 1000,
+                constraint=constraints.positive,
+            )
 
-        # Variational distribution for beta
-        with plate("k", size=self.K, dim=-2):
-            with plate("k_v", size=self.V, dim=-1):
-                sample("beta", dist.Gamma(a_beta, b_beta))
-
-        # Variational distribution for theta
-        with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
-            with plate("d_k", size=self.K, dim=-1):
-                sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))
+            # Variational distribution for theta
+            with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
+                with plate("d_k", size=self.K, dim=-1):
+                    sample("theta", dist.Gamma(a_theta[d_batch], b_theta[d_batch]))

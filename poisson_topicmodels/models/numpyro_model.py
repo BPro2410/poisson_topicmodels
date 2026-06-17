@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 import scipy.sparse as sparse
 from jax import jit, random
+from numpyro import param, sample
+from numpyro.distributions import constraints
 from numpyro.infer import SVI, TraceMeanField_ELBO
 from optax import adam
 from tqdm import tqdm
@@ -41,10 +43,18 @@ class NumpyroModel(ABC):
         Number of topics.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        initparams: Optional[Dict[str, Any]] = None,
+        constantparams: Optional[Dict[str, Any]] = None,
+        hyperparams: Optional[Dict[str, float]] = None,
+    ) -> None:
         """Initialize base model with per-instance metrics."""
         self.Metrics = Metrics(loss=[])
         self.estimated_params: Dict[str, Any] = {}
+        self._initparams: Dict[str, Any] = initparams or {}
+        self._constantparams: Dict[str, Any] = constantparams or {}
+        self._hyperparams: Dict[str, float] = hyperparams or {}
         # These will be set by child classes, declared here for type checking
         self.D: int
         self.V: int
@@ -53,6 +63,81 @@ class NumpyroModel(ABC):
         self.vocab: np.ndarray
         self.K: int
         self._dense_counts_cache: Optional[jax.Array] = None
+
+    def _param(self, name: str, init_value: Any, constraint=constraints.real) -> Any:
+        """Optionally define user-specific initialization variables for estimating
+        the variational families in the guide. If no variables are defined, then
+        the default initialization will be used to initialize the guide."""
+        if self._initparams is None:
+            self._initparams = {}
+
+        value = self._initparams.get(name, init_value)
+
+        if callable(value):
+            raise TypeError(f"Constant latent variable '{name}' must be a value, not a callable.")
+
+        value = jnp.asarray(value, dtype=jnp.float32)
+        if value.shape != init_value.shape:
+            raise ValueError(
+                f"Initialization of '{name}' has shape {value.shape}, expected {jnp.asarray(init_value).shape}."
+            )
+
+        self._initparams[name] = value
+        return param(name, init_value=value, constraint=constraint)
+
+    def _is_constant(self, name: str) -> bool:
+        """A helper function that turns off guide sampling for constant latent variables. If True, then
+        the variational family for the constant latent variable is not estimated by the model."""
+        return (
+            self._constantparams is not None
+            and name in self._constantparams
+            and self._constantparams[name] is not None
+        )
+
+    def _sample(
+        self, name: str, distribution, dimensions: Tuple[int, ...], positive: bool = False
+    ) -> Any:
+        """Optionally define constant latent variables. If defined, these variables will be held constant
+        and will not be estimated by the model. If None then all variables will be estimated."""
+        if self._constantparams is None:
+            self._constantparams = {}
+
+        value = self._constantparams.setdefault(name, None)
+
+        if value is None:
+            return sample(name, distribution)
+
+        if callable(value):
+            raise TypeError(f"Constant latent variable '{name}' must be a value, not a callable.")
+
+        value = np.asarray(value, dtype=np.float32)
+        if value.shape != tuple(dimensions):
+            raise ValueError(
+                f"Constant latent variable '{name}' has shape {value.shape}, expected {dimensions}."
+            )
+        if positive and not np.all(value > 0):
+            raise ValueError(
+                f"Constant latent variable '{name}' must be > 0 elementwise, got {value}."
+            )
+
+        self._constantparams[name] = value
+        return value
+
+    def _hyperparam(self, name: str, default: Any, positive: bool = False) -> Any:
+        """Optionally define user-specific hyperparameters. If no hyperparameters are
+        defined, then the default is used."""
+        if self._hyperparams is None:
+            self._hyperparams = {}
+
+        value = self._hyperparams.get(name, default)
+
+        if callable(value):
+            raise TypeError(f"Hyperparameter '{name}' must be a value, not a callable.")
+        if positive and value <= 0:
+            raise ValueError(f"Hyperparameter '{name}' must be > 0, got {value}.")
+
+        self._hyperparams[name] = value
+        return value
 
     @abstractmethod
     def _model(self, Y_batch: Any, d_batch: Any) -> None:
@@ -186,7 +271,6 @@ class NumpyroModel(ABC):
         Y_batch, D_batch = self._get_batch(init_rng, self.counts)
 
         svi_state = svi_batch.init(jax.random.PRNGKey(1), Y_batch=Y_batch, d_batch=D_batch)
-
         rngs = random.split(jax.random.PRNGKey(2), num_steps)
         pbar = tqdm(range(num_steps))
 
@@ -208,6 +292,16 @@ class NumpyroModel(ABC):
 
         return self.estimated_params
 
+    def input_params(self) -> dict:
+        """Return user-defined variable settings."""
+        return {
+            "initialized_variables": {} if self._initparams is None else self._initparams.copy(),
+            "latent_constant_variables": {}
+            if self._constantparams is None
+            else self._constantparams.copy(),
+            "hyperparameters": {} if self._hyperparams is None else self._hyperparams.copy(),
+        }
+
     def return_topics(self) -> Tuple[np.ndarray, np.ndarray]:
         """
         Return the topics for each document.
@@ -227,7 +321,11 @@ class NumpyroModel(ABC):
         if not self.estimated_params:
             raise ValueError("Model must be trained before calling return_topics()")
 
-        E_theta = self.estimated_params["theta_shape"] / self.estimated_params["theta_rate"]
+        if self._is_constant("theta"):
+            E_theta = np.asarray(self._constantparams["theta"])
+        else:
+            E_theta = self.estimated_params["theta_shape"] / self.estimated_params["theta_rate"]
+
         return np.argmax(E_theta, axis=1), E_theta
 
     def return_beta(self) -> pd.DataFrame:
@@ -248,7 +346,11 @@ class NumpyroModel(ABC):
         if not self.estimated_params:
             raise ValueError("Model must be trained before calling return_beta()")
 
-        E_beta = self.estimated_params["beta_shape"] / self.estimated_params["beta_rate"]
+        if self._is_constant("beta"):
+            E_beta = np.asarray(self._constantparams["beta"])
+        else:
+            E_beta = self.estimated_params["beta_shape"] / self.estimated_params["beta_rate"]
+
         return pd.DataFrame(jnp.transpose(E_beta), index=self.vocab)
 
     def return_top_words_per_topic(self, n=10):

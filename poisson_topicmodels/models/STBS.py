@@ -1,5 +1,5 @@
 import warnings
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
@@ -9,7 +9,7 @@ import pandas as pd
 import scipy.sparse as sparse
 import seaborn as sns
 from jax import jit, random
-from numpyro import param, plate, sample
+from numpyro import plate, sample
 from numpyro.distributions import constraints
 from numpyro.infer import SVI, TraceMeanField_ELBO
 from optax import adam
@@ -39,11 +39,9 @@ class STBS(NumpyroModel):
         authors: np.ndarray,
         batch_size: int,
         X_design_matrix: Optional[np.ndarray] = None,
-        beta_shape_init: np.ndarray = None,
-        beta_rate_init: np.ndarray = None,
-        theta_shape_init: np.ndarray = None,
-        theta_rate_init: np.ndarray = None,
-        i_mu_init: np.ndarray = None,
+        initparams: Optional[Dict[str, Any]] = None,
+        constantparams: Optional[Dict[str, Any]] = None,
+        hyperparams: Optional[Dict[str, float]] = None,
     ) -> None:
         """
         Initialize the STBS model.
@@ -65,21 +63,12 @@ class STBS(NumpyroModel):
         batch_size : int
             The number of documents to be processed in each batch.
             Must satisfy 0 < batch_size <= D.
-        beta_shape_init : np.ndarray, optional
-            Initial shape parameters for the topic-word distributions (default is None).
-            Must have shape (K, V) if provided.
-        beta_rate_init : np.ndarray, optional
-            Initial rate parameters for the topic-word distributions (default is None).
-            Must have shape (K, V) if provided.
-        theta_shape_init : np.ndarray, optional
-            Initial shape parameters for the document-topic distributions (default is None).
-            Must have shape (D, K) if provided.
-        theta_rate_init : np.ndarray, optional
-            Initial rate parameters for the document-topic distributions (default is None).
-            Must have shape (D, K) if provided.
-        i_mu_init : np.ndarray, optional
-            Initial mean parameters for the ideology-topic distributions (default is None).
-            Must have shape (N, ) if provided.
+        initparams : dict, optional
+            User-specified initial values for variational parameters in the guide.
+        constantparams : dict, optional
+            User-specified constant values for latent variables (not updated by SVI).
+        hyperparams : dict, optional
+            User-specified hyperparameters overriding default prior settings.
 
         Raises
         ------
@@ -89,7 +78,9 @@ class STBS(NumpyroModel):
             If dimensions are invalid or time_varying parameters have wrong shape.
         """
 
-        super().__init__()
+        super().__init__(
+            initparams=initparams, constantparams=constantparams, hyperparams=hyperparams
+        )
 
         # Input validation
         if not sparse.issparse(counts):
@@ -146,63 +137,6 @@ class STBS(NumpyroModel):
         )
         self.L = self.X_design_matrix.shape[1]
 
-        # check if initialization parameters have the correct shape and are jnp.arrays
-        for inits in [beta_shape_init, beta_rate_init]:
-            if inits is None:
-                warnings.warn(
-                    "No initial values for beta parameters were provided. "
-                    "The model will initialize them uniformly."
-                )
-            if inits is not None:
-                if not isinstance(inits, (np.ndarray, jnp.ndarray)):
-                    raise ValueError(
-                        "beta_shape_init and beta_rate_init must be numpy or jnp.ndarray objects "
-                        "with matching dimensions [num_topics times num_words]."
-                    )
-                if inits.shape != (self.K, self.V):
-                    raise ValueError(
-                        f"beta_shape_init and beta_rate_init must have shape ({self.K}, {self.V}), "
-                        f"got {inits.shape}"
-                    )
-        self.beta_rate_init = beta_rate_init
-        self.beta_shape_init = beta_shape_init
-
-        for inits in [theta_shape_init, theta_rate_init]:
-            if inits is None:
-                warnings.warn(
-                    "No initial values for theta parameters were provided. "
-                    "The model will initialize them uniformly."
-                )
-            if inits is not None:
-                if not isinstance(inits, (np.ndarray, jnp.ndarray)):
-                    raise ValueError(
-                        "theta_shape_init and theta_rate_init must be numpy or jnp.ndarray objects "
-                        "with matching dimensions [num_documents times num_topics]."
-                    )
-                if inits.shape != (self.D, self.K):
-                    raise ValueError(
-                        f"theta_shape_init and theta_rate_init must have shape ({self.D}, {self.K}), "
-                        f"got {inits.shape}"
-                    )
-        self.theta_rate_init = theta_rate_init
-        self.theta_shape_init = theta_shape_init
-
-        if i_mu_init is None:
-            warnings.warn(
-                "No initial values for the ideology parameters were provided. "
-                "The model will initialize them uniformly."
-            )
-        if i_mu_init is not None:
-            if not isinstance(i_mu_init, (np.ndarray, jnp.ndarray)):
-                raise ValueError(
-                    "i_mu_init must be a numpy or jnp.ndarray object " "with shape [num_authors, ]."
-                )
-            if i_mu_init.shape != (self.N,):
-                raise ValueError(
-                    f"i_mu_init must have shape ({self.N},), " f"got {i_mu_init.shape}"
-                )
-        self.i_mu_init = i_mu_init
-
     def _model(self, Y_batch: jnp.ndarray, d_batch: jnp.ndarray, i_batch: jnp.ndarray) -> None:  # type: ignore[override]
         """Define the probabilistic model using NumPyro.
 
@@ -225,44 +159,125 @@ class STBS(NumpyroModel):
         """
 
         with plate("v", size=self.V, dim=-1):
-            b_beta = sample("b_beta", dist.Gamma(0.3, 1.0))
+            b_beta = self._sample(
+                "b_beta",
+                dist.Gamma(
+                    self._hyperparam("a_b_beta", 0.3, positive=True),
+                    self._hyperparam("b_b_beta", 1.0, positive=True),
+                ),
+                dimensions=(self.V,),
+                positive=True,
+            )
 
         with plate("k", size=self.K, dim=-1):
-            b_rho = sample("b_rho", dist.Gamma(0.3, 1.0))
-            rho = sample("rho", dist.Gamma(0.3, b_rho))
+            b_rho = self._sample(
+                "b_rho",
+                dist.Gamma(
+                    self._hyperparam("a_b_rho", 0.3, positive=True),
+                    self._hyperparam("b_b_rho", 1.0, positive=True),
+                ),
+                dimensions=(self.K,),
+                positive=True,
+            )
+
+            rho = self._sample(
+                "rho",
+                dist.Gamma(self._hyperparam("a_rho", 0.3, positive=True), b_rho),
+                dimensions=(self.K,),
+                positive=True,
+            )
 
         with plate("k", size=self.K, dim=-2):
             with plate("k_v", size=self.V, dim=-1):
-                beta = sample("beta", dist.Gamma(0.3, b_beta))
-                eta = sample("eta", dist.Normal(0, jnp.tile(1 / jnp.sqrt(rho), (self.V, 1)).T))
+                beta = self._sample(
+                    "beta",
+                    dist.Gamma(self._hyperparam("a_beta", 0.3, positive=True), b_beta),
+                    dimensions=(self.K, self.V),
+                    positive=True,
+                )
+
+                eta = self._sample(
+                    "eta",
+                    dist.Normal(
+                        self._hyperparam("mu_eta_prior", 0.0),
+                        jnp.tile(1 / jnp.sqrt(rho), (self.V, 1)).T,
+                    ),
+                    dimensions=(self.K, self.V),
+                )
 
         with plate("l", size=self.L, dim=-1):
-            b_omega = sample("b_omega", dist.Gamma(0.3, 1.0))
-            omega = sample("omega", dist.Gamma(0.3, b_omega))
-            iota_dot = sample("iota_dot", dist.Normal(0, 1))
+            b_omega = self._sample(
+                "b_omega",
+                dist.Gamma(
+                    self._hyperparam("a_b_omega", 0.3, positive=True),
+                    self._hyperparam("b_b_omega", 1.0, positive=True),
+                ),
+                dimensions=(self.L,),
+                positive=True,
+            )
+
+            omega = self._sample(
+                "omega",
+                dist.Gamma(self._hyperparam("a_omega", 0.3, positive=True), b_omega),
+                dimensions=(self.L,),
+                positive=True,
+            )
+
+            iota_dot = self._sample(
+                "iota_dot",
+                dist.Normal(
+                    self._hyperparam("mu_iota_dot_prior", 0.0),
+                    self._hyperparam("sigma_iota_dot_prior", 1.0, positive=True),
+                ),
+                dimensions=(self.L,),
+            )
 
         with plate("l", size=self.L, dim=-2):
             with plate("l_k", size=self.K, dim=-1):
-                iota = sample(
+                iota = self._sample(
                     "iota",
                     dist.Normal(
                         jnp.tile(iota_dot, (self.K, 1)).T,
-                        jnp.tile(1 / jnp.sqrt(omega), (self.K, 1)).T,
+                        jnp.tile(1.0 / jnp.sqrt(omega), (self.K, 1)).T,
                     ),
+                    dimensions=(self.L, self.K),
                 )
 
         i_mu = jnp.matmul(self.X_design_matrix, iota)
 
         with plate("n", size=self.N, dim=-1):
-            I = sample("I", dist.Gamma(0.3, 0.3))
+            I = self._sample(
+                "I",
+                dist.Gamma(
+                    self._hyperparam("a_I", 0.3, positive=True),
+                    self._hyperparam("b_I", 0.3, positive=True),
+                ),
+                dimensions=(self.N,),
+                positive=True,
+            )
 
         with plate("n", size=self.N, dim=-2):
             with plate("k", size=self.K, dim=-1):
                 # Sample the per-unit latent variables (ideal points)
-                i = sample("i", dist.Normal(i_mu, jnp.tile(1 / jnp.sqrt(I), (self.K, 1)).T))
+                i = self._sample(
+                    "i",
+                    dist.Normal(
+                        i_mu,
+                        jnp.tile(1.0 / jnp.sqrt(I), (self.K, 1)).T,
+                    ),
+                    dimensions=(self.N, self.K),
+                )
 
         with plate("n", size=self.N, dim=-1):
-            b_author = sample("b_author", dist.Gamma(0.3, 1.0))
+            b_author = self._sample(
+                "b_author",
+                dist.Gamma(
+                    self._hyperparam("a_b_author", 0.3, positive=True),
+                    self._hyperparam("b_b_author", 1.0, positive=True),
+                ),
+                dimensions=(self.N,),
+                positive=True,
+            )
 
         with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
             b_author_d = b_author[i_batch]
@@ -270,7 +285,12 @@ class STBS(NumpyroModel):
 
             with plate("d_k", size=self.K, dim=-1):
                 # Sample document-level latent variables (topic intensities)
-                theta = sample("theta", dist.Gamma(0.3, b_author_dk))
+                theta = self._sample(
+                    "theta",
+                    dist.Gamma(self._hyperparam("a_theta", 0.3, positive=True), b_author_dk),
+                    dimensions=(self.batch_size, self.K),
+                    positive=True,
+                )
 
                 # Compute Poisson rates for each word
                 P = jnp.sum(
@@ -299,216 +319,201 @@ class STBS(NumpyroModel):
             Indices of authors for the documents in the batch (batch_size,).
         """
 
-        b_beta_shape = param(
-            "b_beta_shape",
-            init_value=jnp.ones(self.V),
-            constraint=constraints.positive,
-        )
-        b_beta_rate = param(
-            "b_beta_rate",
-            init_value=jnp.ones(self.V),
-            constraint=constraints.positive,
-        )
-
-        # Add initial values for beta parameters if provided for the stbs model
-        if self.beta_rate_init is not None:
-            beta_rate = param(
-                "beta_rate",
-                init_value=self.beta_rate_init,
+        if not self._is_constant("b_beta"):
+            b_beta_shape = self._param(
+                "b_beta_shape",
+                init_value=jnp.ones(self.V),
                 constraint=constraints.positive,
             )
-        else:
-            beta_rate = param(
+            b_beta_rate = self._param(
+                "b_beta_rate",
+                init_value=jnp.ones(self.V),
+                constraint=constraints.positive,
+            )
+
+            with plate("v", size=self.V, dim=-1):
+                sample("b_beta", dist.Gamma(b_beta_shape, b_beta_rate))
+
+        if not self._is_constant("b_rho"):
+            b_rho_shape = self._param(
+                "b_rho_shape",
+                init_value=jnp.ones(self.K),
+                constraint=constraints.positive,
+            )
+            b_rho_rate = self._param(
+                "b_rho_rate",
+                init_value=jnp.ones(self.K),
+                constraint=constraints.positive,
+            )
+
+            with plate("k", size=self.K, dim=-1):
+                sample("b_rho", dist.Gamma(b_rho_shape, b_rho_rate))
+
+        if not self._is_constant("rho"):
+            rho_shape = self._param(
+                "rho_shape",
+                init_value=jnp.ones(self.K),
+                constraint=constraints.positive,
+            )
+            rho_rate = self._param(
+                "rho_rate",
+                init_value=jnp.ones(self.K),
+                constraint=constraints.positive,
+            )
+
+            with plate("k", size=self.K, dim=-1):
+                sample("rho", dist.Gamma(rho_shape, rho_rate))
+
+        if not self._is_constant("beta"):
+            beta_rate = self._param(
                 "beta_rate",
                 init_value=jnp.ones([self.K, self.V]),
                 constraint=constraints.positive,
             )
-
-        if self.beta_shape_init is not None:
-            beta_shape = param(
-                "beta_shape",
-                init_value=self.beta_shape_init,
-                constraint=constraints.positive,
-            )
-        else:
-            beta_shape = param(
+            beta_shape = self._param(
                 "beta_shape",
                 init_value=jnp.ones([self.K, self.V]),
                 constraint=constraints.positive,
             )
 
-        b_rho_shape = param(
-            "b_rho_shape",
-            init_value=jnp.ones(self.K),
-            constraint=constraints.positive,
-        )
-        b_rho_rate = param(
-            "b_rho_rate",
-            init_value=jnp.ones(self.K),
-            constraint=constraints.positive,
-        )
-        rho_shape = param(
-            "rho_shape",
-            init_value=jnp.ones(self.K),
-            constraint=constraints.positive,
-        )
-        rho_rate = param(
-            "rho_rate",
-            init_value=jnp.ones(self.K),
-            constraint=constraints.positive,
-        )
+            with plate("k", size=self.K, dim=-2):
+                with plate("k_v", size=self.V, dim=-1):
+                    sample("beta", dist.Gamma(beta_shape, beta_rate))
 
-        mu_eta = param(
-            "mu_eta",
-            init_value=random.normal(random.PRNGKey(2), (self.K, self.V)),
-        )
-        sigma_eta = param(
-            "sigma_eta",
-            init_value=jnp.ones([self.K, self.V]),
-            constraint=constraints.positive,
-        )
-
-        b_omega_shape = param(
-            "b_omega_shape",
-            init_value=jnp.ones(self.L),
-            constraint=constraints.positive,
-        )
-        b_omega_rate = param(
-            "b_omega_rate",
-            init_value=jnp.ones(self.L),
-            constraint=constraints.positive,
-        )
-        omega_shape = param(
-            "omega_shape",
-            init_value=jnp.ones(self.L),
-            constraint=constraints.positive,
-        )
-        omega_rate = param(
-            "omega_rate",
-            init_value=jnp.ones(self.L),
-            constraint=constraints.positive,
-        )
-
-        mu_iota_dot = param(
-            "mu_iota_dot",
-            init_value=jnp.zeros(self.L),
-        )
-        sigma_iota_dot = param(
-            "sigma_iota_dot",
-            init_value=jnp.ones(self.L),
-            constraint=constraints.positive,
-        )
-        mu_iota = param(
-            "mu_iota",
-            init_value=jnp.zeros([self.L, self.K]),
-        )
-        sigma_iota = param(
-            "sigma_iota",
-            init_value=jnp.ones([self.L, self.K]),
-            constraint=constraints.positive,
-        )
-
-        I_shape = param(
-            "I_shape",
-            init_value=jnp.ones(self.N),
-            constraint=constraints.positive,
-        )
-        I_rate = param(
-            "I_rate",
-            init_value=jnp.ones(self.N),
-            constraint=constraints.positive,
-        )
-
-        # Add initial values for ideology parameters if provided for the stbs model
-        if self.i_mu_init is not None:
-            mu_i = param(
-                "mu_i",
-                init_value=jnp.tile(self.i_mu_init, (self.K, 1)).T,
+        if not self._is_constant("eta"):
+            mu_eta = self._param(
+                "mu_eta",
+                init_value=random.normal(random.PRNGKey(2), (self.K, self.V)),
             )
-        else:
-            mu_i = param(
+            sigma_eta = self._param(
+                "sigma_eta",
+                init_value=jnp.ones([self.K, self.V]),
+                constraint=constraints.positive,
+            )
+
+            with plate("k", size=self.K, dim=-2):
+                with plate("k_v", size=self.V, dim=-1):
+                    sample("eta", dist.Normal(mu_eta, sigma_eta))
+
+        if not self._is_constant("b_omega"):
+            b_omega_shape = self._param(
+                "b_omega_shape",
+                init_value=jnp.ones(self.L),
+                constraint=constraints.positive,
+            )
+            b_omega_rate = self._param(
+                "b_omega_rate",
+                init_value=jnp.ones(self.L),
+                constraint=constraints.positive,
+            )
+
+            with plate("l", size=self.L, dim=-1):
+                sample("b_omega", dist.Gamma(b_omega_shape, b_omega_rate))
+
+        if not self._is_constant("omega"):
+            omega_shape = self._param(
+                "omega_shape",
+                init_value=jnp.ones(self.L),
+                constraint=constraints.positive,
+            )
+            omega_rate = self._param(
+                "omega_rate",
+                init_value=jnp.ones(self.L),
+                constraint=constraints.positive,
+            )
+
+            with plate("l", size=self.L, dim=-1):
+                sample("omega", dist.Gamma(omega_shape, omega_rate))
+
+        if not self._is_constant("iota_dot"):
+            mu_iota_dot = self._param(
+                "mu_iota_dot",
+                init_value=jnp.zeros(self.L),
+            )
+            sigma_iota_dot = self._param(
+                "sigma_iota_dot",
+                init_value=jnp.ones(self.L),
+                constraint=constraints.positive,
+            )
+
+            with plate("l", size=self.L, dim=-1):
+                sample("iota_dot", dist.Normal(mu_iota_dot, sigma_iota_dot))
+
+        if not self._is_constant("iota"):
+            mu_iota = self._param(
+                "mu_iota",
+                init_value=jnp.zeros([self.L, self.K]),
+            )
+            sigma_iota = self._param(
+                "sigma_iota",
+                init_value=jnp.ones([self.L, self.K]),
+                constraint=constraints.positive,
+            )
+
+            with plate("l", size=self.L, dim=-2):
+                with plate("l_k", size=self.K, dim=-1):
+                    sample("iota", dist.Normal(mu_iota, sigma_iota))
+
+        if not self._is_constant("I"):
+            I_shape = self._param(
+                "I_shape",
+                init_value=jnp.ones(self.N),
+                constraint=constraints.positive,
+            )
+            I_rate = self._param(
+                "I_rate",
+                init_value=jnp.ones(self.N),
+                constraint=constraints.positive,
+            )
+
+            with plate("n", size=self.N, dim=-1):
+                sample("I", dist.Gamma(I_shape, I_rate))
+
+        if not self._is_constant("i"):
+            mu_i = self._param(
                 "mu_i",
                 init_value=jnp.zeros((self.N, self.K)),
             )
-
-        sigma_i = param(
-            "sigma_i",
-            init_value=jnp.ones((self.N, self.K)),
-            constraint=constraints.positive,
-        )
-
-        b_author_shape = param(
-            "b_author_shape",
-            init_value=jnp.ones(self.N),
-            constraint=constraints.positive,
-        )
-        b_author_rate = param(
-            "b_author_rate",
-            init_value=jnp.ones(self.N),
-            constraint=constraints.positive,
-        )
-
-        # Add initial values for theta parameters if provided for the stbs model
-        if self.theta_rate_init is not None:
-            theta_rate = param(
-                "theta_rate",
-                init_value=self.theta_rate_init,
+            sigma_i = self._param(
+                "sigma_i",
+                init_value=jnp.ones((self.N, self.K)),
                 constraint=constraints.positive,
             )
-        else:
-            theta_rate = param(
+
+            with plate("n", size=self.N, dim=-2):
+                with plate("k", size=self.K, dim=-1):
+                    sample("i", dist.Normal(mu_i, sigma_i))
+
+        if not self._is_constant("b_author"):
+            b_author_shape = self._param(
+                "b_author_shape",
+                init_value=jnp.ones(self.N),
+                constraint=constraints.positive,
+            )
+            b_author_rate = self._param(
+                "b_author_rate",
+                init_value=jnp.ones(self.N),
+                constraint=constraints.positive,
+            )
+
+            with plate("n", self.N, dim=-1):
+                sample("b_author", dist.Gamma(b_author_shape, b_author_rate))
+
+        if not self._is_constant("theta"):
+            theta_rate = self._param(
                 "theta_rate",
                 init_value=jnp.ones([self.D, self.K]),
                 constraint=constraints.positive,
             )
-
-        if self.theta_shape_init is not None:
-            theta_shape = param(
-                "theta_shape",
-                init_value=self.theta_shape_init,
-                constraint=constraints.positive,
-            )
-        else:
-            theta_shape = param(
+            theta_shape = self._param(
                 "theta_shape",
                 init_value=jnp.ones([self.D, self.K]),
                 constraint=constraints.positive,
             )
 
-        with plate("v", size=self.V, dim=-1):
-            sample("b_beta", dist.Gamma(b_beta_shape, b_beta_rate))
-
-        with plate("k", size=self.K, dim=-1):
-            sample("b_rho", dist.Gamma(b_rho_shape, b_rho_rate))
-            sample("rho", dist.Gamma(rho_shape, rho_rate))
-
-        with plate("k", size=self.K, dim=-2):
-            with plate("k_v", size=self.V, dim=-1):
-                sample("beta", dist.Gamma(beta_shape, beta_rate))
-                sample("eta", dist.Normal(mu_eta, sigma_eta))
-
-        with plate("l", size=self.L, dim=-1):
-            sample("b_omega", dist.Gamma(b_omega_shape, b_omega_rate))
-            sample("omega", dist.Gamma(omega_shape, omega_rate))
-            sample("iota_dot", dist.Normal(mu_iota_dot, sigma_iota_dot))
-
-        with plate("l", size=self.L, dim=-2):
-            with plate("l_k", size=self.K, dim=-1):
-                sample("iota", dist.Normal(mu_iota, sigma_iota))
-
-        with plate("n", size=self.N, dim=-1):
-            sample("I", dist.Gamma(I_shape, I_rate))
-
-        with plate("n", size=self.N, dim=-2):
-            with plate("k", size=self.K, dim=-1):
-                sample("i", dist.Normal(mu_i, sigma_i))
-
-        with plate("n", self.N, dim=-1):
-            sample("b_author", dist.Gamma(b_author_shape, b_author_rate))
-
-        with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
-            with plate("d_k", size=self.K, dim=-1):
-                sample("theta", dist.Gamma(theta_shape[d_batch], theta_rate[d_batch]))
+            with plate("d", size=self.D, subsample_size=self.batch_size, dim=-2):
+                with plate("d_k", size=self.K, dim=-1):
+                    sample("theta", dist.Gamma(theta_shape[d_batch], theta_rate[d_batch]))
 
     def _get_batch(
         self, rng: jnp.ndarray, Y: sparse.csr_matrix
@@ -651,6 +656,11 @@ class STBS(NumpyroModel):
         if not self.estimated_params:
             raise ValueError("Model must be trained before calling plot_topic_wordclouds()")
 
+        if log_corrected and self._is_constant("beta"):
+            warnings.warn(
+                "log_corrected = True but beta is constant. Falling back to linear scores."
+            )
+
         if ideology_values is None:
             return super().plot_topic_wordclouds(
                 n_words=n_words, figsize=figsize or (16, 12), save_path=save_path
@@ -663,20 +673,28 @@ class STBS(NumpyroModel):
         if any(t < 0 or t >= self.K for t in topic_indices):
             raise ValueError(f"topics must be indices in [0, {self.K - 1}].")
 
-        beta_shape = self.estimated_params["beta_shape"]
-        beta_rate = self.estimated_params["beta_rate"]
-        mu_eta = self.estimated_params["mu_eta"]
+        if self._is_constant("beta"):
+            beta_mean = np.asarray(self._constantparams["beta"])
+        else:
+            beta_shape = np.asarray(self.estimated_params["beta_shape"])
+            beta_rate = np.asarray(self.estimated_params["beta_rate"])
+            beta_mean = beta_shape / beta_rate
+
+        if self._is_constant("eta"):
+            mu_eta = np.asarray(self._constantparams["eta"])
+        else:
+            mu_eta = np.asarray(self.estimated_params["mu_eta"])
 
         word_scores: List[List[dict]] = []
 
         for k in topic_indices:
             topic_scores = []
             for i_val in ideology_values:
-                if log_corrected:
+                if log_corrected and not self._is_constant("beta"):
                     s = digamma(beta_shape[k]) - np.log(beta_rate[k]) + i_val * mu_eta[k]
                     s = s - s.min() + 0.05 * (s.max() - s.min())
                 else:
-                    s = (beta_shape[k] / beta_rate[k]) * np.exp(mu_eta[k] * i_val)
+                    s = beta_mean[k] * np.exp(mu_eta[k] * i_val)
 
                 word_freq = dict(pd.Series(s, index=self.vocab).nlargest(n_words))
                 topic_scores.append(word_freq)
@@ -733,11 +751,19 @@ class STBS(NumpyroModel):
         ]
 
         if self.estimated_params:
-            mu_i = np.asarray(self.estimated_params["mu_i"])
+            if self._is_constant("i"):
+                mu_i = np.asarray(self._constantparams["i"])
+            else:
+                mu_i = np.asarray(self.estimated_params["mu_i"])
+
             lines.append(f"  Ideal-point range:        [{mu_i.min():.3f}, {mu_i.max():.3f}]")
             lines.append(f"  Ideal-point std:          {mu_i.std():.3f}")
 
-            mu_iota = np.asarray(self.estimated_params["mu_iota"])
+            if self._is_constant("iota"):
+                mu_iota = np.asarray(self._constantparams["iota"])
+            else:
+                mu_iota = np.asarray(self.estimated_params["mu_iota"])
+
             topic_ranges = mu_iota.max(axis=1) - mu_iota.min(axis=1)
             topic_stds = mu_iota.std(axis=1)
 
@@ -763,9 +789,13 @@ class STBS(NumpyroModel):
         if not self.estimated_params:
             raise ValueError("Model must be trained before calling plot_topic_prevalence()")
 
-        theta = np.asarray(self.estimated_params["theta_shape"]) / np.asarray(
-            self.estimated_params["theta_rate"]
-        )
+        if self._is_constant("theta"):
+            theta = np.asarray(self._constantparams["theta"])
+        else:
+            theta = np.asarray(self.estimated_params["theta_shape"]) / np.asarray(
+                self.estimated_params["theta_rate"]
+            )
+
         theta_norm = theta / theta.sum(axis=1, keepdims=True)
         mean_prev = theta_norm.mean(axis=0)
 
@@ -829,9 +859,13 @@ class STBS(NumpyroModel):
         if not self.estimated_params:
             raise ValueError("Model must be trained before calling plot_author_topic_heatmap()")
 
-        theta = np.asarray(self.estimated_params["theta_shape"]) / np.asarray(
-            self.estimated_params["theta_rate"]
-        )
+        if self._is_constant("theta"):
+            theta = np.asarray(self._constantparams["theta"])
+        else:
+            theta = np.asarray(self.estimated_params["theta_shape"]) / np.asarray(
+                self.estimated_params["theta_rate"]
+            )
+
         theta_norm = theta / theta.sum(axis=1, keepdims=True)
 
         K = theta_norm.shape[1]
@@ -939,11 +973,11 @@ class STBS(NumpyroModel):
             group_labels = {"all": "all"}
         else:
             if group_var is None:
-                if self.i_mu_init is None:
+                if "mu_i" not in self._initparams:
                     raise ValueError(
-                        "No group_var provided and i_mu_init was not stored on the model."
+                        "No group_var provided and no initialization for 'mu_i' was stored in initparams."
                     )
-                group_var = np.asarray(self.i_mu_init)
+                group_var = np.asarray(self._initparams["mu_i"][:, 0])
             else:
                 group_var = np.asarray(group_var)
                 if group_var.shape[0] != self.N:
@@ -963,9 +997,13 @@ class STBS(NumpyroModel):
                     zip(unique_group_names, sns.color_palette("tab10", len(unique_group_names)))
                 )
 
-        theta = np.asarray(self.estimated_params["theta_shape"]) / np.asarray(
-            self.estimated_params["theta_rate"]
-        )
+        if self._is_constant("theta"):
+            theta = np.asarray(self._constantparams["theta"])
+        else:
+            theta = np.asarray(self.estimated_params["theta_shape"]) / np.asarray(
+                self.estimated_params["theta_rate"]
+            )
+
         author_weights = (
             pd.DataFrame(theta, columns=[f"x{k}" for k in range(theta.shape[1])])
             .assign(author=self.author_indices)
@@ -977,7 +1015,11 @@ class STBS(NumpyroModel):
             author_weights["topic"].str.replace("^x", "", regex=True).astype(int)
         )
 
-        mu_i = np.asarray(self.estimated_params["mu_i"])
+        if self._is_constant("i"):
+            mu_i = np.asarray(self._constantparams["i"])
+        else:
+            mu_i = np.asarray(self.estimated_params["mu_i"])
+
         author_ideology = (
             pd.DataFrame(mu_i, columns=[f"x{k}" for k in range(mu_i.shape[1])])
             .assign(author=list(self.author_map.values()), group=groups)
@@ -1115,8 +1157,12 @@ class STBS(NumpyroModel):
         if not self.estimated_params:
             raise ValueError("Model must be trained before calling plot_iota_credible_intervals()")
 
-        mu_iota = np.asarray(self.estimated_params["mu_iota"]).T
-        sigma_iota = np.asarray(self.estimated_params["sigma_iota"]).T
+        if self._is_constant("iota"):
+            mu_iota = np.asarray(self._constantparams["iota"]).T
+            sigma_iota = np.zeros_like(mu_iota)
+        else:
+            mu_iota = np.asarray(self.estimated_params["mu_iota"]).T
+            sigma_iota = np.asarray(self.estimated_params["sigma_iota"]).T
 
         K, P = mu_iota.shape
         z = sp_norm.ppf((1 + ci) / 2)
@@ -1218,8 +1264,12 @@ class STBS(NumpyroModel):
         if not self.estimated_params:
             raise ValueError("Model must be trained before calling return_ideal_points()")
 
-        mu_i = np.asarray(self.estimated_params["mu_i"])
-        sigma_i = np.asarray(self.estimated_params["sigma_i"])
+        if self._is_constant("i"):
+            mu_i = np.asarray(self._constantparams["i"])
+            sigma_i = np.zeros_like(mu_i)
+        else:
+            mu_i = np.asarray(self.estimated_params["mu_i"])
+            sigma_i = np.asarray(self.estimated_params["sigma_i"])
 
         rows = []
         for author, idx in self.author_map.items():
@@ -1253,8 +1303,12 @@ class STBS(NumpyroModel):
         if not self.estimated_params:
             raise ValueError("Model must be trained before calling return_ideal_covariates()")
 
-        mu_iota = np.asarray(self.estimated_params["mu_iota"])
-        sigma_iota = np.asarray(self.estimated_params["sigma_iota"])
+        if self._is_constant("iota"):
+            mu_iota = np.asarray(self._constantparams["iota"])
+            sigma_iota = np.zeros_like(mu_iota)
+        else:
+            mu_iota = np.asarray(self.estimated_params["mu_iota"])
+            sigma_iota = np.asarray(self.estimated_params["sigma_iota"])
 
         rows = []
         for l, covariate in enumerate(self.covariates):

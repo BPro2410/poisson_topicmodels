@@ -105,8 +105,8 @@ def test_tbip_time_varying_get_batch_model_guide_and_plot():
     """Exercise TBIP time-varying branches, traceable latent variables, and plotting."""
     counts, vocab = _small_counts_and_vocab()
     authors = np.array(["alice", "bob", "alice", "carol"])
-    beta_shape_init = np.ones((2, counts.shape[1]), dtype=np.float32)
-    beta_rate_init = np.ones((2, counts.shape[1]), dtype=np.float32)
+    beta_mu_init = np.ones((2, counts.shape[1]), dtype=np.float32)
+    beta_sigma_init = np.ones((2, counts.shape[1]), dtype=np.float32)
 
     with pytest.warns(UserWarning):
         model = TBIP(
@@ -116,8 +116,7 @@ def test_tbip_time_varying_get_batch_model_guide_and_plot():
             authors=authors,
             batch_size=2,
             time_varying=True,
-            beta_shape_init=beta_shape_init,
-            beta_rate_init=beta_rate_init,
+            initparams={"mu_beta": beta_mu_init, "sigma_beta": beta_sigma_init},
         )
 
     y_batch, d_batch, i_batch = model._get_batch(random.PRNGKey(3), counts)
@@ -152,14 +151,15 @@ def test_tbip_time_varying_get_batch_model_guide_and_plot():
 
     model.plot_ideal_points(selected_authors=["alice", "carol"])
 
-    with pytest.raises(ValueError, match="must have shape"):
-        TBIP(
-            counts=counts,
-            vocab=vocab,
-            num_topics=2,
-            authors=authors,
-            batch_size=2,
-            time_varying=True,
-            beta_shape_init=np.ones((2, 2), dtype=np.float32),
-            beta_rate_init=beta_rate_init,
-        )
+    incorrect_model = TBIP(
+        counts=counts,
+        vocab=vocab,
+        num_topics=2,
+        authors=authors,
+        batch_size=2,
+        time_varying=True,
+        initparams={"mu_beta": np.ones((2, 2), dtype=np.float32), "sigma_beta": beta_sigma_init},
+    )
+
+    with pytest.raises(ValueError, match="has shape"):
+        incorrect_model.train_step(num_steps=1, lr=0.1)
