@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath(".."))
 project = "poisson-topicmodels"
 copyright = "2026, Bernd Prostmaier, Bettina Grün, Paul Hofmarcher"
 author = "Bernd Prostmaier, Bettina Grün, Paul Hofmarcher"
-release = "0.2.0"
+release = "0.2.1"
 version = "0.2"
 
 # -- General configuration --------------------------------------------------

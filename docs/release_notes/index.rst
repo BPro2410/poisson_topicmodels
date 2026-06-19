@@ -9,7 +9,7 @@ Version history and changelog for poisson-topicmodels.
 Current Version
 ===============
 
-**Latest**: 0.2.0 (April 2026)
+**Latest**: 0.2.1 (June 2026)
 
 For full changelog, see below.
 
