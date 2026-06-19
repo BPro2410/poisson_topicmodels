@@ -90,6 +90,7 @@ def _make_cpf_with_params(D=20, V=50, K=3, C=2):
     counts, vocab = _counts_vocab(D, V)
     covariates = np.random.randn(D, C).astype(np.float32)
     model = CPF(counts, vocab, num_topics=K, batch_size=4, X_design_matrix=covariates)
+    G = model.G
     model.estimated_params = {
         "theta_shape": np.random.rand(D, K).astype(np.float32) + 0.1,
         "theta_rate": np.ones((D, K), dtype=np.float32),
@@ -97,6 +98,12 @@ def _make_cpf_with_params(D=20, V=50, K=3, C=2):
         "beta_rate": np.ones((K, V), dtype=np.float32),
         "lambda_location": np.random.randn(C, K).astype(np.float32),
         "lambda_scale": np.abs(np.random.randn(C, K).astype(np.float32)) + 0.01,
+        "lambda_intercept_location": np.random.randn(K).astype(np.float32),
+        "lambda_intercept_scale": np.abs(np.random.randn(K).astype(np.float32)) + 0.01,
+        "tau2_shape": np.ones(K, dtype=np.float32) * 2,
+        "tau2_rate": np.ones(K, dtype=np.float32),
+        "delta2_shape": np.ones((G, K), dtype=np.float32) * 2,
+        "delta2_rate": np.ones((G, K), dtype=np.float32),
     }
     model.Metrics = TopicModelMetrics(loss=[100.0, 60.0])
     return model
@@ -505,21 +512,33 @@ class TestCPFCoverage:
         with pytest.raises(ValueError, match="trained"):
             model.return_covariate_effects_ci()
 
-    def test_plot_cov_effects(self):
+    def test_plot_cov_effects_lambda_only(self):
         model = _make_cpf_with_params()
-        fig, axes = model.plot_cov_effects()
-        assert fig is not None
+        results = model.plot_cov_effects()
+        assert "lambda" in results
+        assert results["lambda"][0] is not None
         import matplotlib.pyplot as plt
 
-        plt.close(fig)
+        plt.close("all")
+
+    def test_plot_cov_effects_with_shrinkage(self):
+        model = _make_cpf_with_params()
+        results = model.plot_cov_effects(include_shrinkage=True)
+        assert "lambda" in results
+        assert "lambda_intercept" in results
+        assert "tau2" in results
+        assert "delta2" in results
+        import matplotlib.pyplot as plt
+
+        plt.close("all")
 
     def test_plot_cov_effects_subset(self):
         model = _make_cpf_with_params()
-        fig, axes = model.plot_cov_effects(topics=["topic_1"])
-        assert fig is not None
+        results = model.plot_cov_effects(topics=["topic_1"])
+        assert "lambda" in results
         import matplotlib.pyplot as plt
 
-        plt.close(fig)
+        plt.close("all")
 
     def test_plot_cov_effects_invalid_topic(self):
         model = _make_cpf_with_params()
@@ -530,18 +549,42 @@ class TestCPFCoverage:
         counts, vocab = _counts_vocab()
         covs = np.random.randn(20, 2).astype(np.float32)
         model = CPF(counts, vocab, num_topics=3, batch_size=4, X_design_matrix=covs)
-        with pytest.raises(ValueError, match="trained"):
+        with pytest.raises(RuntimeError, match="No estimated parameters"):
             model.plot_cov_effects()
 
-    def test_plot_cov_effects_save(self):
+    def test_plot_cov_effects_save_dir(self):
         model = _make_cpf_with_params()
-        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
-            fig, axes = model.plot_cov_effects(save_path=f.name)
-            assert os.path.exists(f.name)
-            os.unlink(f.name)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            model.plot_cov_effects(save_path=tmpdir)
+            assert os.path.exists(os.path.join(tmpdir, "forest_lambda.png"))
         import matplotlib.pyplot as plt
 
-        plt.close(fig)
+        plt.close("all")
+
+    def test_plot_cov_effects_save_dir_with_shrinkage(self):
+        model = _make_cpf_with_params()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            model.plot_cov_effects(include_shrinkage=True, save_path=tmpdir)
+            assert os.path.exists(os.path.join(tmpdir, "forest_lambda.png"))
+            assert os.path.exists(os.path.join(tmpdir, "forest_lambda_intercept.png"))
+            assert os.path.exists(os.path.join(tmpdir, "forest_tau2.png"))
+            assert os.path.exists(os.path.join(tmpdir, "forest_delta2.png"))
+        import matplotlib.pyplot as plt
+
+        plt.close("all")
+
+    def test_gamma_ci_static(self):
+        shape = np.array([2.0, 3.0])
+        rate = np.array([1.0, 1.0])
+        mean, lo, hi = CPF._gamma_ci(shape, rate, ci=0.95)
+        assert mean.shape == (2,)
+        assert np.all(lo < mean)
+        assert np.all(hi > mean)
+
+    def test_group_names(self):
+        model = _make_cpf_with_params()
+        groups = model._group_names()
+        assert len(groups) == 2  # cov_0, cov_1
 
     def test_cpf_not_sparse_raises(self):
         dense = np.random.rand(20, 50).astype(np.float32)
