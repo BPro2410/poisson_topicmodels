@@ -86,10 +86,30 @@ def _make_spf_with_params(D=20, V=50):
     return model
 
 
-def _make_cpf_with_params(D=20, V=50, K=3, C=2):
+def _make_cpf_with_params(
+    D=20,
+    V=50,
+    K=3,
+    C=2,
+    covariates=None,
+    constantparams=None,
+    link_function="softplus",
+):
+    if covariates is None:
+        covariates = np.random.randn(D, C).astype(np.float32)
+    else:
+        D = covariates.shape[0]
+        C = covariates.shape[1]
     counts, vocab = _counts_vocab(D, V)
-    covariates = np.random.randn(D, C).astype(np.float32)
-    model = CPF(counts, vocab, num_topics=K, batch_size=4, X_design_matrix=covariates)
+    model = CPF(
+        counts,
+        vocab,
+        num_topics=K,
+        batch_size=4,
+        X_design_matrix=covariates,
+        constantparams=constantparams,
+        link_function=link_function,
+    )
     G = model.G
     model.estimated_params = {
         "theta_shape": np.random.rand(D, K).astype(np.float32) + 0.1,
@@ -109,12 +129,22 @@ def _make_cpf_with_params(D=20, V=50, K=3, C=2):
     return model
 
 
-def _make_cspf_with_params(D=20, V=50):
-    counts, vocab = _counts_vocab(D, V)
+def _make_cspf_with_params(
+    D=20,
+    V=50,
+    covariates=None,
+    constantparams=None,
+    link_function="softplus",
+):
     keywords = _keywords()
     K = len(keywords) + 1  # 1 residual topic
     C = 2
-    covariates = np.random.randn(D, C).astype(np.float32)
+    if covariates is None:
+        covariates = np.random.randn(D, C).astype(np.float32)
+    else:
+        D = covariates.shape[0]
+        C = covariates.shape[1]
+    counts, vocab = _counts_vocab(D, V)
     model = CSPF(
         counts,
         vocab,
@@ -122,6 +152,8 @@ def _make_cspf_with_params(D=20, V=50):
         residual_topics=1,
         batch_size=4,
         X_design_matrix=covariates,
+        constantparams=constantparams,
+        link_function=link_function,
     )
     G = model.G
     Tilde_V = model.Tilde_V
@@ -239,6 +271,7 @@ class TestSummary:
         model = _make_cpf_with_params()
         result = model.summary()
         assert "Covariates (C)" in result
+        assert "Covariate groups (G)" in result
         assert "Covariate names" in result
 
     def test_cspf_summary_extra(self):
@@ -488,6 +521,40 @@ class TestCPFCoverage:
         assert isinstance(df, pd.DataFrame)
         assert df.shape == (2, 3)  # C=2, K=3
 
+    def test_cpf_grouped_covariates_and_exp_link(self):
+        covariates = pd.DataFrame(
+            np.array(
+                [
+                    [1.0, 0.0, 1.0],
+                    [0.0, 1.0, 1.0],
+                    [1.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0],
+                ],
+                dtype=np.float32,
+            ),
+            columns=["grp1::a", "grp1::b", "grp2=income"],
+        )
+        model = _make_cpf_with_params(covariates=covariates, link_function="exp")
+        assert model.link_function == "exp"
+        assert model.G == 2
+        assert model.group_index.tolist() == [0, 0, 1]
+        np.testing.assert_allclose(np.asarray(model.group_scaling_diag), [0.5, 0.5, 0.5], atol=1e-5)
+        values = model._link_function(jnp.array([[0.0, 1.0]]))
+        np.testing.assert_allclose(np.asarray(values), np.exp([[0.0, 1.0]]))
+
+    def test_cpf_invalid_link_function_raises(self):
+        counts, vocab = _counts_vocab()
+        covs = np.random.randn(20, 2).astype(np.float32)
+        with pytest.raises(ValueError, match="link_function"):
+            CPF(
+                counts,
+                vocab,
+                num_topics=3,
+                batch_size=4,
+                X_design_matrix=covs,
+                link_function="invalid",
+            )
+
     def test_return_covariate_effects_not_trained(self):
         counts, vocab = _counts_vocab()
         covs = np.random.randn(20, 2).astype(np.float32)
@@ -573,6 +640,48 @@ class TestCPFCoverage:
 
         plt.close("all")
 
+    def test_constant_params_cover_plot_and_ci(self):
+        covariates = pd.DataFrame(
+            np.array(
+                [
+                    [1.0, 0.0, 1.0],
+                    [0.0, 1.0, 1.0],
+                    [1.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0],
+                ],
+                dtype=np.float32,
+            ),
+            columns=["grp1::a", "grp1::b", "grp2=income"],
+        )
+        const = {
+            "lambda": np.full((3, 3), 0.25, dtype=np.float32),
+            "lambda_intercept": np.full(3, 0.5, dtype=np.float32),
+            "tau2": np.full(3, 0.75, dtype=np.float32),
+            "delta2": np.full((2, 3), 1.25, dtype=np.float32),
+        }
+        model = _make_cpf_with_params(covariates=covariates, constantparams=const)
+
+        effects = model.return_covariate_effects()
+        ci = model.return_covariate_effects_ci()
+        assert np.allclose(effects.to_numpy(), 0.25)
+        assert np.allclose(ci["mean"].to_numpy(), 0.25)
+        assert np.allclose(ci["lower"].to_numpy(), 0.25)
+        assert np.allclose(ci["upper"].to_numpy(), 0.25)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            file_path = os.path.join(tmpdir, "cpf_forest.png")
+            results = model.plot_cov_effects(
+                include_shrinkage=True,
+                group_colors={"grp1": "#123456", "grp2": "#abcdef"},
+                save_path=file_path,
+            )
+            assert os.path.exists(file_path)
+            assert "lambda" in results and "lambda_intercept" in results
+
+        import matplotlib.pyplot as plt
+
+        plt.close("all")
+
     def test_gamma_ci_static(self):
         shape = np.array([2.0, 3.0])
         rate = np.array([1.0, 1.0])
@@ -585,6 +694,11 @@ class TestCPFCoverage:
         model = _make_cpf_with_params()
         groups = model._group_names()
         assert len(groups) == 2  # cov_0, cov_1
+
+    def test_group_index_separator_styles(self):
+        names = ["grp1::a", "grp1::b", "color=red", "age[young]", "plain"]
+        idx = CPF._build_group_index(names)
+        assert idx.tolist() == [0, 0, 1, 2, 3]
 
     def test_cpf_not_sparse_raises(self):
         dense = np.random.rand(20, 50).astype(np.float32)
@@ -606,6 +720,57 @@ class TestCSPFCoverage:
         topics, E_theta = model.return_topics()
         assert len(topics) == 20
         assert E_theta.shape == (20, 3)
+
+    def test_cspf_grouped_covariates_and_exp_link(self):
+        covariates = pd.DataFrame(
+            np.array(
+                [
+                    [1.0, 0.0],
+                    [0.0, 1.0],
+                    [1.0, 0.0],
+                    [0.0, 1.0],
+                    [1.0, 0.0],
+                    [0.0, 1.0],
+                    [1.0, 0.0],
+                    [0.0, 1.0],
+                    [1.0, 0.0],
+                    [0.0, 1.0],
+                    [1.0, 0.0],
+                    [0.0, 1.0],
+                    [1.0, 0.0],
+                    [0.0, 1.0],
+                    [1.0, 0.0],
+                    [0.0, 1.0],
+                    [1.0, 0.0],
+                    [0.0, 1.0],
+                    [1.0, 0.0],
+                    [0.0, 1.0],
+                ],
+                dtype=np.float32,
+            ),
+            columns=["grp::a", "grp::b"],
+        )
+        model = _make_cspf_with_params(covariates=covariates, link_function="exp")
+        assert model.link_function == "exp"
+        assert model.G == 1
+        assert model.group_index.tolist() == [0, 0]
+        values = model._link_function(jnp.array([[0.0, 1.0, 2.0]]))
+        np.testing.assert_allclose(np.asarray(values), np.exp([[0.0, 1.0, 2.0]]))
+
+    def test_cspf_invalid_link_function_raises(self):
+        counts, vocab = _counts_vocab()
+        keywords = _keywords()
+        covs = np.random.randn(20, 2).astype(np.float32)
+        with pytest.raises(ValueError, match="link_function"):
+            CSPF(
+                counts,
+                vocab,
+                keywords=keywords,
+                residual_topics=1,
+                batch_size=4,
+                X_design_matrix=covs,
+                link_function="invalid",
+            )
 
     def test_return_beta(self):
         model = _make_cspf_with_params()
@@ -698,6 +863,36 @@ class TestCSPFCoverage:
             assert os.path.exists(os.path.join(tmpdir, "forest_lambda_intercept.png"))
             assert os.path.exists(os.path.join(tmpdir, "forest_tau2.png"))
             assert os.path.exists(os.path.join(tmpdir, "forest_delta2.png"))
+        import matplotlib.pyplot as plt
+
+        plt.close("all")
+
+    def test_constant_params_cover_plot_and_ci(self):
+        const = {
+            "lambda": np.full((2, 3), 0.25, dtype=np.float32),
+            "lambda_intercept": np.full(3, 0.5, dtype=np.float32),
+            "tau2": np.full(3, 0.75, dtype=np.float32),
+            "delta2": np.full((2, 3), 1.25, dtype=np.float32),
+        }
+        model = _make_cspf_with_params(constantparams=const)
+
+        effects = model.return_covariate_effects()
+        ci = model.return_covariate_effects_ci()
+        assert np.allclose(effects.to_numpy(), 0.25)
+        assert np.allclose(ci["mean"].to_numpy(), 0.25)
+        assert np.allclose(ci["lower"].to_numpy(), 0.25)
+        assert np.allclose(ci["upper"].to_numpy(), 0.25)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            file_path = os.path.join(tmpdir, "cspf_forest.png")
+            results = model.plot_cov_effects(
+                include_shrinkage=True,
+                group_colors={"cov_0": "#123456", "cov_1": "#abcdef"},
+                save_path=file_path,
+            )
+            assert os.path.exists(file_path)
+            assert "lambda" in results and "lambda_intercept" in results
+
         import matplotlib.pyplot as plt
 
         plt.close("all")
