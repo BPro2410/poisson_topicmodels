@@ -98,6 +98,97 @@ def test_numpyro_model_error_paths_and_plotting(tmp_path, monkeypatch):
         model.train_step(num_steps=1, lr=0.1, dense_cache_max_gb=0)
 
 
+def test_flexible_input_params_are_reported_as_copies():
+    """Constructor-provided flexible inputs are visible without exposing internals."""
+    counts = sparse.csr_matrix(np.ones((3, 4), dtype=np.float32))
+    vocab = np.array(["word_a", "word_b", "word_c", "word_d"])
+    initparams = {"beta_shape": np.ones((2, 4), dtype=np.float32)}
+    constantparams = {"theta": np.ones((3, 2), dtype=np.float32)}
+    hyperparams = {"a_beta": 0.5}
+
+    model = PF(
+        counts=counts,
+        vocab=vocab,
+        num_topics=2,
+        batch_size=2,
+        initparams=initparams,
+        constantparams=constantparams,
+        hyperparams=hyperparams,
+    )
+
+    input_params = model.input_params()
+
+    assert set(input_params) == {
+        "initialized_variables",
+        "latent_constant_variables",
+        "hyperparameters",
+    }
+    np.testing.assert_array_equal(
+        input_params["initialized_variables"]["beta_shape"], initparams["beta_shape"]
+    )
+    np.testing.assert_array_equal(
+        input_params["latent_constant_variables"]["theta"], constantparams["theta"]
+    )
+    assert input_params["hyperparameters"] == hyperparams
+
+    input_params["initialized_variables"]["new_key"] = np.array([1.0], dtype=np.float32)
+    input_params["latent_constant_variables"].clear()
+    input_params["hyperparameters"]["a_beta"] = 999.0
+
+    fresh_params = model.input_params()
+    assert "new_key" not in fresh_params["initialized_variables"]
+    assert "theta" in fresh_params["latent_constant_variables"]
+    assert fresh_params["hyperparameters"]["a_beta"] == 0.5
+
+
+def test_flexible_input_param_validation_errors_are_clear(monkeypatch):
+    """Custom initialization, constants, and priors fail fast with useful errors."""
+    model = _pf_model()
+    monkeypatch.setattr("poisson_topicmodels.models.numpyro_model.jnp.asarray", np.asarray)
+
+    model._initparams["beta_shape"] = np.ones((1, 4), dtype=np.float32)
+    with pytest.raises(ValueError, match="Initialization of 'beta_shape' has shape"):
+        model._param("beta_shape", np.ones((2, 4), dtype=np.float32))
+
+    model._initparams["beta_shape"] = lambda: np.ones((2, 4), dtype=np.float32)
+    with pytest.raises(TypeError, match="must be a value, not a callable"):
+        model._param("beta_shape", np.ones((2, 4), dtype=np.float32))
+
+    model._constantparams["beta"] = np.ones((1, 4), dtype=np.float32)
+    with pytest.raises(ValueError, match="Constant latent variable 'beta' has shape"):
+        model._sample("beta", distribution=None, dimensions=(2, 4), positive=True)
+
+    model._constantparams["beta"] = -np.ones((2, 4), dtype=np.float32)
+    with pytest.raises(ValueError, match="must be > 0 elementwise"):
+        model._sample("beta", distribution=None, dimensions=(2, 4), positive=True)
+
+    model._constantparams["beta"] = lambda: np.ones((2, 4), dtype=np.float32)
+    with pytest.raises(TypeError, match="must be a value, not a callable"):
+        model._sample("beta", distribution=None, dimensions=(2, 4), positive=True)
+
+    model._hyperparams["a_beta"] = 0.0
+    with pytest.raises(ValueError, match="Hyperparameter 'a_beta' must be > 0"):
+        model._hyperparam("a_beta", 0.3, positive=True)
+
+    model._hyperparams["a_beta"] = lambda: 0.5
+    with pytest.raises(TypeError, match="must be a value, not a callable"):
+        model._hyperparam("a_beta", 0.3, positive=True)
+
+
+def test_flexible_input_helpers_register_valid_values():
+    """Base helpers store validated constants and hyperparameters for inspection."""
+    model = _pf_model()
+    beta = np.ones((2, 4), dtype=np.float32)
+
+    model._constantparams["beta"] = beta
+    returned_beta = model._sample("beta", distribution=None, dimensions=(2, 4), positive=True)
+    np.testing.assert_array_equal(returned_beta, beta)
+    np.testing.assert_array_equal(model.input_params()["latent_constant_variables"]["beta"], beta)
+
+    assert model._hyperparam("a_beta", 0.3, positive=True) == 0.3
+    assert model.input_params()["hyperparameters"]["a_beta"] == 0.3
+
+
 def test_metrics_reset_and_last_loss():
     """Verify Metrics convenience methods for reset and last value lookup."""
     metrics = Metrics(loss=[1.0, 2.0])

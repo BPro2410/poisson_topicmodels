@@ -104,8 +104,10 @@ The **poisson-topicmodels** library provides multiple topic modeling approaches:
 - ✓ Transparent GPU acceleration via JAX
 - ✓ Reproducible results with seed control
 - ✓ Type hints and comprehensive API documentation
-- ✓ >70% test coverage with continuous integration
+- ✓ >90% test coverage target with continuous integration
 - ✓ Clear error messages and input validation
+- ✓ Flexible inference configuration with custom priors, fixed latent variables,
+  and custom variational initialization
 
 Quick Start Example
 ===================

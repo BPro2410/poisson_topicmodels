@@ -120,11 +120,12 @@ class STBS(NumpyroModel):
                 self.covariates = list(X_design_matrix.columns)
                 X_design_matrix = X_design_matrix.values
             else:
+                X_design_matrix = np.asarray(X_design_matrix)
+                if X_design_matrix.ndim != 2:
+                    raise ValueError(f"covariates must be 2D, got shape {X_design_matrix.shape}")
                 self.covariates = [f"cov_{i}" for i in range(X_design_matrix.shape[1])]
 
             X_design_matrix = np.asarray(X_design_matrix)
-            if X_design_matrix.ndim != 2:
-                raise ValueError(f"covariates must be 2D, got shape {X_design_matrix.shape}")
             if X_design_matrix.shape[0] != self.N:
                 raise ValueError(
                     f"covariates has {X_design_matrix.shape[0]} rows, expected {self.N}"
@@ -246,7 +247,7 @@ class STBS(NumpyroModel):
         i_mu = jnp.matmul(self.X_design_matrix, iota)
 
         with plate("n", size=self.N, dim=-1):
-            I = self._sample(
+            ideal_precision = self._sample(
                 "I",
                 dist.Gamma(
                     self._hyperparam("a_I", 0.3, positive=True),
@@ -263,7 +264,7 @@ class STBS(NumpyroModel):
                     "i",
                     dist.Normal(
                         i_mu,
-                        jnp.tile(1.0 / jnp.sqrt(I), (self.K, 1)).T,
+                        jnp.tile(1.0 / jnp.sqrt(ideal_precision), (self.K, 1)).T,
                     ),
                     dimensions=(self.N, self.K),
                 )
@@ -1311,14 +1312,14 @@ class STBS(NumpyroModel):
             sigma_iota = np.asarray(self.estimated_params["sigma_iota"])
 
         rows = []
-        for l, covariate in enumerate(self.covariates):
+        for covariate_idx, covariate in enumerate(self.covariates):
             for k in range(self.K):
                 rows.append(
                     {
                         "covariate": covariate,
                         "topic": k,
-                        "iota": float(mu_iota[l, k]),
-                        "std": float(sigma_iota[l, k]),
+                        "iota": float(mu_iota[covariate_idx, k]),
+                        "std": float(sigma_iota[covariate_idx, k]),
                     }
                 )
 
