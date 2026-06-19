@@ -252,6 +252,7 @@ class TestCPFInitialization:
         )
         assert model.D == 20
         assert model.C == 1
+        assert model.covariates == ["intercept_cov"]
 
     def test_cpf_with_dataframe_covariates(self, small_dtm, small_vocab, covariates_df):
         """CPF should accept DataFrame covariates."""
@@ -401,6 +402,7 @@ class TestCSPFInitialization:
             X_design_matrix=None,
         )
         assert model.C == 1  # Default to ones
+        assert model.covariates == ["intercept_cov"]
 
 
 @pytest.mark.skipif(not HAS_CSPF, reason="CSPF not available")
