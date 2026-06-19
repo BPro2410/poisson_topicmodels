@@ -33,6 +33,7 @@ class CSPF(NumpyroModel):
         initparams: Optional[Dict[str, Any]] = None,
         constantparams: Optional[Dict[str, Any]] = None,
         hyperparams: Optional[Dict[str, float]] = None,
+        link_function: str = "softplus",
     ) -> None:
         super().__init__(
             initparams=initparams, constantparams=constantparams, hyperparams=hyperparams
@@ -87,6 +88,13 @@ class CSPF(NumpyroModel):
         #         if word not in vocab_set:
         #             raise ValueError(f"Keyword '{word}' (topic {topic_id}) not in vocabulary")
 
+        if link_function not in {"softplus", "exp"}:
+            raise ValueError(
+                f"link_function must be one of {{'softplus', 'exp'}}, got {link_function!r}"
+            )
+
+        self.link_function = link_function
+
         self.counts = counts
         self.D = D
         self.V = V
@@ -113,6 +121,14 @@ class CSPF(NumpyroModel):
         self.group_index = self._build_group_index(self.covariates)
         self.G = int(self.group_index.max()) + 1 if self.C > 0 else 0
         self.group_scaling_diag = self._compute_group_scaling_diag(x_np, self.group_index, self.G)
+
+    def _link_function(self, x: jnp.ndarray) -> jnp.ndarray:
+        """Map unconstrained linear predictors to positive values."""
+        if self.link_function == "softplus":
+            return jax.nn.softplus(x)
+        if self.link_function == "exp":
+            return jnp.exp(x)
+        raise ValueError(f"Unsupported link_function: {self.link_function}")
 
     @staticmethod
     def _build_group_index(covariate_names: List[str]) -> np.ndarray:
@@ -252,7 +268,7 @@ class CSPF(NumpyroModel):
                 )
 
         eta_theta = lambda_0[None, :] + jnp.matmul(self.X_design_matrix, lambda_)  # equation 2
-        mu_theta = jax.nn.softplus(eta_theta)[d_batch]  # equation 2
+        mu_theta = self._link_function(eta_theta)[d_batch]  # equation 2
         b_theta = self._hyperparam("b_theta", 0.3, positive=True)
         theta_rate = b_theta / mu_theta  # equation 1
 
