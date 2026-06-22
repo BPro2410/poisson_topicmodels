@@ -192,9 +192,3 @@ tm5 = ETM(
 )
 estimated_params = tm5.train_step(num_steps=100, lr=0.01)
 
-
-# --- TVTBIP --- #
-# tvtbip already implemented in models/tbip.py #
-
-# e.g.,
-# tm5 = topicmodels("TBIP", counts, vocab, num_topics, authors, batchsize, time_varying = True, initial_beta_shape, initial_beta_rate)
