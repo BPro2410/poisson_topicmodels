@@ -173,11 +173,11 @@ estimated_params = tm4.train_step(num_steps=1000, lr=0.01)
 
 # -- Create embeddings --
 # embeds = create_word2vec_embedding_from_dataset(list(df1["Text"]))
-# save_embeds(embeds, "data/embeds.bin")
+# save_embeds(embeds, "../data/embeds.bin")
 
 # -- Load embeddings --
 # path to embeddings
-path_to_embeddings = "data/embeds.bin"
+path_to_embeddings = "../data/embeds.bin"
 embeddings_mapping = load_embeds(path_to_embeddings)
 
 # -- RUN ETM --
