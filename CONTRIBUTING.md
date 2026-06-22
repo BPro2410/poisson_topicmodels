@@ -196,13 +196,13 @@ def train_step(
    git push origin fix/issue-123-short-description
    ```
 
-2. **Create a Pull Request on GitHub:**
+2. **Create a pull request on GitHub:**
    - Link related issues: "Closes #123" in PR description
    - Describe what changes you made and why
    - Reference any related discussions or PRs
    - Include before/after examples if applicable
 
-3. **PR Description Template:**
+3. **PR description template:**
    ```markdown
    ## Description
    Brief description of changes.
