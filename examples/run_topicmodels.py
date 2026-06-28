@@ -191,4 +191,3 @@ tm5 = ETM(
     embed_size=300,
 )
 estimated_params = tm5.train_step(num_steps=100, lr=0.01)
-
