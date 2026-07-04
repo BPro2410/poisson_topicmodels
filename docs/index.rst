@@ -163,7 +163,7 @@ If you use poisson-topicmodels in your research, please cite:
 
    @software{prostmaier2026poisson,
      title={poisson-topicmodels: Probabilistic Topic Modeling with Bayesian Inference},
-     author={Prostmaier, Bernd and Grün, Bettina and Hofmarcher, Paul},
+     author= Prostmaier, Bernd and Pekarek-Kostka, Karina and Grün, Bettina and Hofmarcher, Paul},
      year={2026},
      url={https://github.com/BPro2410/topicmodels_package}
    }

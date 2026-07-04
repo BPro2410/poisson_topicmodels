@@ -313,6 +313,7 @@ python examples/01_getting_started.py
 python examples/02_spf_keywords.py
 python examples/03_cpf_covariates.py
 python examples/04_advanced_cspf.py
+python examples/05_simple_stbs.py
 ```
 
 ---
@@ -336,4 +337,4 @@ For more information, refer to:
 
 ---
 
-**Last Updated:** February 5, 2026
+**Last Updated:** June 22, 2026

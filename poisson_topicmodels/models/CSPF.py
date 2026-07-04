@@ -16,10 +16,68 @@ from .numpyro_model import NumpyroModel
 
 class CSPF(NumpyroModel):
     """
-    Covariate Seeded Poisson Factorization with grouped design-adaptive shrinkage.
+    Covariate Seeded Poisson Factorization (CSPF) topic model with grouped
+    design-adaptive shrinkage.
 
-    This implementation preserves the CSPF interface while replacing the internal
-    covariate-effect specification with the model in ``CSPF_model_new.tex``.
+    Topic model that extends covariate Poisson factorization by combining
+    document-level covariates with seeded topic structure and grouped
+    shrinkage on covariate effects.
+
+    Parameters
+    ----------
+    counts : scipy.sparse.csr_matrix
+        Document-term matrix of shape (D, V) with word counts.
+    vocab : np.ndarray
+        Vocabulary array of shape (V,) containing word terms.
+    keywords : Dict[Any, List[str]]
+        Dictionary mapping topic identifiers to lists of seed words.
+        Keys can be strings or integers. Example: {0: ['climate', 'environment'], 1: ['economy', 'trade']}
+        or {'climate': ['climate', 'environment'], 'economy': ['economy', 'trade']}
+    residual_topics : int
+        Number of residual (unsupervised) topics. Must be >= 0.
+    batch_size : int
+        Mini-batch size for stochastic variational inference.
+        Must satisfy 0 < batch_size <= D.
+    X_design_matrix : np.ndarray or pd.DataFrame, optional
+        Document-level covariates of shape (D, C) where C is the number of
+        features.
+    initparams : dict, optional
+        User-specified initial values for variational parameters in the guide.
+    constantparams : dict, optional
+        User-specified constant values for latent variables (not updated by SVI).
+    hyperparams : dict, optional
+        User-specified hyperparameters overriding default prior settings.
+    link_function : {"softplus", "exp"}, optional
+        Positive link function used to map the linear predictor for
+        document-topic intensities to their Gamma prior mean.
+        Default is "softplus".
+
+    Attributes
+    ----------
+    D : int
+        Number of documents.
+    V : int
+        Vocabulary size.
+    K : int
+        Total number of topics (seeded + residual).
+    C : int
+        Number of covariate features.
+    counts : scipy.sparse.csr_matrix
+        Document-term matrix.
+    vocab : np.ndarray
+        Vocabulary array.
+    keywords : Dict[Any, List[str]]
+        Seed words for guided topics.
+    residual_topics : int
+        Number of unsupervised topics.
+    X_design_matrix : jnp.ndarray
+        Design matrix of covariates.
+    G : int
+        Number of covariate groups.
+    group_scaling_diag : jnp.ndarray
+        Per-covariate scaling derived from (X_g^T X_g)^{-1}.
+    link_function : str
+        Name of the positive link function ("softplus" or "exp").
     """
 
     def __init__(

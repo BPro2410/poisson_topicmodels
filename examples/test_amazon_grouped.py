@@ -104,10 +104,8 @@ def _build_keywords(vocab_set: set[str]) -> dict[str, list[str]]:
 np.random.seed(42)
 rng = np.random.RandomState(42)
 
-print("Loading ./data/10k_amazon.csv")
-df = pd.read_csv(
-    "/Users/Q610748/Documents/01_Coding/02_self/poisson_topicmodels/data/10k_amazon.csv"
-)
+print("Loading ../data/10k_amazon.csv")
+df = pd.read_csv("../data/10k_amazon.csv")
 df = df.dropna(subset=["Text", "Cat1"]).copy()
 
 n_docs = min(10000, len(df))

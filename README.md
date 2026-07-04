@@ -77,8 +77,9 @@ params = model.train_step(num_steps=100, lr=0.01, random_seed=42)
 # Extract results
 topics, _ = model.return_topics()
 top_words = model.return_top_words_per_topic(n=10)
-print(f"Found {topics.shape} topics")
-print(f"Top words: {top_words[:3]}")
+unique, freq = np.unique(topics, return_counts=True)
+print(f"{freq[0]} documents assigned to topic {unique[0]}")
+print(f"Top words for topic 0: {top_words[0][:3]}")
 ```
 
 See `examples/` directory for detailed notebooks.
@@ -168,12 +169,16 @@ top_words = model.return_top_words_per_topic(n=15)
 from poisson_topicmodels import SPF
 
 keywords = {
-    0: ['climate', 'environment', 'carbon'],
-    1: ['economy', 'growth', 'trade'],
+    0: ['word_0', 'word_1', 'word_2'],
+    1: ['word_100', 'word_101'],
 }
 
 model = SPF(counts, vocab, keywords, residual_topics=5, batch_size=64)
 model.train_step(num_steps=500, lr=0.001, random_seed=42)
+
+top_words = model.return_top_words_per_topic(n=10)
+top_words[0]
+top_words[1]
 ```
 
 ### 3. Covariate Effects (CPF)
@@ -184,7 +189,7 @@ from poisson_topicmodels import CPF
 # Include document-level covariates
 covariates = np.random.randn(100, 3)  # 100 documents, 3 covariates
 
-model = CPF(counts, vocab, covariates, num_topics=10, batch_size=64)
+model = CPF(counts, vocab, num_topics=10, batch_size=64, X_design_matrix=covariates)
 model.train_step(num_steps=500, lr=0.001, random_seed=42)
 ```
 
@@ -278,7 +283,7 @@ If you use **poisson_topicmodels** in your research, please cite:
 ```bibtex
 @software{topicmodels2026,
   title = {Poisson-topicmodels: Probabilistic Topic Modeling with Bayesian Inference},
-  author = {Prostmaier, Bernd and Grün, Bettina and Hofmarcher, Paul},
+  author = {Prostmaier, Bernd and Pekarek-Kostka, Karina and Grün, Bettina and Hofmarcher, Paul},
   year = {2026},
   url = {https://github.com/BPro2410/poisson_topicmodels},
 }
