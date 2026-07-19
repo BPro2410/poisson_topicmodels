@@ -127,6 +127,12 @@ python examples/01_getting_started.py
 
 ---
 
+### Overview of implementations (`run_topicmodels.py` and `run_topicmodels.ipynb`)
+
+For an overview of implemented models please run `run_topicmodels.py` (or `run_topicmodels.ipynb` to run in notebook based jupyter environment).
+
+---
+
 ## Data Format Requirements
 
 All examples create synthetic data, but here's what real data should look like:

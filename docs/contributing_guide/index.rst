@@ -399,7 +399,7 @@ Merging & Release
 
 - MAJOR.MINOR.PATCH
 - 0.1.0 → 0.2.0 (new feature)
-- 0.2.0 → 0.2.1 (bug fix)
+- 0.2.1 → 0.2.2 (bug fix)
 - 1.0.0 → 2.0.0 (breaking change)
 
 Getting Help
