@@ -1,6 +1,6 @@
 [project]
 name = "poisson-topicmodels"
-version = "0.2.2"
+version = "1.0.0"
 description = "Poisson topic modeling with Bayesian inference using JAX and NumPyro"
 authors = [
     {name = "Bernd Prostmaier", email = "b.prostmaier@icloud.com"},
@@ -13,7 +13,7 @@ license = {text = "MIT"}
 requires-python = ">=3.11,<3.14"
 keywords = ["topic-modeling", "bayesian-inference", "jax", "numpyro", "probabilistic"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",

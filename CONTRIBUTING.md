@@ -295,7 +295,6 @@ poisson_topicmodels/
 │   │   ├── SPF.py           # Seeded PF
 │   │   ├── CPF.py           # Covariate PF
 │   │   ├── CSPF.py          # Covariate Seeded PF
-│   │   ├── CSPF2.py         # Covariate Seeded PF v2
 │   │   ├── TBIP.py          # Text-Based Ideal Points
 │   │   ├── ETM.py           # Embedded Topic Models
 │   │   ├── Metrics.py       # Metrics tracking

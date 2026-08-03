@@ -1057,11 +1057,13 @@ class STBS(NumpyroModel):
                 pivot.sort_values("abs_delta", ascending=False).reset_index()["topic"].tolist()
             )
 
-        _label = (
-            lambda t: topic_labels[int(t)]
-            if topic_labels and int(t) in topic_labels
-            else f"Topic {t}"
-        )
+        def _label(topic: int) -> str:
+            return (
+                topic_labels[int(topic)]
+                if topic_labels and int(topic) in topic_labels
+                else f"Topic {topic}"
+            )
+
         label_order = [_label(t) for t in topic_order]
 
         author_ideology["topic_label"] = pd.Categorical(

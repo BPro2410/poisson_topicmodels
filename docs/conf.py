@@ -15,8 +15,8 @@ sys.path.insert(0, os.path.abspath(".."))
 project = "poisson-topicmodels"
 copyright = "2026, Bernd Prostmaier, Karina Pekarek-Kostka, Bettina Grün, Paul Hofmarcher"
 author = "Bernd Prostmaier, Karina Pekarek-Kostka, Bettina Grün, Paul Hofmarcher"
-release = "0.2.2"
-version = "0.2"
+release = "1.0.0"
+version = "1.0"
 
 # -- General configuration --------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

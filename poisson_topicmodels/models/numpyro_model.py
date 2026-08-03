@@ -296,9 +296,9 @@ class NumpyroModel(ABC):
         """Return user-defined variable settings."""
         return {
             "initialized_variables": {} if self._initparams is None else self._initparams.copy(),
-            "latent_constant_variables": {}
-            if self._constantparams is None
-            else self._constantparams.copy(),
+            "latent_constant_variables": (
+                {} if self._constantparams is None else self._constantparams.copy()
+            ),
             "hyperparameters": {} if self._hyperparams is None else self._hyperparams.copy(),
         }
 
