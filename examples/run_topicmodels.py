@@ -7,7 +7,7 @@ import pandas as pd
 import scipy.sparse as sparse
 from sklearn.feature_extraction.text import CountVectorizer
 
-from poisson_topicmodels import CSPF, ETM, PF, SPF, TBIP
+from poisson_topicmodels import CPF, CSPF, ETM, PF, SPF, TBIP
 from poisson_topicmodels.utils.utils import load_embeds
 
 # import jax_config
@@ -154,16 +154,8 @@ tm4.return_ideological_words(topic=0)
 # ## CPF Test ##
 # ##############
 
-
-# tm3 = CPF(counts, vocab, num_topics = 5, batch_size = 1024, X_design_matrix = X_design_matrix)
-# svi_batch, svi_state = tm3.train_step(num_steps = 100, lr = 0.01)
-# estimated_params = svi_batch.get_params(svi_state)
-
-df1["speaker"] = np.random.choice(
-    ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"], size=len(df1), replace=True
-)
-tm4 = TBIP(counts, vocab, num_topics=10, authors=df1.speaker, batch_size=1024)
-estimated_params = tm4.train_step(num_steps=1000, lr=0.01)
+tm_cpf = CPF(counts, vocab, num_topics=5, batch_size=1024, X_design_matrix=X_design_matrix)
+estimated_params = tm_cpf.train_step(num_steps=100, lr=0.01)
 
 
 # ##############

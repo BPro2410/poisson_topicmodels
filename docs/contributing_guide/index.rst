@@ -376,7 +376,7 @@ Every PR gets reviewed for:
 **Process**:
 
 1. You submit PR
-2. Automated checks run (CI)
+2. Automated checks run when CI is configured for the repository
 3. Reviewers provide feedback
 4. You address feedback
 5. Maintainers approve and merge

@@ -360,7 +360,7 @@ Latest test results:
 
 - Total tests: 150+
 - Coverage target: >90%
-- CI status: Passing on main
+- CI status: Run the test suite locally before submitting changes
 
 Contribution Checklist
 ======================
@@ -379,5 +379,5 @@ Next Steps
 
 - **Run tests**: ``pytest tests/``
 - **Write tests**: Follow patterns above
-- **CI/CD**: Automated via GitHub Actions
+- **CI/CD**: Configure automated checks before relying on them for releases
 - **Contribute tests**: See :doc:`../contributing_guide/index`

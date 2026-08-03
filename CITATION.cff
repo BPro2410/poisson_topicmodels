@@ -16,8 +16,8 @@ keywords:
   - "jax"
   - "numpyro"
   - "probabilistic-modeling"
-version: 0.2.2
-date-released: 2026-06-19
+version: 1.0.0
+date-released: 2026-08-03
 repository-code: "https://github.com/BPro2410/poisson_topicmodels"
 license: MIT
 abstract: >

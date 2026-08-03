@@ -9,14 +9,14 @@ Version history and changelog for poisson-topicmodels.
 Current Version
 ===============
 
-**Latest**: 0.2.2 (June 2026)
+**Latest**: 1.0.0 (August 2026)
 
 For full changelog, see below.
 
-Unreleased - Flexible Inference Inputs
+Version 1.0.0 - Stable Public Release
 ======================================
 
-*June 17, 2026*
+*August 3, 2026*
 
 **New configuration options**:
 
@@ -35,9 +35,10 @@ Unreleased - Flexible Inference Inputs
 - Documented the new flexible-input dictionaries in the README, getting-started
   guide, training tutorial, and API reference.
 
-**Quality**:
+**Stability**:
 
-- Fixed pre-commit formatting issues in STBS.
+- This release establishes the stable public API for the package.
+- Public API changes will follow the deprecation policy below.
 
 Version 0.2.0 - Inspection & Diagnostics
 ==========================================
@@ -134,7 +135,7 @@ Version 0.1.0 - Initial Release
 - Comprehensive error messages
 - Input validation
 - Reproducibility via seeding
-- GitHub Actions CI/CD
+- Pre-commit checks for formatting, imports, linting, and type checking
 
 **Breaking Changes**:
 
@@ -165,8 +166,8 @@ Version 0.1.0 - Initial Release
 - Performance optimizations
 - Additional embedding support
 
-Coming Soon (0.3.0)
-===================
+Future Roadmap
+==============
 
 Planned features:
 
@@ -175,11 +176,6 @@ Planned features:
 - **Better Visualization**: Interactive topic visualization
 - **Save/Load**: Persist trained models to disk
 - **Documentation Enhancements**: More examples and tutorials
-
-Not Planned for 0.2.0:
-
-- Breaking API changes (we'll maintain compatibility)
-- Complete rewrite of inference (current approach is solid)
 
 Deprecation Policy
 ==================
